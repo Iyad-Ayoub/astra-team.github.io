@@ -1,0 +1,155 @@
+// ASTRA presentation layer; preserve Bootstrap behavior and legacy content.
+$astra-ink: #202b38;
+$astra-muted: #586372;
+$astra-accent: #a31562;
+$astra-surface: #f6f7f9;
+$astra-border: #dde1e6;
+$astra-radius: 6px;
+$astra-shadow: 0 8px 24px rgba(32, 43, 56, .08);
+$astra-container: 1140px;
+$astra-reading-width: 68ch;
+$astra-font-small: .875rem;
+$astra-font-body: 1rem;
+$astra-font-lead: 1.1875rem;
+$astra-font-heading: 2rem;
+$astra-space-1: .5rem;
+$astra-space-2: 1rem;
+$astra-space-3: 1.5rem;
+$astra-space-4: 2rem;
+$astra-space-5: 3rem;
+$astra-section-space: 4.5rem;
+
+:root {
+  --global-text-color: #{$astra-ink};
+  --global-text-color-light: #{$astra-muted};
+  --global-theme-color: #{$astra-accent};
+  --global-hover-color: #{$astra-accent};
+  --global-divider-color: #{$astra-border};
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: $astra-font-body;
+  font-weight: 400;
+  line-height: 1.65;
+}
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid $astra-accent;
+  outline-offset: 4px;
+}
+.astra-skip-link {
+  position: fixed;
+  top: -100px;
+  left: $astra-space-2;
+  z-index: 1100;
+  padding: $astra-space-1 $astra-space-2;
+  background: white;
+  &:focus { top: $astra-space-2; }
+}
+#navbar {
+  opacity: 1;
+  .navbar-brand { font-weight: 600 !important; letter-spacing: -.025em; }
+  .nav-item.active > .nav-link { text-decoration: underline; text-underline-offset: .4em; }
+  .dropdown-menu { border-radius: $astra-radius; box-shadow: $astra-shadow; padding: $astra-space-1 0; }
+  .dropdown-item:hover, .dropdown-item:focus { background: $astra-surface; }
+  .dropdown-item.active { color: white; background: $astra-accent; text-decoration: underline; }
+}
+.astra-home-container { max-width: $astra-container; padding-inline: $astra-space-3; }
+.astra-home {
+  h1, h2, h3 { font-weight: 600; line-height: 1.2; letter-spacing: -.025em; }
+  h2 { font-size: $astra-font-heading; margin: 0; }
+  p:last-child { margin-bottom: 0; }
+  img, figure { max-width: 100%; }
+}
+.astra-hero-heading {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: $astra-space-5;
+  align-items: start;
+  padding: $astra-space-3 0 $astra-space-5;
+  h1 { font-size: clamp(2.75rem, 5vw, 4.5rem); margin: 0; }
+}
+.astra-hero-subtitle { font-size: $astra-font-lead; line-height: 1.5; max-width: 40ch; }
+.astra-actions { display: flex; align-items: center; gap: $astra-space-3; flex-wrap: wrap; margin-top: $astra-space-3; }
+.astra-button {
+  display: inline-flex;
+  align-items: center;
+  gap: $astra-space-2;
+  padding: .7rem 1.1rem;
+  border: 1px solid $astra-accent;
+  border-radius: $astra-radius;
+  background: $astra-accent;
+  color: white;
+  font-weight: 600;
+  span { color: inherit; }
+  &:hover { color: white; text-decoration: underline; }
+}
+.astra-text-link { font-weight: 600; text-decoration: underline; text-underline-offset: .2em; span { color: inherit; } }
+.astra-hero-image {
+  figure { margin: 0; }
+  img { display: block; width: 100%; height: auto; border-radius: $astra-radius; }
+}
+.astra-section { margin-top: $astra-section-space; }
+.astra-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: $astra-space-3; margin-bottom: $astra-space-4; }
+.astra-intro {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: $astra-space-4;
+  padding-bottom: $astra-section-space;
+  border-bottom: 1px solid $astra-border;
+}
+.astra-prose { max-width: $astra-reading-width; font-size: $astra-font-lead; line-height: 1.75; a { text-decoration: underline; } }
+.astra-research-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: $astra-space-3; }
+.astra-research-card {
+  min-width: 0;
+  border: 1px solid $astra-border;
+  border-radius: $astra-radius;
+  background: white;
+  a { display: block; height: 100%; color: $astra-ink; border-radius: $astra-radius; }
+  a:hover, a:focus-visible { text-decoration: none; h3 { text-decoration: underline; text-underline-offset: .15em; } }
+  h3 { font-size: 1.125rem; line-height: 1.45; margin: 0; }
+}
+.astra-card-image {
+  aspect-ratio: 4 / 3;
+  padding: $astra-space-2;
+  background: $astra-surface;
+  border-radius: $astra-radius $astra-radius 0 0;
+  img { width: 100%; height: 100%; object-fit: contain; display: block; }
+}
+.astra-card-heading { display: flex; gap: $astra-space-1; padding: $astra-space-3; align-items: baseline; justify-content: space-between; > span { color: $astra-accent; } }
+.astra-meta { font-size: $astra-font-small; color: $astra-muted; font-variant-numeric: tabular-nums; }
+.astra-news-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  li { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: $astra-space-4; border-top: 1px solid $astra-border; padding: $astra-space-3 0; }
+  a { text-decoration: underline; text-underline-offset: .15em; }
+  .news-title { color: $astra-ink; font-weight: 500; }
+}
+footer.sticky-bottom {
+  background: $astra-surface;
+  padding: $astra-space-5 0;
+  margin-top: $astra-section-space !important;
+  .container { max-width: $astra-container; padding-inline: $astra-space-3; color: $astra-muted; }
+  p { margin: $astra-space-1 0 0; color: $astra-muted; }
+  a { text-decoration: underline; text-underline-offset: .2em; }
+}
+@media (min-width: 1200px) {
+  // Scale the accepted desktop heading down 12.5%; retain smaller-screen sizing.
+  .astra-hero-heading h1 { font-size: clamp(2.40625rem, 4.375vw, 3.9375rem); }
+}
+@media (max-width: 991.98px) {
+  .astra-research-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .astra-hero-heading { gap: $astra-space-4; }
+  .astra-intro { grid-template-columns: 1fr; gap: $astra-space-3; }
+}
+@media (max-width: 575.98px) {
+  .astra-hero-heading { grid-template-columns: 1fr; gap: $astra-space-3; padding-top: 0; }
+  .astra-section { margin-top: $astra-space-5; }
+  .astra-intro { padding-bottom: $astra-space-5; }
+  .astra-section-heading { align-items: flex-start; flex-direction: column; gap: $astra-space-2; }
+  .astra-research-grid { grid-template-columns: 1fr; }
+  .astra-news-list li { grid-template-columns: 1fr; gap: $astra-space-1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #navbar *, .astra-home * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
