@@ -114,6 +114,7 @@ module SiteValidation
       documents[relative] = Nokogiri::HTML(data) if relative.end_with?('.html')
     end
     (REQUIRED_ROUTES + PHASE2_ROUTES).each { |p| raise "required route missing: #{p}" unless documents.key?(p) }
+    phase3_stylesheet(destination, documents.fetch('index.html'), baseurl)
     documents.each do |relative, doc|
       page_uri = 'https://local.invalid' + baseurl + '/' + relative.sub(/index\.html$/, '')
       references = doc.css('[href], [src]').flat_map do |node|
@@ -149,6 +150,21 @@ module SiteValidation
       end
     end
     puts "PASS: #{documents.size} HTML routes, internal links/assets, forbidden files, credential/host patterns (baseurl=#{baseurl.inspect})"
+  end
+
+  def self.phase3_stylesheet(destination, homepage, baseurl)
+    expected = "#{baseurl}/assets/css/main.css"
+    links = homepage.css('link[rel="stylesheet"]').map { |link| link['href'].to_s }
+    unless links.any? { |href| href.match?(/\A#{Regexp.escape(expected)}\?v=\d{14}\z/) }
+      raise 'homepage requires a baseurl-safe, build-versioned main stylesheet'
+    end
+    path = File.join(destination, 'assets/css/main.css')
+    raise 'compiled main stylesheet missing' unless File.file?(path)
+    css = File.read(path).gsub(%r{/\*.*?\*/}m, '')
+    %w[astra-hero-heading astra-button astra-intro astra-research-grid astra-card-image astra-card-heading].each do |selector|
+      raise "compiled Phase 3 selector missing: #{selector}" unless css.match?(/\.#{selector}\s*\{/)
+    end
+    puts 'PASS: versioned Phase 3 stylesheet URL and compiled selectors'
   end
 end
 

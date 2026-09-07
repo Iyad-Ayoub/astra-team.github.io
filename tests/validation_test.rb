@@ -11,19 +11,24 @@ class ValidationTest < Minitest::Test
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, '<html><body id="top">Baseline</body></html>')
     end
+    FileUtils.mkdir_p(File.join(@dir, 'assets/css'))
+    File.write(File.join(@dir, 'assets/css/main.css'),
+               %w[astra-hero-heading astra-button astra-intro astra-research-grid astra-card-image astra-card-heading].map { |s| ".#{s} { display: block; }" }.join("\n"))
+    home('Baseline')
   end
 
   def teardown
     FileUtils.remove_entry(@dir)
   end
 
-  def home(text)
-    File.write(File.join(@dir, 'index.html'), text)
+  def home(text, baseurl = '')
+    File.write(File.join(@dir, 'index.html'),
+               "<link rel='stylesheet' href='#{baseurl}/assets/css/main.css?v=20260907000000'>#{text}")
   end
 
   def test_root_and_subpath_links
     ['', '/preview'].each do |base|
-      home("<a href='#{base}/team/'>Team</a><a href='#{base}/research/#top'>Research</a>")
+      home("<a href='#{base}/team/'>Team</a><a href='#{base}/research/#top'>Research</a>", base)
       SiteValidation.artifact(@dir, base)
     end
   end
@@ -33,6 +38,25 @@ class ValidationTest < Minitest::Test
       home("<a href='#{link}'>Link</a>")
       assert_raises(RuntimeError) { SiteValidation.artifact(@dir) }
     end
+  end
+
+  def test_phase3_stylesheet_url_and_compilation
+    ['', '/astra-team.github.io'].each do |base|
+      home('Baseline', base)
+      SiteValidation.artifact(@dir, base)
+    end
+    ['/assets/css/main.css?v=20260907000000',
+     '/astra-team.github.io/assets/css/main.css',
+     '/astra-team.github.io/assets/css/missing.css?v=20260907000000'].each do |href|
+      File.write(File.join(@dir, 'index.html'), "<link rel='stylesheet' href='#{href}'>")
+      assert_raises(RuntimeError) { SiteValidation.artifact(@dir, '/astra-team.github.io') }
+    end
+    home('Baseline', '/astra-team.github.io')
+    path = File.join(@dir, 'assets/css/main.css')
+    File.write(path, '/* .astra-hero-heading {} */ .navbar { display: flex; }')
+    assert_raises(RuntimeError) { SiteValidation.artifact(@dir, '/astra-team.github.io') }
+    File.unlink(path)
+    assert_raises(RuntimeError) { SiteValidation.artifact(@dir, '/astra-team.github.io') }
   end
 
   def test_srcset_is_checked
