@@ -13,12 +13,13 @@
   <body class="{% if site.navbar_fixed %}fixed-top-nav{% endif %} {% unless site.footer_fixed %}sticky-bottom-footer{% endunless %}">
 
     <!-- Header -->
+    <a class="astra-skip-link" href="#main-content">Skip to content</a>
     {%- include header.html %}
 
     <!-- Content -->
-    <div class="container mt-5">
+    <main id="main-content" tabindex="-1" class="container mt-5 {% if page.layout == 'about' %}astra-home-container{% endif %}">
       {{ content }}
-    </div>
+    </main>
 
     <!-- Footer -->
     {%- include footer.html %}

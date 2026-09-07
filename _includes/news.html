@@ -1,31 +1,26 @@
-          
-          <div class="news">
-            <h2>news</h2>
-            {% if site.news != blank -%} 
-            {%- assign news_size = site.news.size -%}
-            <div class="table-responsive" {% if site.news_scrollable and news_size > 4 %}style="max-height: 20vw"{% endif %}>
-              <table class="table table-sm table-borderless">
-              {%- assign news = site.news | reverse -%}
-              {% if site.news_limit %}
-              {% assign news_limit = site.news_limit %}
-              {% else %}
-              {% assign news_limit = news_size %}
-              {% endif %}
-              {% for item in news limit: news_limit %} 
-                <tr>
-                  <th scope="row">{{ item.date | date: "%b %-d, %Y" }}</th>
-                  <td>
-                    {% if item.inline -%} 
-                      {{ item.content | remove: '<p>' | remove: '</p>' | emojify }}
-                    {%- else -%} 
-                      <a class="news-title" href="{{ item.url | relative_url }}">{{ item.title }}</a>
-                    {%- endif %} 
-                  </td>
-                </tr>
-              {%- endfor %} 
-              </table>
-            </div>
-          {%- else -%} 
-            <p>No news so far...</p>
-          {%- endif %} 
-          </div>
+<section class="astra-section astra-news" aria-labelledby="astra-news-title">
+  <div class="astra-section-heading">
+    <h2 id="astra-news-title">Latest news</h2>
+    <a class="astra-text-link" href="{{ '/news/' | relative_url }}">All news &amp; events <span aria-hidden="true">&rarr;</span></a>
+  </div>
+  {% if site.news != blank %}
+    {% assign news = site.news | sort: 'date' | reverse %}
+    {% assign news_limit = site.news_limit | default: site.news.size %}
+    <ul class="astra-news-list">
+      {% for item in news limit: news_limit %}
+      <li>
+        <time class="astra-meta" datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%b %-d, %Y" }}</time>
+        <div>
+          {% if item.inline %}
+            {{ item.content | remove: '<p>' | remove: '</p>' | emojify }}
+          {% else %}
+            <a class="news-title" href="{{ item.url | relative_url }}">{{ item.title }}</a>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No news so far...</p>
+  {% endif %}
+</section>

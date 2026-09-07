@@ -1,87 +1,55 @@
 ---
 layout: default
 ---
-
-<!-- about.html -->
-      <div class="post">
-        <header class="post-header">
-          <h1 class="post-title">
-           {% if site.title == "blank" -%}<span class="font-weight-bold">{{ site.first_name }}</span> {{ site.middle_name }} {{ site.last_name }}{%- else -%}{{ site.title }}{%- endif %}
-          </h1>
-          <p class="desc">{{ page.subtitle }}</p>
-        </header>
-
-        <article>
-          {% if page.profile -%}
-          <div class="profile align-center">
-            {%- if page.profile.image %}
-              {%- assign profile_image_path = page.profile.image | prepend: 'assets/img/' -%}
-
-              {% if page.profile.image_circular %}
-                {%- assign profile_image_class = "img-fluid z-depth-1 rounded-circle center" -%}
-              {% else %}
-                {%- assign profile_image_class = "img-fluid z-depth-1 rounded" -%}
-              {% endif %}
-
-              {% include figure.html 
-              path=profile_image_path 
-              class=profile_image_class
-              alt=page.profile.image -%}
-              {%- if page.profile.image_date %}
-                <div class="profile imgdate">{{page.profile.image_date}}</div>
-              {%- endif %}
-            {% endif -%}
-          </div>
-          {%- endif %}
-
-          <div class="team-description">
-            {{ page.description | markdownify }}
-          </div>
-
-          {% if page.researches -%}
-          <!-- Researches -->
-          <div class="research">
-            <!-- <h2>Research themes</h2> -->
-            <div class="axes">
-            {% for axis in site.data.axes %}
-              <article>
-                  <a href="{{ '/research/' | relative_url }}#{{ axis.slurm }}">
-                    {% assign im_path = axis.img | prepend: '/assets/img/' %}
-                  <img src="{{ im_path | size: 250 | relative_url }}" alt="" />
-                  <div class="title">{{ axis.name }}</div> 
-                  </a>
-              </article>
-            {% endfor %}
-            </div>
-          </div>
-          {%- endif %}
-
-          {% if page.news -%}
-          <!-- News -->
-          {%- include news.html %}
-          {%- endif %}
-          {% if page.selected_papers -%}
-            <!-- Selected papers -->
-            {%- include selected_papers.html %}
-          {%- endif %}
-          {%- if page.social %}
-          <!-- Social -->
-          <div class="social">
-            <div class="contact-icons">
-            {% include social.html %}
-            </div>
-
-            <div class="contact-note">
-              {{ site.contact_note }}
-            </div>
-            
-          </div>
-          {%- endif %}
-        </article>
-<!--             {%- if page.profile.address %}
-            <div class="address">
-              {{ page.profile.address }}
-            </div>
-            {%- endif %}
- -->
+<div class="astra-home">
+  <header class="astra-hero">
+    <div class="astra-hero-heading">
+      <h1>{% if site.title == "blank" %}{{ site.first_name }} {{ site.middle_name }} {{ site.last_name }}{% else %}{{ site.title }}{% endif %}</h1>
+      <div>
+        <p class="astra-hero-subtitle">{{ page.subtitle }}</p>
+        <div class="astra-actions">
+          <a class="astra-button" href="{{ '/research/' | relative_url }}">Explore Research <span aria-hidden="true">&rarr;</span></a>
+          <a class="astra-text-link" href="{{ '/team/' | relative_url }}">Meet the Team <span aria-hidden="true">&rarr;</span></a>
+        </div>
+      </div>
+    </div>
+    {% if page.profile.image %}
+      {% assign profile_image_path = page.profile.image | prepend: 'assets/img/' %}
+      <div class="astra-hero-image">
+        {% include figure.html path=profile_image_path class="img-fluid" alt="ASTRA team group photograph" %}
+        {% if page.profile.image_date %}<p class="astra-meta">{{ page.profile.image_date }}</p>{% endif %}
+      </div>
+    {% endif %}
+  </header>
+  <section class="astra-section astra-intro" aria-labelledby="astra-intro-title">
+    <h2 id="astra-intro-title">About ASTRA</h2>
+    <div class="astra-prose">{{ page.description | markdownify }}{{ content }}</div>
+  </section>
+  {% if page.researches %}
+  <section class="astra-section" aria-labelledby="astra-research-title">
+    <div class="astra-section-heading">
+      <h2 id="astra-research-title">Research areas</h2>
+      <a class="astra-text-link" href="{{ '/research/' | relative_url }}">Research overview <span aria-hidden="true">&rarr;</span></a>
+    </div>
+    <div class="astra-research-grid">
+      {% for axis in site.data.axes %}
+      <article class="astra-research-card">
+        <a href="{{ '/research/' | relative_url }}#{{ axis.slurm }}">
+          {% assign image_path = axis.img | prepend: '/assets/img/' %}
+          <div class="astra-card-image"><img src="{{ image_path | relative_url }}" alt="" loading="lazy" /></div>
+          <div class="astra-card-heading"><h3>{{ axis.name }}</h3><span aria-hidden="true">&rarr;</span></div>
+        </a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  {% if page.news %}{% include news.html %}{% endif %}
+  {% if page.selected_papers %}{% include selected_papers.html %}{% endif %}
+  {% if page.social %}
+  <div class="social">
+    <div class="contact-icons">{% include social.html %}</div>
+    <div class="contact-note">{{ site.contact_note }}</div>
+  </div>
+  {% endif %}
 </div>
