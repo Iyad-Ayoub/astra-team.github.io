@@ -1,0 +1,16 @@
+{% if include.records.size > 0 %}
+<ul>
+  {% for record in include.records %}
+  <li id="{{ record.id | escape }}">
+    {% if record.url %}
+      <a href="{% if record.url contains '://' %}{{ record.url | escape }}{% else %}{{ record.url | relative_url | escape }}{% endif %}">{{ record.title | escape }}</a>
+    {% else %}
+      {{ record.title | escape }}
+    {% endif %}
+    {% if record.summary %}<p>{{ record.summary | escape }}</p>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Content currently being prepared.</p>
+{% endif %}

@@ -1,0 +1,15 @@
+{% assign vision_page = site.pages | where: 'content_type', 'scientific_vision' | first %}
+{% assign research_sections = site.research_axes | sort: 'order' %}
+{% if include.dropdown %}
+  <a class="dropdown-item text-wrap" href="{{ vision_page.url | relative_url }}">{{ vision_page.title | escape }}</a>
+  {% for section in research_sections %}
+    <a class="dropdown-item text-wrap" href="{{ section.url | relative_url }}">{{ section.title | escape }}</a>
+  {% endfor %}
+{% else %}
+  <ul>
+    <li><a href="{{ vision_page.url | relative_url }}">{{ vision_page.title | escape }}</a></li>
+    {% for section in research_sections %}
+      <li><a href="{{ section.url | relative_url }}">{{ section.title | escape }}</a></li>
+    {% endfor %}
+  </ul>
+{% endif %}

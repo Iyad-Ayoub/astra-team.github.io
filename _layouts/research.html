@@ -10,6 +10,8 @@ layout: default
           </header>
 
           <article>
+            {% include research_links.html %}
+            <h2 id="current-research">Current research descriptions</h2>
             {{ content }}
             {% for axis in site.data.axes %}
               <h2 id="{{ axis.slurm }}">{{ axis.name }}</h2>

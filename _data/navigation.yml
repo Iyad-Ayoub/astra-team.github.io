@@ -1,0 +1,23 @@
+- title: Home
+  url: /
+- title: Research
+  url: /research/
+  research_children: true
+- title: Projects
+  url: /projects/
+- title: Team
+  url: /team/
+- title: Publications
+  url: /publications/
+- title: Research Outputs & Resources
+  url: /outputs/
+  desktop_group: more
+- title: Platforms & Demonstrators
+  url: /platforms/
+  desktop_group: more
+- title: News & Events
+  url: /news/
+  desktop_group: more
+- title: About / Contact
+  url: /about/
+  desktop_group: more

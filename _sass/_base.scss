@@ -195,6 +195,97 @@ blockquote {
 
 // Navbar customization
 
+// Header-only sizing: leave page containers, typography and theme colors alone.
+@media (min-width: 1200px) {
+  #navbar {
+    .astra-header-container {
+      max-width: 1140px;
+      margin-right: auto;
+      margin-left: auto;
+      padding-right: 1.5rem;
+      padding-left: 1.5rem;
+    }
+
+    .navbar-brand {
+      flex-shrink: 0;
+      margin-right: 2rem;
+      font-size: 1.25rem;
+      // Override the existing Bootstrap font-weight-lighter utility on desktop.
+      font-weight: 400 !important;
+    }
+
+    .navbar-nav {
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 0.25rem;
+    }
+
+    .navbar-nav > .nav-item > .nav-link {
+      padding: 0.5rem 0.75rem;
+      font-family: inherit;
+      font-size: 1rem;
+      line-height: 1.5;
+      white-space: nowrap;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .navbar-nav > .nav-item:not(.active) > .nav-link {
+      font-weight: 400;
+    }
+
+    // Neutralize MDB button sizing without replacing Bootstrap dropdown behavior.
+    .navbar-nav > .nav-item > button.nav-link {
+      margin: 0 !important;
+      border: 0;
+    }
+
+    .dropdown-menu {
+      min-width: 0;
+      max-width: calc(100vw - 3rem);
+      text-align: left;
+    }
+
+    .dropdown-menu[aria-labelledby="research-menu"] {
+      width: 34rem;
+    }
+
+    #more-submenu {
+      width: 22rem;
+    }
+
+    .dropdown-item {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      text-align: left;
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+  }
+}
+
+@media (max-width: 1199.98px) {
+  #navbar {
+    // Long expanded menus stay reachable inside the existing fixed header.
+    .navbar-collapse {
+      max-height: calc(100vh - 56px);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .dropdown-menu {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .dropdown-item {
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+  }
+}
+
 .navbar {
   box-shadow: none;
   border-bottom: 1px solid var(--global-divider-color);

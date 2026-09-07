@@ -33,7 +33,6 @@
     lastname: "Pérez"
     profilepic: "patrick-perez.jpg"
     position: "Researcher"
-    url: ""
     url: https://ptrckprz.github.io/
     alumni: true
     alumni_date: 2023-11-01
@@ -46,7 +45,7 @@
     position: "Head"
     position_custom: "Inria team leader"
     order: 1
-    url: "./fawzi-nashashibi"
+    url: "/team/fawzi-nashashibi.html"
 
 -
     firstname: "Tetiana"
