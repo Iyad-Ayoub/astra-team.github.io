@@ -50,7 +50,9 @@ jobs:
         # https://github.com/ruby/setup-ruby/releases/tag/v1.207.0
         uses: ruby/setup-ruby@4a9ddd6f338a97768b8006bf671dfbad383215f4
         with:
-          # Read the tested runtime from .ruby-version.
+          # Read Ruby from .ruby-version and Bundler from Gemfile.lock.
+          # Match local RubyGems; Ruby 3.0.2's original resolver preloads default uri.
+          rubygems: '3.3.5'
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
       - name: Validate source and regression tests
