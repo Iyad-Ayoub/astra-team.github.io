@@ -1,6 +1,8 @@
+    {% capture institution %}ASTRA — joint <a href="https://www.inria.fr/">Inria</a>–<a href="https://www.valeo.com/">Valeo</a> research team{% endcapture %}
     {% if site.footer_fixed %}
     <footer class="fixed-bottom">
       <div class="container mt-0">
+        <p>{{ institution }}</p>
         &copy; Copyright {{ site.time | date: '%Y' }} {{ site.title }}. {{ site.footer_text | markdownify }}
         {%- if site.impressum_path -%}
         <a href="{{ site.url }}{{ site.baseurl }}{{ site.impressum_path }}">Impressum</a>.
@@ -13,6 +15,7 @@
     {%- else -%}
     <footer class="sticky-bottom mt-5">
       <div class="container">
+        <p>{{ institution }}</p>
         &copy; Copyright {{ site.time | date: '%Y' }} {{ site.title }}. {{ site.footer_text | markdownify }}
         {%- if site.impressum_path -%}
         <a href="{{ site.url }}{{ site.baseurl }}{{ site.impressum_path }}">Impressum</a>.

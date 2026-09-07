@@ -1,6 +1,7 @@
 require 'minitest/autorun'
 require 'tmpdir'
 require 'fileutils'
+require 'digest'
 require_relative '../scripts/validate_site'
 
 class ValidationTest < Minitest::Test
@@ -132,5 +133,32 @@ class ValidationTest < Minitest::Test
     assert_equal %w[/ /research/ /projects/ /team/ /publications/], primary.map { |item| item['url'] }
     assert_equal %w[/outputs/ /platforms/ /news/ /about/], more.map { |item| item['url'] }
     assert_equal 9, navigation.size
+  end
+
+  def test_approved_research_copy
+    # Phase 4C approval snapshot: changes to this exact copy need editorial approval.
+    approved = {
+      '_research_axes/perception.md' => '1065cca669efe9f555d45510db83474a0e5da92c3c59a90d651184a775cd8ec0',
+      '_research_axes/mapping.md' => 'e89fc43b3d6defb802146006a9b17cb3c2d4aac8cef05fb7c458e2a7affccc68',
+      '_research_axes/decision.md' => 'a608e67e48b2e5aeebb460bf250de14fd397407e75d67b6d9dd71146824d82e3',
+      '_research_axes/cooperative.md' => 'cb5c9a62d1fca3c521b2164f7f6e0ba2fb597f40709e1691c85acbb7e6cfbc03',
+      '_research_axes/cross-cutting.md' => '95aeab0d9c9994eb4991e13793c8b6f36b38bf2666507a533ef8f5344b2639dd',
+      '_pages/research/vision.md' => '6cd65f0f3fc16f51256748bf481eaed5a5d8872ed5d03b13e591e81871dfac63'
+    }
+    approved.each do |relative, digest|
+      body = File.read(File.join(SiteValidation::ROOT, relative)).split(/^---\s*$\n?/, 3).last.strip
+      assert_equal digest, Digest::SHA256.hexdigest(body), relative
+      refute_includes body, 'Content currently being prepared.'
+    end
+  end
+
+  def test_shared_approved_about_copy
+    root = SiteValidation::ROOT
+    path = File.join(root, '_includes/content/about-astra.md')
+    assert_equal '43073d1b55df0cf68f4070e32dfca13f7badfe8f94a2209dcf4cae88f4bdafd8', Digest::SHA256.file(path).hexdigest
+    %w[_layouts/about.html _includes/content/contact.md].each do |relative|
+      assert_includes File.read(File.join(root, relative)), 'include content/about-astra.md'
+    end
+    refute_includes File.read(File.join(root, '_layouts/research.html')), 'axis.description'
   end
 end
