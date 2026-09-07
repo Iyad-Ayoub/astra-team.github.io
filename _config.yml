@@ -143,8 +143,11 @@ collections:
     output: true
     permalink: /news/:path/
   projects:
-    output: false
+    output: true
     permalink: /projects/:path/
+  research_axes:
+    output: true
+    permalink: /research/:name/
 
 news_scrollable: true # adds a vertical scroll bar if there are more than 3 news items
 news_limit: 20 # leave blank to include all the news in the `_news` folder
@@ -174,10 +177,28 @@ exclude:
   - Gemfile.lock
   - vendor
   - node_modules
+  - scripts
+  - tests
+  - docs
+  - Dockerfile
+  - docker-compose.yml
+  - docker-compose.yaml
+  - compose.yml
+  - compose.yaml
+  - deploy.sh
+  - README.md
+  - CONTRIBUTING.md
+  - TODO.txt
+  - assets/jsconfig.json
+  - .ruby-version
+  - .github
+  - .git
+  - .env
+  - _.htaccess
+  - _.htpasswd
 keep_files:
   - CNAME
   - .nojekyll
-  - .git
 
 # Plug-ins
 plugins:
@@ -198,6 +219,18 @@ plugins:
 
 # Sitemap settings
 defaults:
+  - scope:
+      path: ""
+      type: research_axes
+    values:
+      layout: page
+      content_type: research_axis
+  - scope:
+      path: ""
+      type: projects
+    values:
+      layout: page
+      content_type: project
   - scope:
       path: "assets/**/*.*"
     values:

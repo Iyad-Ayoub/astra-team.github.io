@@ -10,5 +10,4 @@ The new Astra research team is the result of several years of fruitful collabora
 
 This new astra research team is in the line of prior Inria teams such as Imara (20xx-20xx led by Michel Parent), RITS (2012-2022 led by Michel Parent). Astra is the direct evolution of RITS Inria team which worked on designing models, algorithms, and novel architectures for intelligent transportation systems.
 
-The new Astra team is leaded by Fawzi Nashashi (Inria) and Benazouz Bradai (Valeo). The research is articulated around 4 axes. [More info](/research)
-
+The new Astra team is leaded by Fawzi Nashashi (Inria) and Benazouz Bradai (Valeo). The research is articulated around 4 axes. [More info]({{ '/research/' | relative_url }})

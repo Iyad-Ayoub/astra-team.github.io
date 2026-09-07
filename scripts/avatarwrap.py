@@ -7,7 +7,7 @@ from google_images_search import GoogleImagesSearch
 
 # you can provide API key and CX using arguments,
 # or you can set environment variables: GCS_DEVELOPER_KEY, GCS_CX
-gis = GoogleImagesSearch('AIzaSyCgjB9-zrzb9BK2xzkbcxVPkmy5wSk_Y28', 'e67737f03ee884df8')
+gis = GoogleImagesSearch(os.environ['GCS_DEVELOPER_KEY'], os.environ['GCS_CX'])
 
 # # define search params
 # # option for commonly used search param are shown below for easy reference.
