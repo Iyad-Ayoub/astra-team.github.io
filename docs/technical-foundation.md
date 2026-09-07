@@ -20,14 +20,40 @@ this patch. Existing server password material is excluded, not deleted.
 ## P1: preserve and validate the baseline
 
 `.ruby-version` records the tested Ruby 3.0.2 runtime. The existing Gemfile.lock
-is preserved byte-for-byte (Bundler 2.3.5, Jekyll 4.4.1). CI reads that runtime,
+is preserved byte-for-byte (Bundler 2.3.5, Jekyll 4.4.1). The complete native
+toolchain baseline is Ruby 3.0.2, RubyGems 3.3.5 and Bundler 2.3.5.
+CI reads that runtime,
 uses frozen dependency installation and separates read-only build permissions
 from Pages deployment permissions. This preserves a legacy baseline; it is not
 a claim that the old Ruby runtime is supported. A runtime upgrade is separate work.
 The known Docker image/package-manager mismatch remains; Docker wrappers no
 longer delete the lockfile. Use the tested native Ruby path for this baseline.
 
-Run from the repository root:
+The setup action reads `.ruby-version` and the lockfile's `BUNDLED WITH` section;
+the earlier workflow's explicit Ruby 3.1 setting no longer applies. The Gemfile
+has no Ruby directive and the lockfile has no `RUBY VERSION` section, so
+`.ruby-version` remains the runtime source of truth.
+
+CI explicitly selects RubyGems 3.3.5 to match the tested local installation.
+Ruby 3.0.2's original RubyGems 3.2.22 resolver loads the default `uri` 0.10.1
+while activating the `bundle` executable. When Bundler loads Jekyll in-process,
+that conflicts with the locked `uri` 1.1.1. RubyGems 3.3.5 removes that early
+resolver load. Upgrading Bundler alone does not fix this activation path.
+The locked URI comes transitively from `jekyll-scholar` through `citeproc-ruby`
+(`citeproc` or `csl`) and through `csl-styles` / `csl`, then `open-uri`.
+No direct URI dependency, dependency downgrade, or lockfile re-resolution is needed.
+
+For a fresh native Ruby 3.0.2 installation, install the matching tools (use your
+Ruby installation's supported package-management method; distro-managed RubyGems
+may prohibit `gem update --system`):
+
+```sh
+gem update --system 3.3.5 --no-document
+gem install bundler --version 2.3.5 --no-document
+```
+
+Confirm `ruby --version`, `gem --version` and `bundle --version` report the
+baseline above, then run from the repository root:
 
 ```sh
 BUNDLE_FROZEN=true bundle install
