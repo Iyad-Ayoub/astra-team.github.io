@@ -1,5 +1,11 @@
 <!-- pages/info.md -->
 
+## About ASTRA
+
+{% include content/about-astra.md %}
+
+## Contact
+
 For general requests, please contact our team assistant: [Martial Le-Henaff](mailto:martial.le-henaff@inria.fr)
 
 For scientific inquiries, please contact Inria team leader: [Fawzi Nashashibi](mailto:fawzi.nashashibi@inria.fr)

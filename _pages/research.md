@@ -8,4 +8,4 @@ subtitle: <strong>Automated and Safe TRAnsportation systems</strong>
 
 ---
 
-The research in Astra is conducted along four research axes:
+{% include research_links.html %}

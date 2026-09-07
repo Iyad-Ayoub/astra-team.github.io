@@ -7,6 +7,7 @@ layout: default
       <h1>{% if site.title == "blank" %}{{ site.first_name }} {{ site.middle_name }} {{ site.last_name }}{% else %}{{ site.title }}{% endif %}</h1>
       <div>
         <p class="astra-hero-subtitle">{{ page.subtitle }}</p>
+        <p class="astra-meta">ASTRA is a joint <a href="https://www.inria.fr/">Inria</a>–<a href="https://www.valeo.com/">Valeo</a> research team working on intelligent and autonomous mobility.</p>
         <div class="astra-actions">
           <a class="astra-button" href="{{ '/research/' | relative_url }}">Explore Research <span aria-hidden="true">&rarr;</span></a>
           <a class="astra-text-link" href="{{ '/team/' | relative_url }}">Meet the Team <span aria-hidden="true">&rarr;</span></a>
@@ -23,7 +24,8 @@ layout: default
   </header>
   <section class="astra-section astra-intro" aria-labelledby="astra-intro-title">
     <h2 id="astra-intro-title">About ASTRA</h2>
-    <div class="astra-prose">{{ page.description | markdownify }}{{ content }}</div>
+    {% capture about_astra %}{% include content/about-astra.md %}{% endcapture %}
+    <div class="astra-prose">{{ about_astra | markdownify }}{{ content }}</div>
   </section>
   {% if page.researches %}
   <section class="astra-section" aria-labelledby="astra-research-title">
@@ -32,16 +34,21 @@ layout: default
       <a class="astra-text-link" href="{{ '/research/' | relative_url }}">Research overview <span aria-hidden="true">&rarr;</span></a>
     </div>
     <div class="astra-research-grid">
-      {% for axis in site.data.axes %}
+      {% assign core_axes = site.research_axes | where: 'axis_group', 'core' | sort: 'order' %}
+      {% for axis in core_axes %}
       <article class="astra-research-card">
-        <a href="{{ '/research/' | relative_url }}#{{ axis.slurm }}">
-          {% assign image_path = axis.img | prepend: '/assets/img/' %}
+        <a href="{{ axis.url | relative_url }}">
+          {% comment %}Reuse each corresponding legacy image without changing the content schema.{% endcomment %}
+          {% assign legacy_axis = site.data.axes[forloop.index0] %}
+          {% assign image_path = legacy_axis.img | prepend: '/assets/img/' %}
           <div class="astra-card-image"><img src="{{ image_path | relative_url }}" alt="" loading="lazy" /></div>
-          <div class="astra-card-heading"><h3>{{ axis.name }}</h3><span aria-hidden="true">&rarr;</span></div>
+          <div class="astra-card-heading"><h3>{{ axis.title }}</h3><span aria-hidden="true">&rarr;</span></div>
         </a>
       </article>
       {% endfor %}
     </div>
+    {% assign cross_cutting = site.research_axes | where: 'axis_group', 'cross_cutting' | first %}
+    <p class="mt-4"><a class="astra-text-link" href="{{ cross_cutting.url | relative_url }}">{{ cross_cutting.title }}</a></p>
   </section>
   {% endif %}
   {% if page.news %}{% include news.html %}{% endif %}
