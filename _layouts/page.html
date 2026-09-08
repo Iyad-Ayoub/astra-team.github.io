@@ -2,7 +2,7 @@
 layout: default
 ---
 <!-- page.html -->
-        <div class="post research">
+        <div class="post research{% if page.content_type == 'projects_index' or page.content_type == 'project' or page.content_type == 'platforms_index' or page.content_type == 'outputs_index' %} astra-catalog{% endif %}">
 
           <header class="post-header">
             <h1 class="post-title">{{ page.title }}</h1>

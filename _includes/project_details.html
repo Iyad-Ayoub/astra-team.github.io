@@ -1,0 +1,11 @@
+<p class="astra-meta">{{ page.type | escape }} · {{ page.status | escape }}</p>
+<p>{{ page.summary | escape }}</p>
+<dl class="astra-project-metadata">
+{% if page.start_date %}<dt>Start</dt><dd>{% include project_date.html value=page.start_date %}</dd>{% endif %}
+{% if page.end_date %}<dt>End</dt><dd>{% include project_date.html value=page.end_date %}</dd>{% endif %}
+{% if page.kickoff_date %}<dt>Kick-off</dt><dd>{% include project_date.html value=page.kickoff_date %}</dd>{% endif %}
+{% if page.coordinator %}<dt>Coordinator</dt><dd>{{ page.coordinator | escape }}</dd>{% endif %}
+{% if page.astra_role %}<dt>ASTRA role</dt><dd>{{ page.astra_role | escape }}</dd>{% endif %}
+{% if page.partners %}<dt>Partners</dt><dd><ul>{% for partner in page.partners %}<li>{{ partner | escape }}</li>{% endfor %}</ul></dd>{% endif %}
+</dl>
+<p><a href="{{ '/projects/' | relative_url }}">All projects</a></p>

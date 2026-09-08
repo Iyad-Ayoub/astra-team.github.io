@@ -1,2 +1,6 @@
 # Approved platform/demonstrator records only. See docs/content-model.md for fields.
-[]
+- id: zoe
+  title: Zoé Autonomous Research Vehicle
+  type: Experimental autonomous-driving research vehicle
+  status: Current
+  summary: ASTRA operates a Renault Zoé research vehicle used as an experimental platform for autonomous-driving research and validation.
