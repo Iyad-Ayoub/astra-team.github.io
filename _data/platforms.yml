@@ -4,3 +4,34 @@
   type: Experimental autonomous-driving research vehicle
   status: Current
   summary: ASTRA operates a Renault Zoé research vehicle used as an experimental platform for autonomous-driving research and validation.
+  group: inria-astra
+
+- id: citroen-c1
+  title: Citroën C1
+  summary: An Inria experimental vehicle used in ASTRA-related autonomous-driving and mobility research activities.
+  group: inria-astra
+
+- id: cybus
+  title: Cybus shuttles
+  summary: Autonomous shuttle platforms available within the Inria experimental environment and used in research activities related to autonomous mobility.
+  group: inria-astra
+
+- id: cybercars
+  title: Cybercars
+  summary: Experimental autonomous robotic vehicles used for research and validation in intelligent transportation and autonomous mobility.
+  group: inria-astra
+
+- id: cruise4u
+  title: Cruise4U
+  summary: A Valeo automated-driving demonstrator used in industrial research and validation contexts relevant to ASTRA’s collaboration with Valeo.
+  group: valeo
+
+- id: drive4u
+  title: Drive4U
+  summary: A Valeo automated-driving demonstrator for urban autonomous-driving research and validation, presented as a partner platform rather than an ASTRA-owned vehicle.
+  group: valeo
+
+- id: navya
+  title: NAVYA shuttle
+  summary: A Valeo-associated autonomous shuttle platform available in the broader experimental ecosystem supporting autonomous-mobility research.
+  group: valeo

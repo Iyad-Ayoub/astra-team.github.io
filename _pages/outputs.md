@@ -3,16 +3,25 @@ layout: page
 title: Research Outputs & Resources
 permalink: /outputs/
 content_type: outputs_index
+groups:
+  - group: featured
+    id: featured-software
+    title: Featured Software & Models
+  - group: additional
+    id: additional-software
+    title: Open-Source Research Software
+  - group: datasets
+    id: datasets
+    title: Datasets
+  - group: frameworks
+    id: frameworks
+    title: Frameworks & Experimental Tools
 ---
 
-{% assign featured = site.data.outputs | where: 'group', 'featured' %}
-{% assign additional = site.data.outputs | where: 'group', 'additional' %}
-<section aria-labelledby="featured-software">
-<h2 id="featured-software" class="h3">Featured research software</h2>
-{% include structured_records.html records=featured %}
+{% for group in page.groups %}
+{% assign records = site.data.outputs | where: 'group', group.group %}
+<section aria-labelledby="{{ group.id }}">
+<h2 id="{{ group.id }}" class="h3">{{ group.title | escape }}</h2>
+{% include structured_records.html records=records %}
 </section>
-<section aria-labelledby="additional-software">
-<h2 id="additional-software" class="h3">Additional research software</h2>
-<p class="astra-meta">This grouping reflects mobility relevance, not scientific quality.</p>
-{% include structured_records.html records=additional %}
-</section>
+{% endfor %}

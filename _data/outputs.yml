@@ -6,6 +6,13 @@
   repository: https://github.com/astra-vision/PaSCo
   group: featured
 
+- id: monoscene
+  title: MonoScene — Monocular 3D Semantic Scene Completion
+  kind: Software / research code
+  summary: Open-source research code for monocular 3D semantic scene completion, jointly estimating scene geometry and semantics from a single image.
+  url: https://cv-rits.github.io/MonoScene/
+  group: featured
+
 - id: famix
   title: FAMix — Language-Guided Domain Generalized Segmentation
   kind: Software / research code
@@ -34,6 +41,12 @@
   repository: https://github.com/astra-vision/PODA
   group: featured
 
+- id: scenerf
+  title: SceneRF
+  kind: Software / research code
+  summary: Open-source research code for 3D scene reconstruction using neural radiance field representations.
+  group: additional
+
 - id: materialpalette
   title: MaterialPalette — Extraction of Materials from a Single Image
   kind: Software / research code
@@ -48,9 +61,58 @@
   repository: https://github.com/astra-vision/BRDFTransform
   group: additional
 
+- id: dream
+  title: DREAM
+  kind: Software / research code
+  summary: Open-source research code associated with multimodal neural visual decoding.
+  url: https://weihaox.github.io/DREAM
+  group: additional
+
 - id: umbrae
   title: UMBRAE — Unified Multimodal Brain Decoding
   kind: Software / research code
   summary: Open-source research code for unified multimodal brain decoding.
   repository: https://github.com/weihaox/UMBRAE
   group: additional
+
+- id: texsd
+  title: TexSD
+  kind: Dataset
+  summary: Dataset for material estimation containing approximately 10,000 high-resolution textures.
+  group: datasets
+
+- id: pbrrand
+  title: PBRRand
+  kind: Dataset
+  summary: Procedurally generated 3D scenes with varying materials and lighting conditions for research on visual scene understanding and material properties.
+  group: datasets
+
+- id: brainhub
+  title: BrainHub
+  kind: Dataset / benchmark
+  summary: Multimodal dataset and benchmark for neural visual decoding and brain-signal-based scene understanding.
+  group: datasets
+
+- id: weather-kitti
+  title: Weather KITTI
+  kind: Dataset
+  summary: Weather-augmented KITTI data for studying perception robustness under adverse visual conditions.
+  group: datasets
+
+- id: weather-cityscapes
+  title: Weather Cityscapes
+  kind: Dataset
+  summary: Weather-augmented Cityscapes data for studying perception robustness under adverse visual conditions.
+  group: datasets
+
+- id: weather-nuscenes
+  title: Weather nuScenes
+  kind: Dataset
+  summary: Weather-augmented nuScenes data for studying perception robustness under adverse visual conditions.
+  group: datasets
+
+- id: weather-simulator
+  title: Weather Simulator
+  kind: Framework / experimental tool
+  summary: Open-source software for physics-based weather simulation used to study visual robustness under adverse conditions.
+  group: frameworks
