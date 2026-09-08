@@ -2,7 +2,9 @@
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.error
@@ -13,6 +15,11 @@ STRUCTURE_IDS = ["1124151", "246190", "454685"]
 URL = ('https://api.archives-ouvertes.fr/search/?q=structId_i:('
        + '%20OR%20'.join(STRUCTURE_IDS) + ')&wt=bibtex&start=0&rows=5000')
 MAX_BYTES = 20 * 1024 * 1024
+REMOTE_FAILURE = 75  # Reserved for the shell wrapper's validated fallback policy.
+
+
+class RemoteFetchError(Exception):
+    """No usable response was obtained from the remote service."""
 
 
 def download():
@@ -20,15 +27,20 @@ def download():
         try:
             with urllib.request.urlopen(URL, timeout=30) as response:
                 if response.status != 200:
-                    raise ValueError('HAL returned an unexpected status')
+                    raise urllib.error.URLError('HAL returned an unexpected status')
                 body = response.read(MAX_BYTES + 1)
-            if len(body) > MAX_BYTES:
-                raise ValueError('HAL response exceeds the size limit')
-            return body.decode('utf-8-sig')
-        except (urllib.error.URLError, TimeoutError):
+                expected_length = response.getheader('Content-Length')
+        except (urllib.error.URLError, TimeoutError, ConnectionError, socket.gaierror) as error:
             if attempt == 2:
-                raise
+                raise RemoteFetchError('HAL remote fetch unavailable') from error
             time.sleep(attempt + 1)
+            continue
+        # Received but invalid/truncated content is a hard failure, not fallback.
+        if len(body) > MAX_BYTES:
+            raise ValueError('HAL response exceeds the size limit')
+        if expected_length is not None and len(body) != int(expected_length):
+            raise ValueError('HAL response is incomplete')
+        return body.decode('utf-8-sig')
 
 
 def clean_bibtex(text):
@@ -74,9 +86,20 @@ def refresh(destination=ROOT / '_bibliography/rits-astra.bib'):
             candidate.unlink()
 
 
-if __name__ == '__main__':
+def main(destination=ROOT / '_bibliography/rits-astra.bib'):
     try:
-        refresh()
+        refresh(destination)
+    except RemoteFetchError:
+        # Only download() classifies remote errors; local failures remain fatal.
+        print('HAL remote fetch unavailable; bibliography not replaced.', file=sys.stderr)
+        return REMOTE_FAILURE
     except Exception:
         # Do not print response bodies, credentials, or partially parsed data.
-        raise SystemExit('HAL update failed; existing bibliography preserved.')
+        print('ERROR: HAL update failed locally or produced invalid data; existing bibliography preserved.',
+              file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
