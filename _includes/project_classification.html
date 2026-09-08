@@ -1,0 +1,2 @@
+<span class="astra-record-status">{{ include.project.scope | capitalize | escape }}</span>
+<span class="astra-record-status">{% case include.project.type %}{% when 'research-project' %}Research Project{% when 'research-infrastructure' %}Research Infrastructure{% when 'joint-lab' %}Joint Lab{% endcase %}</span>
