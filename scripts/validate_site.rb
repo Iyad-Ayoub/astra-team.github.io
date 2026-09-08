@@ -69,6 +69,9 @@ module SiteValidation
       if record['url'] && !record['url'].match?(%r{\A(?:https?://|/(?!/))})
         raise 'record URL must be HTTP(S) or root-relative'
       end
+      if record['repository'] && !(record['repository'].is_a?(String) && record['repository'].match?(%r{\Ahttps://github[.]com/[^/\s]+/[^/\s]+\z}))
+        raise 'repository must be an HTTPS GitHub repository URL'
+      end
       record['id']
     end
     raise 'duplicate record id' unless ids.uniq.size == ids.size

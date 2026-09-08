@@ -1,0 +1,7 @@
+{%- assign canonical_date = include.value | append: '' -%}
+{%- if canonical_date.size == 7 -%}
+  {%- assign display_date = canonical_date | append: '-01' | date: '%B %Y' -%}
+{%- else -%}
+  {%- assign display_date = canonical_date | date: '%-d %B %Y' -%}
+{%- endif -%}
+<time datetime="{{ canonical_date | escape }}">{{ display_date }}</time>

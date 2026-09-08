@@ -1,13 +1,17 @@
 {% if include.records.size > 0 %}
-<ul>
+<ul class="list-unstyled">
   {% for record in include.records %}
-  <li id="{{ record.id | escape }}">
+  <li id="{{ record.id | escape }}" class="mb-4 p-3 astra-research-card">
+    <h3 class="h5 mb-2">
     {% if record.url %}
       <a href="{% if record.url contains '://' %}{{ record.url | escape }}{% else %}{{ record.url | relative_url | escape }}{% endif %}">{{ record.title | escape }}</a>
     {% else %}
       {{ record.title | escape }}
     {% endif %}
+    </h3>
+    {% if record.type or record.kind or record.status %}<p class="astra-meta">{{ record.type | default: record.kind | escape }}{% if record.status %} · <span class="astra-record-status">{{ record.status | escape }}</span>{% endif %}</p>{% endif %}
     {% if record.summary %}<p>{{ record.summary | escape }}</p>{% endif %}
+    {% if record.repository %}<p class="mb-0"><a class="astra-text-link" href="{{ record.repository | escape }}" aria-label="GitHub repository for {{ record.title | escape }}">GitHub repository ↗</a></p>{% endif %}
   </li>
   {% endfor %}
 </ul>

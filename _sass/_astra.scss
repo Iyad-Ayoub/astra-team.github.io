@@ -150,6 +150,47 @@ footer.sticky-bottom {
   .astra-research-grid { grid-template-columns: 1fr; }
   .astra-news-list li { grid-template-columns: 1fr; gap: $astra-space-1; }
 }
+// Phase 5 catalog only: do not alter legacy research headings or global tokens.
+.astra-catalog {
+  h1, h2, h3 { overflow-wrap: break-word; }
+  h2 {
+    text-align: left;
+    letter-spacing: normal;
+    line-height: 1.4;
+    margin: $astra-space-4 0 $astra-space-2;
+  }
+  article > section:first-child > h2 { margin-top: 0; }
+  .astra-project-list {
+    > li { padding: $astra-space-3 0; }
+    > li:first-child { padding-top: 0; }
+    h2 { margin: 0 0 $astra-space-1; font-size: 1.25rem; font-weight: 400; }
+    p { margin-bottom: $astra-space-1; }
+    p:last-child { margin-bottom: 0; }
+  }
+  .astra-project-metadata {
+    display: grid;
+    grid-template-columns: minmax(6rem, 8rem) minmax(0, 1fr);
+    gap: $astra-space-1 $astra-space-3;
+    margin: $astra-space-3 0;
+    dt, dd { margin: 0; overflow-wrap: break-word; }
+    dt { font-weight: 600; }
+    ul { margin: 0; padding-left: 1.25rem; }
+  }
+  .astra-meta { font-size: $astra-font-small; font-weight: 400; margin-bottom: $astra-space-1; }
+  .astra-record-status {
+    display: inline-block;
+    padding: 0 .4em;
+    border: 1px solid $astra-border;
+    border-radius: $astra-radius;
+  }
+  .astra-research-card {
+    .astra-text-link { display: inline; height: auto; font-size: $astra-font-small; }
+  }
+  @media (max-width: 575.98px) {
+    .astra-project-metadata { grid-template-columns: 6rem minmax(0, 1fr); column-gap: $astra-space-2; }
+    .astra-project-list > li { padding: $astra-space-2 0; }
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   #navbar *, .astra-home * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
