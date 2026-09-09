@@ -77,7 +77,31 @@ module SiteValidation
     raise 'duplicate record id' unless ids.uniq.size == ids.size
   end
 
+  def self.team_records(records)
+    raise 'team roster must be a list' unless records.is_a?(Array)
+    ids = records.map do |record|
+      raise 'team record requires id/name/role' unless record.is_a?(Hash) &&
+        record['id'].is_a?(String) && record['id'].match?(/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/) &&
+        %w[name role].all? { |key| record[key].is_a?(String) && !record[key].strip.empty? }
+      categories = case record['status']
+                   when 'current' then %w[leadership scientists associates engineers phd administration]
+                   when 'alumni' then %w[former-early-career former-staff former-interns]
+                   else raise 'team status must be current or alumni'
+                   end
+      raise 'team category conflicts with status' unless categories.include?(record['category'])
+      if record['profile_url'] && !(record['profile_url'].is_a?(String) && record['profile_url'].match?(%r{\A(?:https?://|/(?!/))}))
+        raise 'invalid team profile URL'
+      end
+      if record['photo'] && !(record['photo'].is_a?(String) && record['photo'].match?(%r{\A/assets/img/team/[^/]+\.(?:png|jpe?g|webp)\z}i))
+        raise 'team photo must reference a team asset path'
+      end
+      record['id']
+    end
+    raise 'duplicate team id' unless ids.uniq.size == ids.size
+  end
+
   def self.content_model(root = ROOT)
+    team_records(YAML.safe_load_file(File.join(root, '_data/team_roster.yml')))
     %w[outputs platforms].each do |type|
       records(YAML.safe_load_file(File.join(root, "_data/#{type}.yml")))
     end

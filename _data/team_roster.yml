@@ -1,0 +1,470 @@
+# Canonical public Team roster. Publication author matching retains legacy team.yml.
+# See docs/phase-6b-team.md for reconciliation and editorial boundaries.
+- id: "fawzi-nashashibi"
+  name: "Fawzi Nashashibi"
+  status: "current"
+  category: "leadership"
+  role: "ASTRA Team Leader"
+  affiliation: "Inria"
+  display_order: 1
+  additional_role: "Senior Researcher / HDR"
+  profile_url: "/team/fawzi-nashashibi.html"
+  photo: "/assets/img/team/fawzi-nashashibi.jpg"
+
+- id: "benazouz-bradai"
+  name: "Benazouz Bradai"
+  status: "current"
+  category: "leadership"
+  role: "Valeo Scientific Leader"
+  affiliation: "Valeo"
+  display_order: 2
+  profile_url: "https://www.linkedin.com/in/dr-benazouz-bradai-9968807"
+  photo: "/assets/img/team/benazouz-bradai.jpg"
+
+- id: "iyad-abuhadrous"
+  name: "Iyad Abuhadrous"
+  status: "current"
+  category: "scientists"
+  role: "Non-permanent Researcher"
+  affiliation: "Inria"
+  display_order: 3
+  profile_url: "https://www.linkedin.com/in/iyad-ayoub/"
+  photo: "/assets/img/team/iyad-abuhadrous.png"
+
+- id: "alexandre-boulch"
+  name: "Alexandre Boulch"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 4
+  profile_url: "https://boulch.eu/"
+  photo: "/assets/img/team/alexandre-boulch.jpg"
+
+- id: "andrei-bursuc"
+  name: "Andrei Bursuc"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 5
+  profile_url: "https://abursuc.github.io/"
+  photo: "/assets/img/team/andrei-bursuc.jpg"
+
+- id: "raoul-de-charette"
+  name: "Raoul de Charette"
+  status: "current"
+  category: "scientists"
+  role: "Research Scientist / HDR"
+  affiliation: "Inria"
+  display_order: 6
+  profile_url: "https://rdecharette.github.io"
+  photo: "/assets/img/team/raoul-de-charette.jpg"
+
+- id: "guy-fayolle"
+  name: "Guy Fayolle"
+  status: "current"
+  category: "scientists"
+  role: "Emeritus Researcher"
+  affiliation: "Inria"
+  display_order: 7
+  photo: "/assets/img/team/guy-fayolle.jpg"
+
+- id: "fernando-garrido"
+  name: "Fernando Garrido"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 8
+  profile_url: "https://www.linkedin.com/in/fernandogarridocarpio/"
+  photo: "/assets/img/team/fernando-garrido-carpio.jpg"
+
+- id: "axel-jeanne"
+  name: "Axel Jeanne"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 9
+  profile_url: "https://www.linkedin.com/in/axeljeanne/"
+  photo: "/assets/img/team/axel-jeanne.jpg"
+
+- id: "jean-marc-lasgouttes"
+  name: "Jean-Marc Lasgouttes"
+  status: "current"
+  category: "scientists"
+  role: "Research Scientist"
+  affiliation: "Inria"
+  display_order: 10
+  profile_url: "https://who.rocq.inria.fr/Jean-Marc.Lasgouttes/"
+  photo: "/assets/img/team/jean-marc-lasgouttes.jpg"
+
+- id: "gerard-le-lann"
+  name: "Gérard Le Lann"
+  status: "current"
+  category: "scientists"
+  role: "Emeritus Researcher"
+  affiliation: "Inria"
+  display_order: 11
+  profile_url: "https://www.linkedin.com/in/gerard-le-lann-85b0837/"
+  photo: "/assets/img/team/gerard-le-lann.jpg"
+
+- id: "renaud-marlet"
+  name: "Renaud Marlet"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 12
+  profile_url: "http://imagine.enpc.fr/~marletr/"
+  photo: "/assets/img/team/renaud-marlet.jpg"
+
+- id: "gilles-puy"
+  name: "Gilles Puy"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 13
+  profile_url: "https://sites.google.com/site/puygilles/"
+  photo: "/assets/img/team/gilles-puy.jpg"
+
+- id: "tiago-rocha-goncalves"
+  name: "Tiago Rocha Goncalves"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 14
+  profile_url: "https://tiagorochag.github.io/"
+  photo: "/assets/img/team/tiago-goncalves-rocha.jpg"
+
+- id: "tuan-hung-vu"
+  name: "Tuan Hung Vu"
+  status: "current"
+  category: "scientists"
+  role: "Industrial Research Member"
+  affiliation: "Valeo"
+  display_order: 15
+  profile_url: "https://tuanhungvu.github.io/"
+  photo: "/assets/img/team/tuan-hung-vu.jpg"
+
+- id: "itheri-yahiaoui"
+  name: "Itheri Yahiaoui"
+  status: "current"
+  category: "associates"
+  role: "Research Associate"
+  affiliation: "University of Reims"
+  display_order: 16
+
+- id: "paul-roger-dauvergne"
+  name: "Paul Roger-Dauvergne"
+  status: "current"
+  category: "engineers"
+  role: "Integration Engineer"
+  affiliation: "Inria"
+  display_order: 17
+  profile_url: "https://www.linkedin.com/in/paul-roger-dauvergne/"
+  photo: "/assets/img/team/paul_rogerdauvergne.jpeg"
+
+- id: "fatima-balde"
+  name: "Fatima Balde"
+  status: "current"
+  category: "phd"
+  role: "PhD Student"
+  affiliation: "Inria"
+  display_order: 18
+  profile_url: "https://www.linkedin.com/in/fatima-balde-146312220/"
+  photo: "/assets/img/team/fatima_balde.jpg"
+
+- id: "mohammad-fahes"
+  name: "Mohammad Fahes"
+  status: "current"
+  category: "phd"
+  role: "PhD Student"
+  affiliation: "Inria"
+  display_order: 19
+  profile_url: "https://mfahes.github.io/"
+  photo: "/assets/img/team/mohammad-fahes.jpg"
+
+- id: "islem-kobbi"
+  name: "Islem Kobbi"
+  status: "current"
+  category: "phd"
+  role: "PhD Student"
+  affiliation: "Inria"
+  display_order: 20
+  profile_url: "https://www.linkedin.com/in/islem-kobbi/"
+  photo: "/assets/img/team/islem-kobbi.jpeg"
+
+- id: "elias-maharmeh"
+  name: "Elias Maharmeh"
+  status: "current"
+  category: "phd"
+  role: "PhD Student"
+  affiliation: "Valeo"
+  display_order: 21
+  additional_role: "CIFRE"
+  profile_url: "https://scholar.google.com/citations?user=RY7aM_0AAAAJ"
+  photo: "/assets/img/team/elias-maharmeh.png"
+
+- id: "tetiana-martyniuk"
+  name: "Tetiana Martyniuk"
+  status: "current"
+  category: "phd"
+  role: "PhD Student"
+  affiliation: "Valeo"
+  display_order: 22
+  additional_role: "CIFRE"
+  profile_url: "https://t-martyniuk.github.io/"
+  photo: "/assets/img/team/tetiana-martyniuk.jpg"
+
+- id: "antionios-tragoudaras"
+  name: "Antionios Tragoudaras"
+  status: "current"
+  category: "phd"
+  role: "PhD Student"
+  affiliation: "Inria"
+  display_order: 23
+
+- id: "william-gaudelier"
+  name: "William Gaudelier"
+  status: "current"
+  category: "phd"
+  role: "PhD Student"
+  affiliation: "Inria"
+  display_order: 24
+
+- id: "abigail-palma"
+  name: "Abigaïl Palma"
+  status: "current"
+  category: "administration"
+  role: "Administrative Assistant"
+  display_order: 25
+
+- id: "karim-essalmi"
+  name: "Karim Essalmi"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 26
+  profile_url: "https://scholar.google.fr/citations?user=62gLmEwAAAAJ"
+  photo: "/assets/img/team/karim-essalmi.jpg"
+
+- id: "noel-nadal"
+  name: "Noël Nadal"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 27
+  profile_url: "https://www.linkedin.com/in/noelnadal/"
+  photo: "/assets/img/team/noel-nadal.jpg"
+
+- id: "yacine-ben-ameur"
+  name: "Yacine Ben Ameur"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD / early-career researcher"
+  display_order: 28
+
+- id: "anh-quan-cao"
+  name: "Anh-Quan Cao"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 29
+  profile_url: "https://anhquancao.github.io/"
+  photo: "/assets/img/team/anh-quan-cao.jpg"
+
+- id: "amina-ghoul"
+  name: "Amina Ghoul"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 30
+  profile_url: "https://scholar.google.com/citations?user=3daSu5UAAAAJ"
+  photo: "/assets/img/team/amina-ghoul.jpg"
+
+- id: "ivan-lopes"
+  name: "Ivan Lopes"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 31
+  profile_url: "https://wonjunior.github.io/"
+  photo: "/assets/img/team/ivan-lopes.jpg"
+
+- id: "jiahao-zhang"
+  name: "Jiahao Zhang"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 32
+  photo: "/assets/img/team/jiahao-zhang.jpg"
+
+- id: "fabio-pizzati"
+  name: "Fabio Pizzati"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 33
+  profile_url: "https://fabvio.github.io/"
+  photo: "/assets/img/team/fabio-pizzati.jpg"
+  current_position: "Postdoc at MBZUAI"
+
+- id: "renaud-poncelet"
+  name: "Renaud Poncelet"
+  status: "alumni"
+  category: "former-early-career"
+  role: "Former PhD student"
+  display_order: 34
+  profile_url: "https://renaudponcelet.zetmus.fr/"
+  photo: "/assets/img/team/renaud-poncelet.jpg"
+
+- id: "anne-verroust-blondet"
+  name: "Anne Verroust-Blondet"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Researcher"
+  display_order: 35
+  profile_url: "https://who.rocq.inria.fr/Anne.Verroust/"
+  photo: "/assets/img/team/anne-verroust-blondet.jpg"
+  current_position: "retired"
+
+- id: "zayed-alsayed"
+  name: "Zayed Alsayed"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Research Engineer"
+  display_order: 36
+  profile_url: "https://scholar.google.fr/citations?user=z65GtlQAAAAJ"
+  photo: "/assets/img/team/zayed-alsayed.jpg"
+
+- id: "hussam-atoui"
+  name: "Hussam Atoui"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Research Engineer"
+  display_order: 37
+  profile_url: "https://scholar.google.com/citations?user=ieyZltcAAAAJ"
+  photo: "/assets/img/team/hussam-atoui.jpg"
+
+- id: "nelson-de-moura"
+  name: "Nelson De Moura"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Postdoctoral Researcher"
+  display_order: 38
+  photo: "/assets/img/team/nelson-demoura.jpeg"
+
+- id: "emmanuel-doucet"
+  name: "Emmanuel Doucet"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former research / engineering / support staff"
+  display_order: 39
+
+- id: "kathia-melbouci"
+  name: "Kathia Melbouci"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former research / engineering / support staff"
+  display_order: 40
+
+- id: "kaouther-messaoud"
+  name: "Kaouther Messaoud"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former research / engineering / support staff"
+  display_order: 41
+
+- id: "clotilde-monnet"
+  name: "Clotilde Monnet"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Project Manager"
+  display_order: 42
+  photo: "/assets/img/team/clotilde-monnet.jpg"
+
+- id: "patrick-perez"
+  name: "Patrick Pérez"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Researcher"
+  display_order: 43
+  profile_url: "https://ptrckprz.github.io/"
+  photo: "/assets/img/team/patrick-perez.jpg"
+  current_position: "CEO of Kyutai"
+
+- id: "paulo-resende"
+  name: "Paulo Resende"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Research Engineer"
+  display_order: 44
+  profile_url: "https://fr.linkedin.com/in/pauloclresende"
+  photo: "/assets/img/team/paulo-resende.jpg"
+
+- id: "geoffroy-cousin"
+  name: "Geoffroy Cousin"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former research / engineering / support staff"
+  display_order: 45
+
+- id: "anne-mathurin"
+  name: "Anne Mathurin"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Team Assistant"
+  display_order: 46
+  profile_url: "https://www.annemathurin.com/"
+  photo: "/assets/img/team/anne-mathurin.jpg"
+
+- id: "souhaiel-ben-salem"
+  name: "Souhaiel Ben Salem"
+  status: "alumni"
+  category: "former-interns"
+  role: "Former Intern"
+  display_order: 47
+  profile_url: "https://www.linkedin.com/in/souhaiel-bensalem-5a71721aa"
+  photo: "/assets/img/team/souhaiel-ben-salem.jpg"
+
+- id: "tan-khiem-huynh"
+  name: "Tan Khiem Huynh"
+  status: "alumni"
+  category: "former-interns"
+  role: "Former Intern"
+  display_order: 48
+  profile_url: "https://www.linkedin.com/in/khiem2105/"
+  photo: "/assets/img/team/tan-khiem-huynh.jpg"
+
+- id: "clement-weinreich"
+  name: "Clément Weinreich"
+  status: "alumni"
+  category: "former-interns"
+  role: "Former Intern"
+  display_order: 49
+  profile_url: "https://clement-w.github.io/"
+  photo: "/assets/img/team/clement_weinreich.jpeg"
+  current_position: "PhD at CNRS, Institut Pasteur, Harvard"
+
+- id: "matteo-marengo"
+  name: "Matteo Marengo"
+  status: "alumni"
+  category: "former-interns"
+  role: "Former Intern"
+  display_order: 50
+  profile_url: "https://www.linkedin.com/in/matteolmarengo/"
+  photo: "/assets/img/team/matteo_marengo.jpeg"
+  current_position: "Research intern at Harvard"
+
+- id: "weihao-xia"
+  name: "Weihao Xia"
+  status: "alumni"
+  category: "former-interns"
+  role: "Former PhD Intern"
+  display_order: 51
+  profile_url: "https://weihaox.github.io/"
+  photo: "/assets/img/team/weihao_xia.png"
