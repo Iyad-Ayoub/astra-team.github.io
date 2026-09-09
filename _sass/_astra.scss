@@ -269,6 +269,13 @@ footer.sticky-bottom {
     .astra-project-list > li { padding: $astra-space-2 0; }
   }
 }
+// Informational research figures only; no crop, upscaling or pipeline filters.
+.astra-axis-illustration {
+  max-width: 38rem;
+  margin: $astra-space-4 0;
+  img { display: block; max-width: 100%; height: auto; }
+  figcaption { margin-top: $astra-space-2; font-size: $astra-font-small; line-height: 1.5; }
+}
 @media (prefers-reduced-motion: reduce) {
   #navbar *, .astra-home * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
