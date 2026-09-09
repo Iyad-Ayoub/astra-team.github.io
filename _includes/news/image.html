@@ -1,0 +1,6 @@
+{% if include.item.image and include.item.image != empty %}
+<figure class="astra-news-image">
+  <img src="{{ include.item.image | relative_url | escape }}" alt="{{ include.item.image_alt | escape }}" loading="lazy">
+  {% if include.item.image_credit %}<figcaption>{{ include.item.image_credit | escape }}</figcaption>{% endif %}
+</figure>
+{% endif %}

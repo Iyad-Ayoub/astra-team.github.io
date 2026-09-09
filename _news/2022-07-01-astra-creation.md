@@ -1,5 +1,17 @@
 ---
-layout: post
+layout: news
+content_id: news-astra-creation-2022
+slug: 2022-07-01-astra-creation
+status: draft
+type: collaboration
+event_date: "2022-07-01"
+date_precision: day
+summary: The joint Inria–Valeo ASTRA team was created in 2022.
+homepage: false
+featured: false
+legacy: true
+source: Previous ASTRA website announcement; retained for compatibility, pending historical review.
+source_year: 2022
 date: 2022-07-01 00:00:00-0400
 title: Creation of the Astra team
 ---

@@ -1,26 +1,8 @@
 <section class="astra-section astra-news" aria-labelledby="astra-news-title">
   <div class="astra-section-heading">
     <h2 id="astra-news-title">Latest news</h2>
-    <a class="astra-text-link" href="{{ '/news/' | relative_url }}">All news &amp; events <span aria-hidden="true">&rarr;</span></a>
+    <a class="astra-text-link" href="{{ '/news/' | relative_url }}">View all news <span aria-hidden="true">→</span></a>
   </div>
-  {% if site.news != blank %}
-    {% assign news = site.news | sort: 'date' | reverse %}
-    {% assign news_limit = site.news_limit | default: site.news.size %}
-    <ul class="astra-news-list">
-      {% for item in news limit: news_limit %}
-      <li>
-        <time class="astra-meta" datetime="{{ item.date | date_to_xmlschema }}">{{ item.date | date: "%b %-d, %Y" }}</time>
-        <div>
-          {% if item.inline %}
-            {{ item.content | remove: '<p>' | remove: '</p>' | emojify }}
-          {% else %}
-            <a class="news-title" href="{{ item.url | relative_url }}">{{ item.title }}</a>
-          {% endif %}
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No news so far...</p>
-  {% endif %}
+  <p class="astra-meta">Dated events precede year-only highlights within each year.</p>
+  <ul class="astra-news-list">{% for item in site.news_homepage %}{% include news/row.html item=item homepage=true %}{% endfor %}</ul>
 </section>

@@ -5,12 +5,12 @@ require 'pathname'
 require 'uri'
 require 'yaml'
 require_relative 'validate_bibliography'
+require_relative '../_plugins/news_model'
 
 module SiteValidation
   ROOT = File.expand_path('..', __dir__)
   REQUIRED_ROUTES = %w[index.html research/index.html team/index.html
                        team/fawzi-nashashibi.html publications/index.html info/index.html
-                       news/2022-07-01-astra-creation/index.html
                        news/2025-01-20-plenary/index.html 404.html].freeze
   PHASE2_ROUTES = %w[research/vision/index.html research/perception/index.html
                     research/mapping/index.html research/decision/index.html
@@ -101,6 +101,9 @@ module SiteValidation
   end
 
   def self.content_model(root = ROOT)
+    AstraNews.validate(Dir[File.join(root, '_news/*.md')].map { |p| front_matter(p) }, root: root,
+      output_ids: YAML.safe_load_file(File.join(root, '_data/outputs.yml')).map { |r| r['id'] },
+      project_ids: Dir[File.join(root, '_projects/*.md')].map { |p| front_matter(p)['content_id'] })
     team_records(YAML.safe_load_file(File.join(root, '_data/team_roster.yml')))
     %w[outputs platforms].each do |type|
       records(YAML.safe_load_file(File.join(root, "_data/#{type}.yml")))
@@ -141,6 +144,7 @@ module SiteValidation
       documents[relative] = Nokogiri::HTML(data) if relative.end_with?('.html')
     end
     (REQUIRED_ROUTES + PHASE2_ROUTES).each { |p| raise "required route missing: #{p}" unless documents.key?(p) }
+    raise 'unpublished creation announcement must not be generated' if documents.key?('news/2022-07-01-astra-creation/index.html')
     phase3_stylesheet(destination, documents.fetch('index.html'), baseurl)
     documents.each do |relative, doc|
       page_uri = 'https://local.invalid' + baseurl + '/' + relative.sub(/index\.html$/, '')
