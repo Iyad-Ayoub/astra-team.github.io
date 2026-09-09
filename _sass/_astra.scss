@@ -150,6 +150,35 @@ footer.sticky-bottom {
   .astra-research-grid { grid-template-columns: 1fr; }
   .astra-news-list li { grid-template-columns: 1fr; gap: $astra-space-1; }
 }
+// Team-only presentation; publication author matching and other pages are untouched.
+.astra-team {
+  .astra-team-section { margin: 0 0 $astra-space-4; }
+  h2 { margin: 0 0 $astra-space-3; text-align: left; letter-spacing: normal; font-size: 1.5rem; line-height: 1.4; }
+  .astra-people { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: $astra-space-3; list-style: none; padding: 0; margin: 0; }
+  .astra-person { min-width: 0; padding: $astra-space-2 0; border-top: 1px solid $astra-border; }
+  .astra-person-with-photo { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: $astra-space-2; align-items: start; }
+  .astra-person img { display: block; width: 72px; height: 72px; object-fit: cover; border-radius: $astra-radius; }
+  .astra-person-text { min-width: 0; overflow-wrap: break-word; }
+  h3 { font-size: 1.0625rem; line-height: 1.4; font-weight: 600; margin: 0 0 .25rem; }
+  h3 a { color: $astra-ink; text-decoration: underline; text-underline-offset: .15em; }
+  p { margin: 0 0 .25rem; font-size: $astra-font-small; line-height: 1.5; }
+  .astra-person-role, .astra-person-position { color: $astra-muted; }
+  .astra-person-affiliation span { display: inline-block; padding: 0 .4em; border: 1px solid $astra-border; border-radius: $astra-radius; }
+  .astra-team-leadership .astra-people { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .astra-team-leadership .astra-person { padding: $astra-space-2; background: $astra-surface; border-radius: $astra-radius; }
+  .astra-team-alumni {
+    h2 { color: $astra-muted; }
+    .astra-people { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 $astra-space-4; }
+    h3 { font-size: $astra-font-body; font-weight: 500; }
+    .astra-person { padding: $astra-space-1 0; }
+  }
+  @media (max-width: 991.98px) {
+    .astra-people { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 575.98px) {
+    .astra-people, .astra-team-leadership .astra-people, .astra-team-alumni .astra-people { grid-template-columns: minmax(0, 1fr); gap: $astra-space-1; }
+  }
+}
 // Phase 5 catalog only: do not alter legacy research headings or global tokens.
 .astra-catalog {
   h1, h2, h3 { overflow-wrap: break-word; }
