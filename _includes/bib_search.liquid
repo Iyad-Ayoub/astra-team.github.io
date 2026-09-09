@@ -1,4 +1,17 @@
 {% if site.bib_search %}
   <script src="{{ '/assets/js/bibsearch.js' | relative_url | bust_file_cache }}" type="module"></script>
-  <input type="text" id="bibsearch" spellcheck="false" autocomplete="off" class="search bibsearch-form-input" placeholder="Type to filter">
+  <div class="publication-controls" hidden>
+    <div class="publication-search">
+      <label for="bibsearch">Search publications</label>
+      <input type="search" id="bibsearch" spellcheck="false" autocomplete="off" placeholder="Search by title, author, venue or keyword">
+    </div>
+    <div>
+      <label for="publication-year">Year</label>
+      <select id="publication-year"><option value="">All years</option>{% for year in publication_years %}<option value="{{ year }}">{{ year }}</option>{% endfor %}</select>
+    </div>
+    <div>
+      <label for="publication-type">Type</label>
+      <select id="publication-type"><option value="">All types</option>{% for type in publication_types %}<option value="{{ type | escape }}">{{ type | escape }}</option>{% endfor %}</select>
+    </div>
+  </div>
 {% endif %}

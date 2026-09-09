@@ -7,15 +7,16 @@ nav: true
 nav_order: 3
 ---
 <!-- _pages/publications.md -->
-<div class="publications">
+<div class="publications astra-publications">
 
-<em>As publications are automatically extracted from <a href="https://inria.hal.science" target="_blank">HAL</a>, the list is not always up-to-date.<br />
-Consider looking at the group or author pages.</em><br />
+<p>ASTRA publications are synchronized from <a href="https://inria.hal.science">HAL</a>. Recent records may appear after HAL indexing and synchronization.</p>
 
 
-<hr>
-Search by authors, keywords, etc.: {% include bib_search.liquid %}
+{% capture publication_archive %}{% astra_bibliography -f rits-astra %}{% endcapture %}
+<p id="publication-count" role="status" aria-live="polite" aria-atomic="true" data-total="{{ publication_count }}">{{ publication_count }} publications</p>
+{% include bib_search.liquid %}
+<p id="publication-empty" hidden>No publications match the current search and filters.</p>
 
-{% bibliography -f rits-astra %}
+{{ publication_archive }}
 
 </div>
