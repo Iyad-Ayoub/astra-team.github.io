@@ -170,6 +170,35 @@ footer.sticky-bottom {
   .astra-research-grid { grid-template-columns: 1fr; }
   .astra-news-list li { grid-template-columns: 1fr; gap: $astra-space-1; }
 }
+// Publication archive only: extend the existing static bibliography presentation.
+.astra-publications {
+  [hidden] { display: none !important; }
+  .publication-controls { display: grid; grid-template-columns: minmax(0, 1fr) 8rem 12rem; gap: $astra-space-2; margin: $astra-space-3 0; }
+  .publication-controls label { display: block; font-size: $astra-font-small; font-weight: 600; margin-bottom: .25rem; }
+  .publication-controls input, .publication-controls select { width: 100%; min-width: 0; border: 1px solid $astra-border; border-radius: $astra-radius; padding: .5rem; background: white; color: $astra-ink; font: inherit; }
+  input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid $astra-accent; outline-offset: 3px; }
+  .publication-year { margin-top: $astra-space-4; }
+  .publication-year h2 { font-size: 1.5rem; text-align: left; letter-spacing: normal; margin: 0 0 .25rem; scroll-margin-top: 6rem; }
+  .publication-year-count { margin-bottom: $astra-space-2; }
+  ol.bibliography > li { border-top: 1px solid $astra-border; padding: $astra-space-2 0; margin: 0; }
+  .publication-record { min-width: 0; overflow-wrap: anywhere; scroll-margin-top: 6rem; }
+  .publication-title { font-size: 1.125rem; line-height: 1.4; letter-spacing: normal; text-align: left; margin: .5rem 0; font-weight: 600; }
+  .publication-meta { font-size: $astra-font-small; color: $astra-muted; margin: 0; }
+  .publication-type { display: inline-block; background: $astra-surface; border: 1px solid $astra-border; border-radius: $astra-radius; padding: 0 .4rem; margin-right: .4rem; }
+  .publication-venue { margin: .35rem 0; font-style: italic; }
+  .publication-actions { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; margin-top: .65rem; }
+  .publication-actions > a, summary { color: $astra-accent; text-decoration: underline; text-underline-offset: .15em; }
+  summary { cursor: pointer; width: fit-content; }
+  .publication-bibtex { min-width: 0; max-width: 100%; }
+  .publication-bibtex[open] { flex-basis: 100%; }
+  .publication-bibtex pre { margin: .75rem 0 0; padding: $astra-space-2; font-size: .875rem; line-height: 1.5; color: $astra-ink; background: $astra-surface; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+  .publication-bibtex code { white-space: inherit; font-family: monospace; }
+  .publication-more-authors { margin-top: .25rem; p { margin: .5rem 0; } }
+}
+@media (max-width: 767.98px) {
+  .astra-publications .publication-controls { grid-template-columns: 1fr; }
+}
+
 // Team-only presentation; publication author matching and other pages are untouched.
 .astra-team {
   .astra-team-section { margin: 0 0 $astra-space-4; }
