@@ -24,8 +24,8 @@
 - id: "iyad-abuhadrous"
   name: "Iyad Abuhadrous"
   status: "current"
-  category: "scientists"
-  role: "Non-permanent Researcher"
+  category: "associates"
+  role: "R&D Engineer"
   affiliation: "Inria"
   display_order: 3
   profile_url: "https://www.linkedin.com/in/iyad-ayoub/"
@@ -34,7 +34,7 @@
 - id: "alexandre-boulch"
   name: "Alexandre Boulch"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 4
@@ -44,7 +44,7 @@
 - id: "andrei-bursuc"
   name: "Andrei Bursuc"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 5
@@ -54,8 +54,8 @@
 - id: "raoul-de-charette"
   name: "Raoul de Charette"
   status: "current"
-  category: "scientists"
-  role: "Research Scientist / HDR"
+  category: "permanent"
+  role: "Researcher"
   affiliation: "Inria"
   display_order: 6
   profile_url: "https://rdecharette.github.io"
@@ -64,8 +64,8 @@
 - id: "guy-fayolle"
   name: "Guy Fayolle"
   status: "current"
-  category: "scientists"
-  role: "Emeritus Researcher"
+  category: "permanent"
+  role: "Researcher Emeritus"
   affiliation: "Inria"
   display_order: 7
   photo: "/assets/img/team/guy-fayolle.jpg"
@@ -73,7 +73,7 @@
 - id: "fernando-garrido"
   name: "Fernando Garrido"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 8
@@ -83,7 +83,7 @@
 - id: "axel-jeanne"
   name: "Axel Jeanne"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 9
@@ -93,8 +93,8 @@
 - id: "jean-marc-lasgouttes"
   name: "Jean-Marc Lasgouttes"
   status: "current"
-  category: "scientists"
-  role: "Research Scientist"
+  category: "permanent"
+  role: "Researcher"
   affiliation: "Inria"
   display_order: 10
   profile_url: "https://who.rocq.inria.fr/Jean-Marc.Lasgouttes/"
@@ -103,8 +103,8 @@
 - id: "gerard-le-lann"
   name: "Gérard Le Lann"
   status: "current"
-  category: "scientists"
-  role: "Emeritus Researcher"
+  category: "permanent"
+  role: "Researcher Emeritus"
   affiliation: "Inria"
   display_order: 11
   profile_url: "https://www.linkedin.com/in/gerard-le-lann-85b0837/"
@@ -113,7 +113,7 @@
 - id: "renaud-marlet"
   name: "Renaud Marlet"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 12
@@ -123,7 +123,7 @@
 - id: "gilles-puy"
   name: "Gilles Puy"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 13
@@ -133,7 +133,7 @@
 - id: "tiago-rocha-goncalves"
   name: "Tiago Rocha Goncalves"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 14
@@ -143,7 +143,7 @@
 - id: "tuan-hung-vu"
   name: "Tuan Hung Vu"
   status: "current"
-  category: "scientists"
+  category: "industrial"
   role: "Industrial Research Member"
   affiliation: "Valeo"
   display_order: 15
@@ -161,7 +161,7 @@
 - id: "paul-roger-dauvergne"
   name: "Paul Roger-Dauvergne"
   status: "current"
-  category: "engineers"
+  category: "associates"
   role: "Integration Engineer"
   affiliation: "Inria"
   display_order: 17
@@ -236,11 +236,18 @@
   affiliation: "Inria"
   display_order: 24
 
-- id: "abigail-palma"
-  name: "Abigaïl Palma"
+- id: "christelle-leclerc"
+  name: "Christelle Leclerc"
   status: "current"
   category: "administration"
-  role: "Administrative Assistant"
+  role: "Team Assistant"
+  display_order: 24
+
+- id: "abigail-palma"
+  name: "Abigaïl Palma"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Administrative Assistant"
   display_order: 25
 
 - id: "karim-essalmi"
@@ -468,3 +475,11 @@
   display_order: 51
   profile_url: "https://weihaox.github.io/"
   photo: "/assets/img/team/weihao_xia.png"
+
+- id: "martial-le-henaff"
+  name: "Martial Le-Henaff"
+  status: "alumni"
+  category: "former-staff"
+  role: "Former Team Assistant"
+  display_order: 52
+  photo: "/assets/img/team/martial-henaff.jpeg"

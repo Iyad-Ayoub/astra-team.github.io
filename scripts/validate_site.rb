@@ -84,7 +84,7 @@ module SiteValidation
         record['id'].is_a?(String) && record['id'].match?(/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/) &&
         %w[name role].all? { |key| record[key].is_a?(String) && !record[key].strip.empty? }
       categories = case record['status']
-                   when 'current' then %w[leadership scientists associates engineers phd administration]
+                   when 'current' then %w[leadership permanent industrial associates phd administration]
                    when 'alumni' then %w[former-early-career former-staff former-interns]
                    else raise 'team status must be current or alumni'
                    end

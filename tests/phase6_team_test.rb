@@ -5,24 +5,23 @@ class Phase6TeamTest < Minitest::Test
   ROOT = File.expand_path('..', __dir__)
   CURRENT = {
     'leadership' => ['Fawzi Nashashibi', 'Benazouz Bradai'],
-    'scientists' => ['Iyad Abuhadrous', 'Alexandre Boulch', 'Andrei Bursuc',
-      'Raoul de Charette', 'Guy Fayolle', 'Fernando Garrido', 'Axel Jeanne',
-      'Jean-Marc Lasgouttes', 'Gérard Le Lann', 'Renaud Marlet', 'Gilles Puy',
+    'permanent' => ['Raoul de Charette', 'Guy Fayolle', 'Jean-Marc Lasgouttes', 'Gérard Le Lann'],
+    'industrial' => ['Alexandre Boulch', 'Andrei Bursuc',
+      'Fernando Garrido', 'Axel Jeanne', 'Renaud Marlet', 'Gilles Puy',
       'Tiago Rocha Goncalves', 'Tuan Hung Vu'],
-    'associates' => ['Itheri Yahiaoui'],
-    'engineers' => ['Paul Roger-Dauvergne'],
+    'associates' => ['Iyad Abuhadrous', 'Itheri Yahiaoui', 'Paul Roger-Dauvergne'],
     'phd' => ['Fatima Balde', 'Mohammad Fahes', 'Islem Kobbi', 'Elias Maharmeh',
       'Tetiana Martyniuk', 'Antionios Tragoudaras', 'William Gaudelier'],
-    'administration' => ['Abigaïl Palma']
+    'administration' => ['Christelle Leclerc']
   }.freeze
   REQUIRED_ALUMNI = ['Karim Essalmi', 'Noël Nadal', 'Yacine Ben Ameur',
     'Anh-Quan Cao', 'Amina Ghoul', 'Ivan Lopes', 'Jiahao Zhang', 'Fabio Pizzati',
     'Renaud Poncelet', 'Anne Verroust-Blondet', 'Zayed Alsayed', 'Hussam Atoui',
     'Nelson De Moura', 'Emmanuel Doucet', 'Kathia Melbouci', 'Kaouther Messaoud',
-    'Clotilde Monnet', 'Patrick Pérez', 'Paulo Resende', 'Geoffroy Cousin'].freeze
+    'Clotilde Monnet', 'Patrick Pérez', 'Paulo Resende', 'Geoffroy Cousin', 'Martial Le-Henaff', 'Abigaïl Palma'].freeze
   EXTRA_ALUMNI = ['Anne Mathurin', 'Souhaiel Ben Salem', 'Tan Khiem Huynh',
     'Clément Weinreich', 'Matteo Marengo', 'Weihao Xia'].freeze
-  PENDING = ['Martial Le-Henaff', 'Yasser Benigmim', 'Soumava Paul', 'Jonathan Seele'].freeze
+  PENDING = ['Yasser Benigmim', 'Soumava Paul', 'Jonathan Seele'].freeze
   ALIASES = {
     'Fernando Garrido' => 'Fernando Garrido Carpio',
     'Tiago Rocha Goncalves' => 'Tiago Goncalves Rocha',
@@ -43,16 +42,34 @@ class Phase6TeamTest < Minitest::Test
     current = roster.select { |r| r['status'] == 'current' }
     alumni = roster.select { |r| r['status'] == 'alumni' }
     assert_equal 25, current.size
-    assert_equal 26, alumni.size
+    assert_equal 28, alumni.size
     CURRENT.each do |category, names|
       assert_equal names, current.select { |r| r['category'] == category }.sort_by { |r| r['display_order'] }.map { |r| r['name'] }
     end
     assert_equal (REQUIRED_ALUMNI + EXTRA_ALUMNI).sort, alumni.map { |r| r['name'] }.sort
-    assert_equal 51, roster.map { |r| r['id'] }.uniq.size
-    assert_equal 51, roster.map { |r| r['name'] }.uniq.size
+    assert_equal 53, roster.map { |r| r['id'] }.uniq.size
+    assert_equal 53, roster.map { |r| r['name'] }.uniq.size
     assert_equal 'ASTRA Team Leader', current.find { |r| r['name'] == 'Fawzi Nashashibi' }['role']
     assert_equal 'Valeo Scientific Leader', current.find { |r| r['name'] == 'Benazouz Bradai' }['role']
     assert_equal 1, roster.count { |r| r['role'] == 'ASTRA Team Leader' }
+    {
+      'christelle-leclerc' => ['current', 'Team Assistant'],
+      'abigail-palma' => ['alumni', 'Former Administrative Assistant'],
+      'iyad-abuhadrous' => ['current', 'R&D Engineer'],
+      'itheri-yahiaoui' => ['current', 'Research Associate'],
+      'paul-roger-dauvergne' => ['current', 'Integration Engineer'],
+      'martial-le-henaff' => ['alumni', 'Former Team Assistant'],
+      'raoul-de-charette' => ['current', 'Researcher'],
+      'guy-fayolle' => ['current', 'Researcher Emeritus'],
+      'jean-marc-lasgouttes' => ['current', 'Researcher'],
+      'gerard-le-lann' => ['current', 'Researcher Emeritus']
+    }.each do |id, expected|
+      assert_equal expected, roster.find { |r| r['id'] == id }.values_at('status', 'role')
+    end
+    martial = alumni.find { |r| r['id'] == 'martial-le-henaff' }
+    assert_empty martial.keys & %w[end_date current_position current_organization profile_url]
+    abigail = alumni.find { |r| r['id'] == 'abigail-palma' }
+    assert_empty abigail.keys & %w[end_date current_position current_organization profile_url photo bio]
     %w[karim-essalmi noel-nadal].each do |id|
       member = alumni.find { |r| r['id'] == id }
       refute_nil member
@@ -105,8 +122,9 @@ class Phase6TeamTest < Minitest::Test
     doc = Nokogiri::HTML(File.read(File.join(destination, 'team/index.html')))
     team = doc.at_css('.astra-team')
     refute_nil team
-    assert_equal ['Scientific Leadership', 'Research Scientists', 'Research Associates',
-      'Engineers', 'PhD Students', 'Administrative Support', 'Alumni & Former Members'],
+    assert_equal ['Scientific Leadership', 'Permanent Researchers',
+      'Associate / Industrial Research Members', 'Associated Researchers & Engineers',
+      'PhD Students', 'Administrative Support', 'Alumni & Former Members'],
       team.css('h2').map(&:text)
     CURRENT.each do |category, names|
       assert_equal names, team.css("[aria-labelledby='team-#{category}'] h3").map(&:text)
@@ -114,7 +132,23 @@ class Phase6TeamTest < Minitest::Test
     assert_equal (REQUIRED_ALUMNI + EXTRA_ALUMNI).sort,
       team.css('[aria-labelledby="team-alumni"] h3').map(&:text).sort
     assert_equal 25, team.css('[data-status="current"]').size
-    assert_equal 26, team.css('[data-status="alumni"]').size
+    assert_equal 28, team.css('[data-status="alumni"]').size
+    assert_includes team.at_css('[aria-labelledby="team-administration"] #christelle-leclerc').text, 'Team Assistant'
+    assert_includes team.at_css('.astra-team-alumni #abigail-palma').text, 'Former Administrative Assistant'
+    assert_empty team.css('[data-status="current"]#abigail-palma')
+    {
+      'iyad-abuhadrous' => 'R&D Engineer',
+      'itheri-yahiaoui' => 'Research Associate',
+      'paul-roger-dauvergne' => 'Integration Engineer'
+    }.each do |id, role|
+      assert_equal role, team.at_css("[aria-labelledby='team-associates'] ##{id} .astra-person-role").text
+    end
+    refute_includes team.at_css('#iyad-abuhadrous').text, 'Non-permanent Researcher'
+    refute_includes team.at_css('#iyad-abuhadrous').text, 'Senior Researcher'
+    %w[Engineers Postdocs Visitors].each { |title| refute_includes team.css('h2').map(&:text), title }
+    refute_includes team.css('h2').map(&:text), 'Other Researchers / Research Associates'
+    assert_includes team.at_css('.astra-team-alumni #martial-le-henaff').text, 'Former Team Assistant'
+    assert_empty team.css('[data-status="current"]#martial-le-henaff')
     assert_empty team.css('[aria-labelledby="team-phd"] #karim-essalmi, [aria-labelledby="team-phd"] #noel-nadal')
     assert_includes team.at_css('#fawzi-nashashibi').text, 'ASTRA Team Leader'
     assert_includes team.at_css('#benazouz-bradai').text, 'Valeo Scientific Leader'
