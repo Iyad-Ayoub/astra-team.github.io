@@ -1,0 +1,10 @@
+---
+layout: page
+---
+{% comment %}Insert after the first rendered paragraph without splitting or editing scientific Markdown.{% endcomment %}
+{% if page.image %}
+  {% capture introduction_end %}</p>{% include research_illustration.html %}{% endcapture %}
+  {{ content | replace_first: '</p>', introduction_end }}
+{% else %}
+  {{ content }}
+{% endif %}

@@ -1,0 +1,7 @@
+<figure class="astra-axis-illustration">
+  <img src="{{ page.image | relative_url }}" alt="{{ page.image_alt | escape }}"
+       width="{{ page.image_width }}" height="{{ page.image_height }}" loading="lazy" decoding="async">
+  {% if page.image_caption or page.image_credit %}
+  <figcaption>{% if page.image_caption %}{{ page.image_caption | escape }}{% endif %}{% if page.image_credit %} <span>{{ page.image_credit | escape }}</span>{% endif %}</figcaption>
+  {% endif %}
+</figure>
