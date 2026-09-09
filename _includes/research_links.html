@@ -15,7 +15,7 @@
 {% for section in research_sections %}
 {% if section.axis_group == 'core' %}
 {% assign legacy_axis = site.data.axes[forloop.index0] %}
-<li id="{{ legacy_axis.slurm }}"><a href="{{ section.url | relative_url }}">{{ section.title | escape }}</a></li>
+<li id="{{ legacy_axis.slurm }}"><a href="{{ section.url | relative_url }}">{{ section.title | escape }}</a>{% if section.summary %}<p>{{ section.summary | escape }}</p>{% endif %}</li>
 {% endif %}
 {% endfor %}
 </ul>

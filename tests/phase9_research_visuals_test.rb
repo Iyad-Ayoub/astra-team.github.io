@@ -11,7 +11,8 @@ class Phase9ResearchVisualsTest < Minitest::Test
     'decision' => ['axis_decision.jpg', 659, 536]
   }.freeze
   BODY_HASHES = {
-    'cooperative' => '74eb796faf2b2063f1085b7c6251ff56d07a4d2417f6f06caf3d11e83ed2cc3c',
+    # Pre-Phase-10 explicitly approved replacement; other scientific snapshots unchanged.
+    'cooperative' => 'd7bdf77f2bdbb42574e6c26a96269215113820e29a5d597d95e9cadcaf6e56f6',
     'cross-cutting' => '8aab6721ed171ea4b93c26e43e810d0af9f22cc04f7ff7d7a2b3b4258f59361d',
     'decision' => '5de2f7f6c4b42d0a07cd28a997a4fa29a2b95566e56280e20a88abab1b1bec35',
     'mapping' => 'db0200ae1c729c4caca28f4ae414dbbdd2c128ea781f270f0645983af2eb1f84',
