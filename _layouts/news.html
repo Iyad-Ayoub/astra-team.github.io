@@ -1,0 +1,23 @@
+---
+layout: default
+---
+<article class="post astra-news-detail">
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title | escape }}</h1>
+    <p class="astra-meta">{% include news/date.html item=page %} <span class="astra-news-type">{{ page.type | replace: '-', ' ' | escape }}</span>{% if page.location %} · {{ page.location | escape }}{% endif %}</p>
+  </header>
+  {% include news/image.html item=page %}
+  {% if page.legacy %}<p class="astra-meta">Historical announcement preserved from the previous website. Some historical details await editorial review.</p>{% endif %}
+  {% assign news_body = content | strip %}
+  <div class="astra-news-body">{% if news_body != empty %}{{ content }}{% else %}<p>{{ page.summary | escape }}</p>{% endif %}</div>
+  {% if page.related_output %}
+    {% assign output = site.data.outputs | where: 'id', page.related_output | first %}
+    <p><a href="{{ '/outputs/' | relative_url }}#{{ output.id | escape }}">Related research output: {{ output.title | escape }}</a></p>
+  {% endif %}
+  {% if page.related_project %}
+    {% assign project = site.projects | where: 'content_id', page.related_project | first %}
+    <p><a href="{{ project.url | relative_url }}">Related project: {{ project.title | escape }}</a></p>
+  {% endif %}
+  {% if page.external_url and page.external_url != empty %}<p><a href="{{ page.external_url | escape }}">Official event or project website <span aria-hidden="true">↗</span></a></p>{% endif %}
+  <p><a class="astra-text-link" href="{{ '/news/' | relative_url }}">All news &amp; events <span aria-hidden="true">→</span></a></p>
+</article>

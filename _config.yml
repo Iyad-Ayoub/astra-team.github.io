@@ -138,8 +138,6 @@ bing_site_verification:  # out your bing-site-verification ID (Bing Webmaster)
 
 collections:
   news:
-    defaults:
-      layout: post
     output: true
     permalink: /news/:path/
   projects:
@@ -149,8 +147,7 @@ collections:
     output: true
     permalink: /research/:name/
 
-news_scrollable: true # adds a vertical scroll bar if there are more than 3 news items
-news_limit: 20 # leave blank to include all the news in the `_news` folder
+# News archive/homepage selection is defined in _plugins/news_model.rb.
 
 # -----------------------------------------------------------------------------
 # Jekyll settings
@@ -219,6 +216,11 @@ plugins:
 
 # Sitemap settings
 defaults:
+  - scope:
+      path: ""
+      type: news
+    values:
+      layout: news
   - scope:
       path: ""
       type: research_axes

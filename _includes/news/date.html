@@ -1,0 +1,1 @@
+<span class="astra-news-date">{% if include.item.date_precision == 'year' %}{{ include.item.news_date_label | escape }}{% else %}<time datetime="{{ include.item.event_date | escape }}">{{ include.item.news_date_label | escape }}</time>{% endif %}</span>

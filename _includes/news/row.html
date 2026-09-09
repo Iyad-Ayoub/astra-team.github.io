@@ -1,0 +1,9 @@
+<li class="astra-news-row" data-news-id="{{ include.item.content_id | escape }}">
+  <div class="astra-meta">{% include news/date.html item=include.item %}<span class="astra-news-type">{{ include.item.type | replace: '-', ' ' | escape }}</span></div>
+  <div class="astra-news-copy">
+    {% include news/image.html item=include.item %}
+    <h3><a class="news-title" href="{{ include.item.url | relative_url }}">{{ include.item.title | escape }}</a></h3>
+    <p>{% if include.homepage %}{{ include.item.summary | truncatewords: 26 | escape }}{% else %}{{ include.item.summary | escape }}{% endif %}</p>
+    <a class="astra-text-link" href="{{ include.item.url | relative_url }}" aria-label="Read more: {{ include.item.title | escape }}">Read more <span aria-hidden="true">→</span></a>
+  </div>
+</li>
