@@ -2,15 +2,24 @@
 
 Canonical public roster: _data/team_roster.yml. Current membership and names
 follow the user-approved 2025 roster and explicit Phase 6B corrections.
-There are 25 current members (2 leadership, 13 scientists, 1 associate,
-1 engineer, 7 PhD students, 1 administrative assistant) and 26 alumni.
+There are 25 current members (2 leadership, 4 permanent researchers,
+8 industrial research members, 3 associated researchers/engineers,
+7 PhD students, 1 administrative assistant) and 28 alumni.
+The final correction makes Christelle Leclerc the sole current Team Assistant.
+Abigaïl Palma is a Former Administrative Assistant and Martial Le-Henaff
+is a Former Team Assistant. No departure dates or employers are added.
+Iyad Abuhadrous is displayed as R&D Engineer (user-confirmed Inria position),
+alongside Itheri Yahiaoui and Paul Roger-Dauvergne in the combined
+Associated Researchers & Engineers section.
+No employer, departure date or profile link is added for Martial; his existing
+legacy photo association is preserved in data but not shown in the alumni list.
 
 The 20 requested alumni are included. Six additional people already explicitly
 marked alumni in the repository are retained: Anne Mathurin, Souhaiel Ben Salem,
 Tan Khiem Huynh, Clément Weinreich, Matteo Marengo and Weihao Xia.
 
-Four previously displayed entries are not classified by the approved roster:
-Martial Le-Henaff, Yasser Benigmim, Soumava Paul and Jonathan Seele.
+Three previously displayed entries are not classified by the approved roster:
+Yasser Benigmim, Soumava Paul and Jonathan Seele.
 Their legacy records are preserved, but they are not published as current or
 newly labelled alumni. ASTRA confirmation is needed for any future inclusion.
 

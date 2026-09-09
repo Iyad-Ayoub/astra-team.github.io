@@ -7,12 +7,12 @@ nav_order: 2
 groups:
   - category: leadership
     title: Scientific Leadership
-  - category: scientists
-    title: Research Scientists
+  - category: permanent
+    title: Permanent Researchers
+  - category: industrial
+    title: Associate / Industrial Research Members
   - category: associates
-    title: Research Associates
-  - category: engineers
-    title: Engineers
+    title: Associated Researchers & Engineers
   - category: phd
     title: PhD Students
   - category: administration
