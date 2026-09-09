@@ -6,7 +6,7 @@
 
 ## Contact
 
-For general requests, please contact our team assistant: [Martial Le-Henaff](mailto:martial.le-henaff@inria.fr)
+For general requests, please contact our team assistant: [Christelle Leclerc](mailto:krystel.leclerc@inria.fr).
 
 For scientific inquiries, please contact Inria team leader: [Fawzi Nashashibi](mailto:fawzi.nashashibi@inria.fr)
 

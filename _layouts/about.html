@@ -44,6 +44,7 @@ layout: default
           <div class="astra-card-image"><img src="{{ image_path | relative_url }}" alt="" loading="lazy" /></div>
           <div class="astra-card-heading"><h3>{{ axis.title }}</h3><span aria-hidden="true">&rarr;</span></div>
         </a>
+        {% if axis.summary %}<p>{{ axis.summary | escape }}</p>{% endif %}
       </article>
       {% endfor %}
     </div>

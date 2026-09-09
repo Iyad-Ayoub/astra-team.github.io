@@ -141,7 +141,8 @@ class ValidationTest < Minitest::Test
       '_research_axes/perception.md' => '1065cca669efe9f555d45510db83474a0e5da92c3c59a90d651184a775cd8ec0',
       '_research_axes/mapping.md' => 'e89fc43b3d6defb802146006a9b17cb3c2d4aac8cef05fb7c458e2a7affccc68',
       '_research_axes/decision.md' => 'a608e67e48b2e5aeebb460bf250de14fd397407e75d67b6d9dd71146824d82e3',
-      '_research_axes/cooperative.md' => 'cb5c9a62d1fca3c521b2164f7f6e0ba2fb597f40709e1691c85acbb7e6cfbc03',
+      # Pre-Phase-10 approved Axis 4 wording; all other approval snapshots retained.
+      '_research_axes/cooperative.md' => 'bf5a051838882c7fd968e92197b57ec8f9fed0533c548600afeff9753b22c5fa',
       '_research_axes/cross-cutting.md' => '95aeab0d9c9994eb4991e13793c8b6f36b38bf2666507a533ef8f5344b2639dd',
       '_pages/research/vision.md' => '6cd65f0f3fc16f51256748bf481eaed5a5d8872ed5d03b13e591e81871dfac63'
     }

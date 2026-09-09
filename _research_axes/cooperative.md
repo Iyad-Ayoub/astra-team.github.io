@@ -1,27 +1,32 @@
 ---
-title: Cooperative & Connected Autonomous Systems
+title: Large-Scale Mobility Systems
+summary: Modelling, analysing and coordinating transportation systems at vehicle, fleet and network scales, including traffic dynamics, infrastructure interaction and connected mobility.
 content_id: cooperative
 order: 4
 axis_group: core
 ---
 
-Building on ASTRA’s work on Large-Scale Mobility Systems, this axis studies how vehicles, infrastructure and transport systems can exchange information and coordinate at different scales. Current research includes infrastructure cooperation, V2X communication, crowdsourced mapping, traffic modelling, fleet coordination and large-scale mobility analysis. Microscopic and macroscopic models are used to study congestion, bottlenecks and collective traffic behavior, while connected-vehicle approaches support information sharing and coordinated maneuvers. Cooperative perception, localization and distributed decision-making are considered as developing directions that extend this established system-level perspective.
+ASTRA studies mobility not only at the level of an individual autonomous vehicle, but also as part of a larger transportation system. This research addresses traffic dynamics, mobility modelling, fleet coordination, infrastructure interaction and the collective behaviour of vehicles across urban and road networks.
+
+The team develops microscopic and macroscopic models to analyse congestion, traffic flow, bottlenecks and large-scale mobility patterns, and investigates how information from vehicles, infrastructure and transportation systems can support more efficient mobility. Connected and cooperative approaches, including V2X communication and shared information, are considered where they contribute to this broader system-level perspective.
 
 ## Representative topics
 
-- Infrastructure cooperation and V2X communication
-- Connected and automated mobility
-- Crowdsourced mapping and shared information
-- Coordinated vehicle maneuvers
-- Microscopic and macroscopic traffic modelling
-- Congestion and bottleneck analysis
-- Fleet coordination and large-scale mobility systems
+- microscopic and macroscopic traffic modelling
+- traffic flow, congestion and bottleneck analysis
+- large-scale mobility systems
+- fleet and transport-system coordination
+- infrastructure interaction
+- mobility-data analysis
+- connected vehicles and V2X information exchange
+- crowdsourced and shared mobility information
 
 ## Emerging directions
 
-- Cooperative perception and localization
-- Distributed and multi-agent decision-making
-- Cooperative planning and control
-- Collective intelligence for connected mobility
+- cooperative perception and localization
+- distributed coordination
+- multi-agent mobility systems
+- cooperative planning
+- collective intelligence for transportation
 
 [Back to Research]({{ '/research/' | relative_url }})

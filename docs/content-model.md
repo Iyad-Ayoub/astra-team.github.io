@@ -73,7 +73,7 @@ Research                                  /research/
                                           /research/mapping/
   Prediction, Decision-Making, Planning & Control
                                           /research/decision/
-  Cooperative & Connected Autonomous Systems
+  Large-Scale Mobility Systems
                                           /research/cooperative/
   Cross-Cutting & Emerging Research        /research/cross-cutting/
 Projects                                  /projects/
