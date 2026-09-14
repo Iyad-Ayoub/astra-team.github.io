@@ -9,7 +9,7 @@ name: Deploy astra-team with jekyll
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    branches: ["main", "phase-10d-ruby-baseline-migration"]
   
   schedule:
     # Every Monday at 2am UTC
@@ -39,20 +39,24 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
         with:
           persist-credentials: false
-      - name: Install ImageMagick
+      - name: Set up Node for minification and browser checks
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6, Node 24 action runtime
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Install ImageMagick and native build prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick
+          sudo apt-get install -y imagemagick build-essential patch pkg-config libssl-dev zlib1g-dev liblzma-dev
       - name: Setup Ruby
-        # https://github.com/ruby/setup-ruby/releases/tag/v1.207.0
-        uses: ruby/setup-ruby@4a9ddd6f338a97768b8006bf671dfbad383215f4
+        # https://github.com/ruby/setup-ruby/releases/tag/v1.321.0 (Node 24)
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b
         with:
           # Read Ruby from .ruby-version and Bundler from Gemfile.lock.
-          # Match local RubyGems; Ruby 3.0.2's original resolver preloads default uri.
-          rubygems: '3.3.5'
+          # Keep the Ruby distribution's RubyGems; no independent downgrade.
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
       - name: Validate source and regression tests
@@ -81,10 +85,6 @@ jobs:
             bundle exec ruby scripts/validate_site.rb "$destination" "$baseurl"
           done
           bundle exec jekyll doctor
-      - name: Set up targeted browser checks
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - name: Install pinned browser test dependency
         run: |
           npm install --prefix "$RUNNER_TEMP/astra-browser" --no-save --no-package-lock playwright@1.63.0
@@ -96,11 +96,14 @@ jobs:
           PHASE10_SITE="$RUNNER_TEMP/astra-root" node tests/phase10_browser_test.cjs
           PHASE10_SITE="$RUNNER_TEMP/astra-subpath" PHASE10_BASEURL="/astra-team.github.io" node tests/phase10_browser_test.cjs
       - name: Retrieve all HAL publications
+        if: github.ref == 'refs/heads/main'
         run: bash scripts/publication-update.sh
       - name: Setup Pages
+        if: github.ref == 'refs/heads/main'
         id: pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
+        if: github.ref == 'refs/heads/main'
         # Outputs to the './_site' directory by default
         run: |
           bundle exec jekyll build --baseurl "$PAGES_BASE_PATH"
@@ -113,11 +116,13 @@ jobs:
           # Only the authoritative repository is indexable, even for a root-hosted fork.
           ASTRA_BUILD_CONTEXT: ${{ github.repository == 'astra-team/astra-team.github.io' && 'production' || 'staging' }}
       - name: Upload artifact
+        if: github.ref == 'refs/heads/main'
         # Automatically uploads an artifact from the './_site' directory by default
         uses: actions/upload-pages-artifact@v3
 
   # Deployment job
   deploy:
+    if: github.ref == 'refs/heads/main'
     permissions:
       pages: write
       id-token: write

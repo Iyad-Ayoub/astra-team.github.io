@@ -1,5 +1,8 @@
 # Phase 10C — legal, privacy, accessibility and indexing readiness
 
+Historical validation record. The deferred Ruby/Bundler work below is addressed
+by [Phase 10D](phase-10d-ruby-baseline.md); earlier version numbers are historical.
+
 Date: 14 September 2026. Branch: `phase-10c-legal-privacy-readiness`.
 The uncommitted Phase 10B work was preserved on this branch. No commit, push or
 deployment is authorized. This implementation is not formal legal approval.

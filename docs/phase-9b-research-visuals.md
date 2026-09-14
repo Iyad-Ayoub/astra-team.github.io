@@ -1,5 +1,8 @@
 # Phase 9B — Controlled research illustrations
 
+Historical validation record: use [Phase 10D](phase-10d-ruby-baseline.md) for
+current runtime setup instead of the Ruby 3.0.2 / Bundler 2.3.5 baseline below.
+
 Only three established Phase 9A P1 illustrations are integrated. The original scientific Markdown bodies remain byte-for-byte unchanged; optional front matter selects a reusable `research_visual` layout, which inserts a semantic figure after the introduction's first rendered paragraph. The page title and scientific text remain primary. No responsive-image filters are invoked by the new include.
 
 ## Selected sources and editorial metadata

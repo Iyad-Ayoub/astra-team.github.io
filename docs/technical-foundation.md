@@ -19,38 +19,23 @@ this patch. Existing server password material is excluded, not deleted.
 
 ## P1: preserve and validate the baseline
 
-`.ruby-version` records the tested Ruby 3.0.2 runtime. The existing Gemfile.lock
-is preserved byte-for-byte (Bundler 2.3.5, Jekyll 4.4.1). The complete native
-toolchain baseline is Ruby 3.0.2, RubyGems 3.3.5 and Bundler 2.3.5.
-CI reads that runtime,
-uses frozen dependency installation and separates read-only build permissions
-from Pages deployment permissions. This preserves a legacy baseline; it is not
-a claim that the old Ruby runtime is supported. A runtime upgrade is separate work.
-The known Docker image/package-manager mismatch remains; Docker wrappers no
-longer delete the lockfile. Use the tested native Ruby path for this baseline.
+The Phase 10D baseline is Ruby 3.4.10, its bundled RubyGems 3.6.9 and Bundler
+2.6.9. See [migration and Ubuntu setup](phase-10d-ruby-baseline.md).
+`.ruby-version` is the runtime source of truth, also read by the Gemfile and CI.
+The lockfile records the matching Ruby and Bundler versions. Frozen installs
+retain all 90 existing application-gem versions, including Jekyll 4.4.1.
+Nokogiri and google-protobuf use source variants at their existing versions;
+Nokogiri's source build adds mini_portile2 2.8.9.
 
-The setup action reads `.ruby-version` and the lockfile's `BUNDLED WITH` section;
-the earlier workflow's explicit Ruby 3.1 setting no longer applies. The Gemfile
-has no Ruby directive and the lockfile has no `RUBY VERSION` section, so
-`.ruby-version` remains the runtime source of truth.
+CI retains read-only build permissions, separate deployment permissions and
+Bundler caching. No independent RubyGems downgrade is applied. The earlier
+Ruby 3.0.2 / RubyGems 3.3.5 / Bundler 2.3.5 workaround for default `uri`
+activation is historical, not the current setup procedure. URI remains an
+unchanged transitive dependency; no direct URI dependency was added.
 
-CI explicitly selects RubyGems 3.3.5 to match the tested local installation.
-Ruby 3.0.2's original RubyGems 3.2.22 resolver loads the default `uri` 0.10.1
-while activating the `bundle` executable. When Bundler loads Jekyll in-process,
-that conflicts with the locked `uri` 1.1.1. RubyGems 3.3.5 removes that early
-resolver load. Upgrading Bundler alone does not fix this activation path.
-The locked URI comes transitively from `jekyll-scholar` through `citeproc-ruby`
-(`citeproc` or `csl`) and through `csl-styles` / `csl`, then `open-uri`.
-No direct URI dependency, dependency downgrade, or lockfile re-resolution is needed.
-
-For a fresh native Ruby 3.0.2 installation, install the matching tools (use your
-Ruby installation's supported package-management method; distro-managed RubyGems
-may prohibit `gem update --system`):
-
-```sh
-gem update --system 3.3.5 --no-document
-gem install bundler --version 2.3.5 --no-document
-```
+The legacy Docker image/package-manager mismatch is still unresolved. Docker
+is not a validated Phase 10D development path; use the native setup below and
+the migration guide. Existing Docker wrappers still preserve the lockfile.
 
 Confirm `ruby --version`, `gem --version` and `bundle --version` report the
 baseline above, then run from the repository root:

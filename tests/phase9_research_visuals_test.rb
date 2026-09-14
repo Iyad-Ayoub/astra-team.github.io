@@ -22,8 +22,10 @@ class Phase9ResearchVisualsTest < Minitest::Test
     # Phase 10B changes only URL, GA, footer text and the metadata fallback.
     # Retain a full-config pin: no image-pipeline setting has changed.
     '_config.yml' => '400b0af118e0abfae9752119e36539678f1b9da829463a640e472c1cf4de4e5f',
-    'Gemfile' => '1f3d9b694f9c984c8e567cbfb7eeb58a852e807e9e4dfca72612b8cbf350351b',
-    'Gemfile.lock' => '137c5ef5fad8e70bc4f9494484503f07da3313cd5aa5416bbcd5a683f5e483c6',
+    # Phase 10D: Ruby baseline and same-version native source variants only.
+    # phase10d_runtime_test independently pins all 90 existing gem versions.
+    'Gemfile' => 'e703ea4b078a59be2035256c0f810aa1987ab7808fefd975954870e28eadf7cc',
+    'Gemfile.lock' => '69f2dce6e90cdb8f327cc28a62e3a964097d59d0d7433c931c99c4c2542e62d1',
     '_includes/figure.html' => '48fe9e4477433fdd658f106b433e0b004fed32b5cb8e1df1936a314c3adf02b3'
   }.freeze
 
