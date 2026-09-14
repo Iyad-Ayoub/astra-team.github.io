@@ -116,6 +116,14 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
   img { width: 100%; height: 100%; object-fit: contain; display: block; }
 }
 .astra-card-heading { display: flex; gap: $astra-space-1; padding: $astra-space-3; align-items: baseline; justify-content: space-between; > span { color: $astra-accent; } }
+// The homepage summary is a sibling of its link, not part of a 100%-height link.
+// Keep both in normal flow; grid stretch still aligns all four cards.
+.astra-home .astra-research-card {
+  display: flex;
+  flex-direction: column;
+  > a { height: auto; }
+  > p { margin: 0; padding: 0 $astra-space-3 $astra-space-3; }
+}
 .astra-meta { font-size: $astra-font-small; color: $astra-muted; font-variant-numeric: tabular-nums; }
 .astra-news-list {
   margin: 0;
@@ -278,4 +286,18 @@ footer.sticky-bottom {
 }
 @media (prefers-reduced-motion: reduce) {
   #navbar *, .astra-home * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+// Scoped legal information; preserve the surrounding Phase 3 design.
+.astra-legal {
+  max-width: 48rem;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+  h2 { text-align: left; letter-spacing: normal; margin-top: 1.75rem; }
+}
+.astra-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .25rem 1rem;
+  margin-top: .5rem;
 }

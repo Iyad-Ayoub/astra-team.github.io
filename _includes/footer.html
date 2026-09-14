@@ -4,6 +4,7 @@
       <div class="container mt-0">
         <p>{{ institution }}</p>
         &copy; Copyright {{ site.time | date: '%Y' }} {{ site.title }}. {{ site.footer_text | markdownify }}
+        {% include footer_legal_links.html %}
         {%- if site.impressum_path -%}
         <a href="{{ site.url }}{{ site.baseurl }}{{ site.impressum_path }}">Impressum</a>.
         {%- endif -%}
@@ -17,6 +18,7 @@
       <div class="container">
         <p>{{ institution }}</p>
         &copy; Copyright {{ site.time | date: '%Y' }} {{ site.title }}. {{ site.footer_text | markdownify }}
+        {% include footer_legal_links.html %}
         {%- if site.impressum_path -%}
         <a href="{{ site.url }}{{ site.baseurl }}{{ site.impressum_path }}">Impressum</a>.
         {%- endif -%}
