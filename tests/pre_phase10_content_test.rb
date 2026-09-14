@@ -33,7 +33,8 @@ class PrePhase10ContentTest < Minitest::Test
     end
     ['index.html', 'research/index.html'].each do |file|
       page = Nokogiri::HTML(File.read(File.join(destination, file)))
-      assert_includes page.text, SUMMARY
+      summary = file == 'index.html' ? 'Modelling and coordinating transportation systems at vehicle, fleet and network scales.' : SUMMARY
+      assert_includes page.text, summary
       labels = page.css("a[href='#{base}/research/cooperative/']").map { |a| a.css('[aria-hidden="true"]').remove; a.text.strip }
       assert_includes labels, TITLE
     end

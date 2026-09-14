@@ -20,7 +20,8 @@
     <link rel="shortcut icon" href="{{ site.icon | prepend: '/assets/img/' | relative_url}}"/>
     {% endif %}
     <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}?v={{ site.time | date: '%Y%m%d%H%M%S' }}">
-    <link rel="canonical" href="{{ page.url | replace:'index.html','' | absolute_url }}">
+    <link rel="canonical" href="{{ page.canonical_path | default: page.url | astra_canonical: site.url | escape }}">
+    {% if site.astra_staging %}<meta name="robots" content="noindex, follow">{% endif %}
     
     <!-- Dark Mode -->
     {% if site.enable_darkmode %}

@@ -60,6 +60,31 @@ jobs:
           bundle exec ruby scripts/validate_site.rb --source-only
           bundle exec ruby tests/validation_test.rb
           python3 -m unittest discover -s tests -p 'test_*.py'
+      # Corpus snapshots run before the optional live HAL refresh. A legitimate
+      # new HAL record must not fail tests pinned to the versioned 259 entries.
+      - name: Build and test versioned root and project-subpath baselines
+        env:
+          JEKYLL_ENV: production
+        run: |
+          bundle exec jekyll build --destination "$RUNNER_TEMP/astra-root" --baseurl ""
+          bash tests/run_ruby.sh "$RUNNER_TEMP/astra-root" ""
+          bundle exec jekyll build --destination "$RUNNER_TEMP/astra-subpath" --baseurl "/astra-team.github.io"
+          bash tests/run_ruby.sh "$RUNNER_TEMP/astra-subpath" "/astra-team.github.io"
+          bundle exec jekyll doctor
+      - name: Set up targeted browser checks
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser test dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/astra-browser" --no-save --no-package-lock playwright@1.63.0
+          node "$RUNNER_TEMP/astra-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Check containment, metadata and analytics in browser
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/astra-browser/node_modules/playwright
+        run: |
+          PHASE10_SITE="$RUNNER_TEMP/astra-root" node tests/phase10_browser_test.cjs
+          PHASE10_SITE="$RUNNER_TEMP/astra-subpath" PHASE10_BASEURL="/astra-team.github.io" node tests/phase10_browser_test.cjs
       - name: Retrieve all HAL publications
         run: bash scripts/publication-update.sh
       - name: Setup Pages
@@ -70,9 +95,13 @@ jobs:
         run: |
           bundle exec jekyll build --baseurl "$PAGES_BASE_PATH"
           bundle exec ruby scripts/validate_site.rb _site "$PAGES_BASE_PATH"
+          PHASE10_SITE="$PWD/_site" bundle exec ruby tests/phase10_release_test.rb
+          PHASE10_SITE="$PWD/_site" PHASE10_BASEURL="$PAGES_BASE_PATH" bundle exec ruby tests/phase10c_readiness_test.rb
         env:
           JEKYLL_ENV: production
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # Only the authoritative repository is indexable, even for a root-hosted fork.
+          ASTRA_BUILD_CONTEXT: ${{ github.repository == 'astra-team/astra-team.github.io' && 'production' || 'staging' }}
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
         uses: actions/upload-pages-artifact@v3
