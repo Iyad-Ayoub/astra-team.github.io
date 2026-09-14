@@ -1,5 +1,9 @@
 # Phase 10B — Release blockers and safe public-site fixes
 
+Historical validation record. For the current runtime and installation commands,
+see [Phase 10D](phase-10d-ruby-baseline.md); the Ruby 3.0.2 references below record
+the pre-migration baseline, not current setup instructions.
+
 Branch: `phase-10b-release-blockers`. Based on audited main commit
 `2f808d3aec2103886047bfe502c6b7e4394619ef`. No commit, push or deployment.
 

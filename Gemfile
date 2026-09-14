@@ -1,4 +1,9 @@
 source 'https://rubygems.org'
+ruby file: '.ruby-version'
+
+# Existing Linux binaries support Ruby < 3.4; compile the same versions instead.
+gem 'nokogiri', '1.17.2', force_ruby_platform: true
+gem 'google-protobuf', '3.25.8', force_ruby_platform: true
 group :jekyll_plugins do
     gem 'wdm', '>= 0.1.0' if Gem.win_platform?
     gem 'jekyll'
