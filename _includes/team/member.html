@@ -1,11 +1,12 @@
 {% assign member = include.member %}
+{% assign profile_url = member.profile_url | astra_profile_url %}
 {% assign photo = site.static_files | where: 'path', member.photo | first %}
 <li class="astra-person{% if member.status == 'current' and photo %} astra-person-with-photo{% endif %}" id="{{ member.id | escape }}" data-status="{{ member.status }}">
 {% if member.status == 'current' and photo %}
 <img src="{{ member.photo | relative_url }}" alt="{{ member.name | escape }}" width="72" height="72" loading="lazy">
 {% endif %}
 <div class="astra-person-text">
-<h3>{% if member.profile_url %}<a href="{% if member.profile_url contains '://' %}{{ member.profile_url | escape }}{% else %}{{ member.profile_url | relative_url | escape }}{% endif %}">{{ member.name | escape }}</a>{% else %}{{ member.name | escape }}{% endif %}</h3>
+<h3>{% if profile_url %}<a href="{% if profile_url contains '://' %}{{ profile_url | escape }}{% else %}{{ profile_url | relative_url | escape }}{% endif %}">{{ member.name | escape }}</a>{% else %}{{ member.name | escape }}{% endif %}</h3>
 <p class="astra-person-role">{{ member.role | escape }}{% if member.additional_role %}<br><span>{{ member.additional_role | escape }}</span>{% endif %}</p>
 {% if member.affiliation %}<p class="astra-person-affiliation"><span>{{ member.affiliation | escape }}</span></p>{% endif %}
 {% if member.current_position %}<p class="astra-person-position">Recorded position: {{ member.current_position | escape }}</p>{% endif %}

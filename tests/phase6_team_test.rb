@@ -166,7 +166,10 @@ class Phase6TeamTest < Minitest::Test
     PENDING.each { |name| refute_includes team.text, name }
     roster.each do |r|
       assert_equal 1, team.css("##{r['id']}").size
-      if r['profile_url']
+      if %w[mohammad-fahes weihao-xia anne-verroust-blondet].include?(r['id'])
+        # Phase 10B: retain records and names, suppress only confirmed 404 actions.
+        assert_empty team.css("##{r['id']} h3 a")
+      elsif r['profile_url']
         url = r['profile_url'].start_with?('/') ? base + r['profile_url'] : r['profile_url']
         assert team.at_css("##{r['id']} a[href='#{url}']")
       end

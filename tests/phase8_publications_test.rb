@@ -129,8 +129,10 @@ class Phase8PublicationsTest < Minitest::Test
       bibtex[entry.key] = row.at_css('.publication-bibtex code').text
       assert_equal entry.key, BibTeX.parse(bibtex[entry.key]).entries.values.first.key
     end
-    # Snapshots from the unmodified pre-Phase-8 build, covering every record.
-    assert_equal 'a1c3a9af1dc5d179c400d7665876f2782e25596593893650645a513e58d0c91e', Digest::SHA256.hexdigest(JSON.generate(authors.sort.to_h))
+    # Phase 10B removes only the confirmed Mohammad/Weihao 404 actions (six
+    # records). Author matching data/names and every other hyperlink are intact.
+    assert_equal '6b32af4007f8d496ee37ab0ed31f7d595563b9f12821c62436cf1fad64b769a9', Digest::SHA256.hexdigest(JSON.generate(authors.sort.to_h))
+    # BibTeX remains the original pre-Phase-8 snapshot for every record.
     assert_equal 'e81a1fa11087bc323713ec494c2067c723ce0c000c162642381b46e7b002ef07', Digest::SHA256.hexdigest(JSON.generate(bibtex.sort.to_h))
     assert doc.at_css('#publication-empty').key?('hidden')
     %w[bibsearch publication-year publication-type].each { |id| refute_nil doc.at_css("label[for='#{id}']") }

@@ -19,7 +19,9 @@ class Phase9ResearchVisualsTest < Minitest::Test
     'perception' => '86bfb69eff6a6d160a987ab7a706a02ca259eb60d8dc747376ea0e1e99dee00b'
   }.freeze
   PIPELINE_HASHES = {
-    '_config.yml' => '70aacf5d212131d5b8e7393d3b0507dd70fa7e2797bd9670f254b5b2e3e75099',
+    # Phase 10B changes only URL, GA, footer text and the metadata fallback.
+    # Retain a full-config pin: no image-pipeline setting has changed.
+    '_config.yml' => '400b0af118e0abfae9752119e36539678f1b9da829463a640e472c1cf4de4e5f',
     'Gemfile' => '1f3d9b694f9c984c8e567cbfb7eeb58a852e807e9e4dfca72612b8cbf350351b',
     'Gemfile.lock' => '137c5ef5fad8e70bc4f9494484503f07da3313cd5aa5416bbcd5a683f5e483c6',
     '_includes/figure.html' => '48fe9e4477433fdd658f106b433e0b004fed32b5cb8e1df1936a314c3adf02b3'

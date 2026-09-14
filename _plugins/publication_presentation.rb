@@ -34,6 +34,7 @@ module AstraPublications
 
   def self.doi_url(value)
     doi = value.to_s.strip.sub(%r{\Ahttps?://(?:dx\.)?doi\.org/}i, '').sub(/\Adoi:\s*/i, '')
+    doi = doi.gsub('\\_', '_') # BibTeX escaping is not part of the DOI identifier.
     return unless doi.match?(%r{\A10\.\d{4,9}/\S+\z})
     # Encode path delimiters such as # and ? as DOI content, not URL controls.
     'https://doi.org/' + doi.split('/').map { |part| URI.encode_www_form_component(part).gsub('+', '%20') }.join('/')
