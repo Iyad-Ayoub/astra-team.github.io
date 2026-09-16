@@ -57,10 +57,20 @@ Use the official local preview command from any directory:
 scripts/preview-local.sh
 ```
 
-It resolves the repository root, removes `_site`, `.jekyll-cache` and
-`.sass-cache`, performs a clean `bundle exec jekyll build`, then serves the
-generated `_site` at `http://127.0.0.1:4000/`. It does not use `jekyll serve`
+It resolves the repository root, performs a normal `bundle exec jekyll build`,
+then serves the generated `_site` at `http://127.0.0.1:4000/`. This is the
+normal development workflow: it rebuilds changed Markdown, Liquid and SCSS
+without discarding generated output or caches. It does not use `jekyll serve`
 and does not alter production canonical-URL behavior.
+
+Use a full rebuild only when stale generated output is suspected:
+
+```sh
+scripts/preview-local.sh --clean
+```
+
+`--clean` removes `_site`, `.jekyll-cache` and `.sass-cache` before building.
+Use `scripts/preview-local.sh --help` for the concise command summary.
 
 GitHub Actions runs validation and root/subpath baseline builds for every push
 to every branch. The HAL refresh, Pages setup, Pages artifact build and upload,
