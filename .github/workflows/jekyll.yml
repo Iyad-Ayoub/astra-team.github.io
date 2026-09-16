@@ -7,9 +7,9 @@
 name: Deploy astra-team with jekyll
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs validation and baseline builds on every pushed branch.
   push:
-    branches: ["main", "phase-10d-ruby-baseline-migration"]
+    branches: ["**"]
   
   schedule:
     # Every Monday at 2am UTC
