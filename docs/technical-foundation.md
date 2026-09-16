@@ -49,6 +49,24 @@ JEKYLL_ENV=production BUNDLE_FROZEN=true bundle exec jekyll build
 bundle exec ruby scripts/validate_site.rb _site
 ```
 
+## Local preview and CI
+
+Use the official local preview command from any directory:
+
+```sh
+scripts/preview-local.sh
+```
+
+It resolves the repository root, removes `_site`, `.jekyll-cache` and
+`.sass-cache`, performs a clean `bundle exec jekyll build`, then serves the
+generated `_site` at `http://127.0.0.1:4000/`. It does not use `jekyll serve`
+and does not alter production canonical-URL behavior.
+
+GitHub Actions runs validation and root/subpath baseline builds for every push
+to every branch. The HAL refresh, Pages setup, Pages artifact build and upload,
+and GitHub Pages deployment remain guarded for `main` only. Manual dispatch and
+the scheduled workflow remain available; feature-branch runs cannot deploy.
+
 For a project-path build, use `jekyll build --baseurl /astra-team.github.io`
 and validate with `scripts/validate_site.rb _site /astra-team.github.io`.
 The existing responsive-image plugin can regenerate source-side `_responsive`
