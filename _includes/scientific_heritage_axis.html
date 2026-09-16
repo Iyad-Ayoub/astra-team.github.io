@@ -1,0 +1,22 @@
+{% assign axis = site.data.scientific_heritage.axes[page.content_id] %}
+{% if axis %}
+<section class="astra-axis-enrichment" aria-labelledby="scientific-foundations">
+  <h2 id="scientific-foundations">Scientific Foundations</h2>
+  <p>{{ axis.historical_foundation | escape }}</p>
+</section>
+<section class="astra-axis-enrichment" aria-labelledby="selected-works">
+  <h2 id="selected-works">Selected Works</h2>
+  {% astra_selected_works axis.selected_publications %}
+</section>
+{% if axis.related_outputs.size > 0 %}
+<section class="astra-axis-enrichment" aria-labelledby="related-software-datasets">
+  <h2 id="related-software-datasets">Related Software &amp; Datasets</h2>
+  <ul class="astra-related-records">
+  {% for output_id in axis.related_outputs %}
+    {% assign output = site.data.outputs | where: 'id', output_id | first %}
+    {% if output %}<li><a href="{{ '/outputs/#' | append: output.id | relative_url }}">{{ output.title | escape }}</a><span>{{ output.kind | escape }}</span></li>{% endif %}
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endif %}

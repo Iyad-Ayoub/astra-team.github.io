@@ -284,6 +284,31 @@ footer.sticky-bottom {
   img { display: block; max-width: 100%; height: auto; }
   figcaption { margin-top: $astra-space-2; font-size: $astra-font-small; line-height: 1.5; }
 }
+.astra-axis-enrichment {
+  margin-top: $astra-space-4;
+  padding-top: $astra-space-3;
+  border-top: 1px solid $astra-border;
+  h2 { margin-top: 0; font-size: 1.5rem; text-align: left; letter-spacing: normal; }
+}
+.astra-selected-works, .astra-related-records {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  li { padding: $astra-space-2 0; border-top: 1px solid $astra-border; }
+  li:first-child { border-top: 0; padding-top: 0; }
+  a { font-weight: 600; }
+  span { display: block; color: $astra-muted; font-size: $astra-font-small; }
+}
+.astra-heritage { margin: $astra-space-4 0; }
+#scientific-heritage { letter-spacing: normal; }
+.astra-heritage-timeline { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: $astra-space-3; list-style: none; padding: 0; margin: 0; }
+.astra-heritage-milestone { min-width: 0; padding: $astra-space-2; border: 1px solid $astra-border; border-top-width: 3px; border-radius: $astra-radius; background: $astra-surface; h3 { font-size: 1.0625rem; font-weight: 600; line-height: 1.35; margin: 0 0 .4rem; } p { font-size: $astra-font-small; line-height: 1.5; margin: 0 0 .5rem; } }
+.astra-heritage-year { color: $astra-muted; font-variant-numeric: tabular-nums; font-weight: 600; font-size: .9375rem; }
+.astra-historical-label { font-size: .75rem; color: $astra-muted; }
+.astra-heritage-current { background: white; border-color: $astra-accent; }
+.astra-experimental-heritage { margin-top: $astra-space-5; padding-top: $astra-space-3; border-top: 1px solid $astra-border; }
+@media (max-width: 991.98px) { .astra-heritage-timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 575.98px) { .astra-heritage-timeline { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) {
   #navbar *, .astra-home * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
