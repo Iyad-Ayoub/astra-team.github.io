@@ -84,6 +84,34 @@ module AstraPublications
       data
     end
   end
+
+  # Render a compact, key-only view for research pages. The bibliography remains
+  # the sole source of titles, years and venues; relationship data stores keys.
+  class SelectedWorksTag < Jekyll::Scholar::BibliographyTag
+    def initialize(tag_name, markup, tokens)
+      super(tag_name, '-f rits-astra', tokens)
+      @expression = Liquid::Expression.parse(markup.strip)
+    end
+
+    def render(context)
+      keys = Array(context.evaluate(@expression)).map(&:to_s)
+      return '' if keys.empty?
+
+      set_context_to(context)
+      update_dependency_tree
+      entries = bibliography
+      keys.map do |key|
+        entry = entries[key]
+        raise "Selected work not found in bibliography: #{key}" unless entry
+        display = entry[:title].to_s.gsub(/\A\{+|\}+\z/, '')
+        venue = %i[journal booktitle school institution publisher].map { |field| entry[field].to_s }.find { |value| !value.empty? }
+        metadata = [entry[:year].to_s, venue].reject(&:empty?).map { |value| CGI.escapeHTML(value) }.join(' · ')
+        "<li data-publication-key=\"#{CGI.escapeHTML(key)}\"><a href=\"#{context.registers[:site].baseurl}/publications/##{CGI.escapeHTML(key)}\">#{CGI.escapeHTML(display)}</a>" \
+          "<span>#{metadata}</span></li>"
+      end.then { |items| "<ul class=\"astra-selected-works\">#{items.join}</ul>" }
+    end
+  end
 end
 
 Liquid::Template.register_tag('astra_bibliography', AstraPublications::BibliographyTag)
+Liquid::Template.register_tag('astra_selected_works', AstraPublications::SelectedWorksTag)

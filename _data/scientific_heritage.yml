@@ -1,0 +1,76 @@
+# Editorial data for the Phase 12B heritage presentation. Public text is deliberately
+# limited to dated, authoritative evidence; source notes remain in the phase document.
+timeline:
+  - year: '1993'
+    title: Praxitèle programme
+    classification: HISTORICAL_EARLY_MOBILITY
+    summary: An Inria-led industrial consortium studied a public-transport model based on small, preferably electric urban vehicles managed through telecommunications.
+    source: https://radar.inria.fr/rapportsactivite/RA1996/meval/meval.pdf
+  - year: '1997'
+    title: IMARA project
+    classification: HISTORICAL_IMARA
+    summary: After the Praxitèle programme, Michel Parent started the IMARA project at Inria Rocquencourt to continue research on intelligent transportation systems and automation.
+    source: https://citeseerx.ist.psu.edu/document?doi=86b61b28b3384e9961389ae51d47ed1fa7f83dec&repid=rep1&type=pdf
+  - year: '2001–2005'
+    title: CyberCars project
+    classification: HISTORICAL_IMARA
+    summary: The European CyberCars project brought together actors to develop and test technologies for automated urban vehicles; IMARA’s B2 prototype was conceived within the project as a fully automated urban vehicle.
+    source: https://radar.inria.fr/rapportsactivite/RA2003/imara/imara.pdf
+  - year: '2012'
+    title: Cybus urban demonstration
+    classification: HISTORICAL_IMARA
+    summary: IMARA reported Cybus operating in La Rochelle for three months as a free transport service.
+    source: https://radar.inria.fr/report/2012/imara/uid76.html
+  - year: '2014–2015'
+    title: RITS project-team
+    classification: HISTORICAL_RITS
+    summary: Inria created RITS in February 2014; it became a project-team in July 2015, with research spanning vehicle guidance, communication and transportation systems.
+    source: https://radar.inria.fr/report/2020/rits/uid0.html
+  - year: '2022'
+    title: ASTRA joint team
+    classification: CURRENT_ASTRA
+    summary: Inria and Valeo created ASTRA as a joint project-team for intelligent mobility and transport automation.
+    source: https://www.inria.fr/fr/inria-valeo-mobilite-intelligente-vehicules-autonomes
+
+axes:
+  perception:
+    historical_foundation: Earlier Inria work in intelligent mobility included road-environment perception and sensor-based vehicle research. This historical context informs, but is distinct from, ASTRA’s current multimodal scene-intelligence programme.
+    selected_publications:
+      - cao:hal-04324930
+      - cao:hal-03945327
+      - cao:hal-04986162
+    related_outputs: [pasco, scenerf, poda, weather-simulator]
+  mapping:
+    historical_foundation: Earlier Inria mobility research addressed autonomous navigation, localization and mapping. ASTRA now develops its own work on multi-sensor positioning, map representations and localization integrity.
+    selected_publications:
+      - alsayed:hal-01202038
+      - alsayed:hal-01829091
+    related_outputs: []
+  decision:
+    historical_foundation: Vehicle guidance, trajectory planning and control were established themes in earlier Inria intelligent-transportation research. ASTRA continues with a distinct current programme in prediction, decision-making, planning and control.
+    selected_publications:
+      - essalmi:hal-04758582
+      - garrido:hal-03058689
+      - garrido:hal-01356691
+    related_outputs: []
+  cooperative:
+    historical_foundation: Earlier Inria research examined automated urban transport, vehicle guidance and transportation systems. The Cybus demonstration is historical context; it is not presented as a current ASTRA service or platform inventory.
+    selected_publications:
+      - martin:hal-01094376
+      - soua:hal-01878153
+      - garrido:hal-01356691
+    related_outputs: []
+
+platform_heritage:
+  - id: cybus-la-rochelle-2012
+    title: Cybus urban-service demonstration
+    type: Historical demonstrator
+    period: '2012'
+    summary: IMARA reported Cybus operating in La Rochelle for three months as a free transport service.
+    source: https://radar.inria.fr/report/2012/imara/uid76.html
+  - id: cybercars-service-2011
+    title: Cybercars service context
+    type: Historical platform family
+    period: '2011'
+    summary: IMARA described a Cybercars service in La Rochelle supporting an on-demand urban transportation system using automated electric vehicles called Cybus.
+    source: https://rex-radar.inria.fr/rapportsactivite/RA2011/imara/imara.pdf
