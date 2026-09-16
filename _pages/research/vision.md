@@ -6,12 +6,12 @@ content_type: scientific_vision
 content_id: scientific-vision
 ---
 
-ASTRA investigates intelligent and autonomous mobility from the perception of the environment to decision-making, vehicle control and large-scale transport systems. Its research combines sensing, geometric and semantic representations, prediction, planning, control and cooperative mobility to address the complexity of real-world transportation.
+ASTRA is a joint Inria–Valeo research team in intelligent and autonomous mobility. It studies how vehicles and mobility systems perceive, understand and act in complex, uncertain environments, from the individual vehicle to traffic and transport networks.
 
-A central objective is to develop autonomous systems that remain reliable in uncertain and dynamic environments. This requires robust perception under challenging conditions, accurate localization and mapping, anticipation of surrounding traffic, safe decision-making and vehicle control, and coordination with infrastructure and other road users.
+Research is organized around four complementary axes: Multimodal Perception & Scene Intelligence; Localization, Mapping & Spatial Intelligence; Prediction, Decision-Making, Planning & Control; and Large-Scale Mobility Systems. Together they address sensing and representation, positioning, anticipation and action, and the behaviour and coordination of mobility systems.
 
-ASTRA brings together complementary methodological approaches, including physical and mathematical models, optimization, learning-based methods and data-driven representations. Rather than treating these approaches independently, the team studies how they can be combined according to the structure and constraints of transportation problems.
+ASTRA combines physical and mathematical modelling, optimization, learning-based methods and data-driven methods. These methods are selected and combined according to scientific questions and transport constraints, including safety, uncertainty, dynamics and scale.
 
-Research spans both the individual autonomous vehicle and the wider mobility system. This includes connected and cooperative vehicles, traffic dynamics, fleet coordination and infrastructure interaction. Emerging AI methods are explored selectively when they can strengthen these established scientific foundations and contribute to safer, more efficient and more intelligent mobility.
+Large-Scale Mobility Systems research examines traffic dynamics, mobility modelling, fleet and system coordination, infrastructure interaction, congestion, network-level behaviour and mobility-system intelligence. Connected, cooperative and V2X approaches are considered where they help address these system-level questions. Emerging AI methods are explored selectively when they strengthen established foundations in perception, modelling, optimization or control.
 
 [Back to Research]({{ '/research/' | relative_url }})

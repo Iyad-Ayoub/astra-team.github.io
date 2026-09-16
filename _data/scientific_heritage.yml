@@ -24,8 +24,8 @@ timeline:
   - year: '2014–2015'
     title: RITS project-team
     classification: HISTORICAL_RITS
-    summary: Inria created RITS in February 2014; it became a project-team in July 2015, with research spanning vehicle guidance, communication and transportation systems.
-    source: https://radar.inria.fr/report/2020/rits/uid0.html
+    summary: Inria created RITS in February 2014 under the leadership of Fawzi Nashashibi; it became a project-team in July 2015, with research spanning vehicle guidance, communication and transportation systems.
+    source: https://radar.inria.fr/report/2015/rits/uid1.html
   - year: '2022'
     title: ASTRA joint team
     classification: CURRENT_ASTRA

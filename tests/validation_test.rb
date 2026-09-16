@@ -144,7 +144,7 @@ class ValidationTest < Minitest::Test
       # Pre-Phase-10 approved Axis 4 wording; all other approval snapshots retained.
       '_research_axes/cooperative.md' => 'bf5a051838882c7fd968e92197b57ec8f9fed0533c548600afeff9753b22c5fa',
       '_research_axes/cross-cutting.md' => '95aeab0d9c9994eb4991e13793c8b6f36b38bf2666507a533ef8f5344b2639dd',
-      '_pages/research/vision.md' => '6cd65f0f3fc16f51256748bf481eaed5a5d8872ed5d03b13e591e81871dfac63'
+      '_pages/research/vision.md' => '3da1aa448a6808063f8adbf386973eba5d8d4db917f198177742a302ff0a1b30'
     }
     approved.each do |relative, digest|
       body = File.read(File.join(SiteValidation::ROOT, relative)).split(/^---\s*$\n?/, 3).last.strip

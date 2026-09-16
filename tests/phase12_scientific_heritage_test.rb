@@ -20,6 +20,9 @@ class Phase12ScientificHeritageTest < Minitest::Test
       assert_match(%r{\Ahttps://}, item.fetch('source'))
       assert_includes %w[CURRENT_ASTRA HISTORICAL_RITS HISTORICAL_IMARA HISTORICAL_EARLY_MOBILITY CONTINUITY_TO_ASTRA UNCERTAIN], item.fetch('classification')
     end
+    rits = milestones.find { |item| item.fetch('classification') == 'HISTORICAL_RITS' }
+    assert_equal 'Inria created RITS in February 2014 under the leadership of Fawzi Nashashibi; it became a project-team in July 2015, with research spanning vehicle guidance, communication and transportation systems.', rits.fetch('summary')
+    assert_equal 'https://radar.inria.fr/report/2015/rits/uid1.html', rits.fetch('source')
     refute_match(/ASTRA has been doing|ASTRA since 1993/i, File.read(File.join(ROOT, '_includes/content/contact.md')))
   end
 
