@@ -1,0 +1,23 @@
+{% if include.records.size > 0 %}
+<div class="astra-platform-records">
+  {% for record in include.records %}
+  <article id="{{ record.id | escape }}" class="mb-4 p-3 astra-research-card">
+    {% for anchor in record.legacy_anchors %}<span id="{{ anchor | escape }}" aria-hidden="true"></span>{% endfor %}
+    <h3 class="h5 mb-2">{{ record.name | escape }}</h3>
+    <p class="astra-meta mb-2"><span class="astra-record-status">{% if record.temporal_status == 'current' %}Current platform · {% endif %}{{ record.platform_type | escape }}</span></p>
+    <p class="mb-2">{{ record.summary | escape }}</p>
+    {% if record.sources.size > 0 %}
+    <div class="astra-platform-sources mt-2 pt-2 border-top">
+      <span class="astra-meta d-block mb-1"><strong>References</strong></span>
+      {% for source in record.sources %}
+        <p class="astra-meta mb-1">
+          <a class="astra-text-link" href="{{ source.url | escape }}" aria-label="{{ source.title | escape }} ({{ source.publisher | escape }}{% if source.year %}, {{ source.year | escape }}{% endif %})">{{ source.title | escape }} ↗</a>
+          {% if source.publisher or source.year %}<span class="astra-source-details">({{ source.publisher | escape }}{% if source.year %}, {{ source.year | escape }}{% endif %})</span>{% endif %}
+        </p>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% endif %}

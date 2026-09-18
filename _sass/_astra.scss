@@ -269,6 +269,24 @@ footer.sticky-bottom {
     border: 1px solid $astra-border;
     border-radius: $astra-radius;
   }
+  .astra-status-current {
+    font-weight: 600;
+    border-color: #2e7d32;
+    color: #1b5e20;
+    background: #f1f8e9;
+  }
+  .astra-status-historical {
+    color: $astra-muted;
+    background: $astra-surface;
+  }
+  .astra-status-unverified, .astra-status-inventory {
+    color: $astra-ink;
+    background: $astra-surface;
+  }
+  .astra-platform-sources {
+    ul { margin: 0; padding-left: 0; }
+    li:last-child { margin-bottom: 0 !important; }
+  }
   .astra-research-card {
     .astra-text-link { display: inline; height: auto; font-size: $astra-font-small; }
   }
