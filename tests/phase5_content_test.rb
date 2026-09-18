@@ -144,10 +144,11 @@ class Phase5ContentTest < Minitest::Test
     unverified = platforms.at_css('#documented-inria-inventory').parent
     partner = platforms.at_css('#valeo-partner-demonstrators').parent
     historical = platforms.at_css('#experimental-heritage').parent
-    assert_equal 1, current.xpath('./ul/li').size
-    assert_equal 1, unverified.xpath('./ul/li').size
-    assert_equal 3, partner.xpath('./ul/li').size
-    assert_equal 2, historical.xpath('./ul/li').size
+    assert_equal 1, current.css('.astra-platform-records > article').size
+    assert_equal 1, unverified.css('.astra-platform-records > article').size
+    assert_equal 3, partner.css('.astra-platform-records > article').size
+    assert_equal 2, historical.css('.astra-platform-records > article').size
+
     assert_empty current.css('#cruise4u, #drive4u')
     assert_equal 'Featured Software & Models', outputs.at_css('#featured-software').text
     assert_equal 'Open-Source Research Software', outputs.at_css('#additional-software').text
