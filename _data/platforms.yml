@@ -1,37 +1,141 @@
-# Approved platform/demonstrator records only. See docs/content-model.md for fields.
+# Evidence-aware platform registry. `temporal_status` describes what the cited
+# evidence establishes, not an inferred present-day availability.
 - id: zoe
-  title: Zoé Autonomous Research Vehicle
-  type: Experimental autonomous-driving research vehicle
-  status: Current
-  summary: ASTRA operates a Renault Zoé research vehicle used as an experimental platform for autonomous-driving research and validation.
-  group: inria-astra
+  name: Zoé Autonomous Research Vehicle
+  platform_type: Autonomous research vehicle
+  relationship: astra_inria
+  temporal_status: current
+  evidence_status: directly_documented
+  summary: Renault Zoé is ASTRA’s autonomous research vehicle for perception, localization, and autonomous-driving experiments.
+  ownership_context: ASTRA / Inria platform vehicle
+  evidence_as_of: '2025-12'
+  sources:
+    - title: ASTRA 2025 activity report
+      url: https://radar.inria.fr/report/2025/astra/index.html
+      publisher: Inria
+      year: 2025
+      source_type: activity_report
+      supports: ASTRA possession in December 2025, robotisation context, and initial Rocquencourt tests.
+  media: []
 
 - id: citroen-c1
-  title: Citroën C1
-  summary: An Inria experimental vehicle used in ASTRA-related autonomous-driving and mobility research activities.
-  group: inria-astra
+  name: Citroën C1
+  platform_type: Experimental research vehicle
+  relationship: astra_inria
+  temporal_status: status_unverified
+  evidence_status: historically_documented
+  summary: The Citroën C1 has been used within ASTRA/Inria research activities as an experimental road vehicle.
+  ownership_context: Inria road-vehicle inventory reported for ASTRA
+  evidence_as_of: '2023'
+  sources:
+    - title: ASTRA 2023 activity report
+      url: https://rex-radar.inria.fr/report/2023/astra/index.html
+      publisher: Inria
+      year: 2023
+      source_type: activity_report
+      supports: Inria C1 listed in the ASTRA road-vehicle inventory.
+  media: []
 
 - id: cybus
-  title: Cybus shuttles
-  summary: Autonomous shuttle platforms available within the Inria experimental environment and used in research activities related to autonomous mobility.
-  group: inria-astra
+  name: Cybus shuttles
+  platform_type: Historical automated-shuttle demonstrator
+  relationship: inria_historical_heritage
+  temporal_status: historical
+  evidence_status: directly_documented
+  summary: Cybus autonomous shuttles were deployed in experimental urban mobility services, including a three-month demonstration in La Rochelle in 2012.
+  ownership_context: Historical Inria / IMARA demonstrator
+  evidence_as_of: '2012'
+  legacy_anchors: [cybus-la-rochelle-2012]
+  sources:
+    - title: IMARA 2012 activity report
+      url: https://radar.inria.fr/report/2012/imara/uid76.html
+      publisher: Inria
+      year: 2012
+      source_type: activity_report
+      supports: Cybus operation in La Rochelle as a free transport service for three months.
+  media: []
 
 - id: cybercars
-  title: Cybercars
-  summary: Experimental autonomous robotic vehicles used for research and validation in intelligent transportation and autonomous mobility.
-  group: inria-astra
+  name: Cybercars
+  platform_type: Historical automated-vehicle family
+  relationship: inria_historical_heritage
+  temporal_status: historical
+  evidence_status: directly_documented
+  summary: Cybercars contributed to earlier Inria research on automated electric vehicles and on-demand urban transportation systems.
+  ownership_context: Historical Inria / IMARA platform family
+  evidence_as_of: '2011'
+  legacy_anchors: [cybercars-service-2011]
+  sources:
+    - title: IMARA 2011 activity report
+      url: https://rex-radar.inria.fr/rapportsactivite/RA2011/imara/imara.pdf
+      publisher: Inria
+      year: 2011
+      source_type: activity_report
+      supports: Cybercars service context and Cybus automated-electric-vehicle use in La Rochelle.
+  media: []
 
 - id: cruise4u
-  title: Cruise4U
-  summary: A Valeo automated-driving demonstrator used in industrial research and validation contexts relevant to ASTRA’s collaboration with Valeo.
-  group: valeo
+  name: Cruise4U
+  platform_type: Automated-driving demonstrator
+  relationship: valeo_partner
+  temporal_status: historical
+  evidence_status: directly_documented
+  summary: Cruise4U is a Valeo automated-driving demonstrator used in road experiments and demonstrations between 2015 and 2018.
+  ownership_context: Valeo demonstrator reported in ASTRA’s 2023 partner inventory
+  evidence_as_of: '2023'
+  sources:
+    - title: ASTRA 2023 activity report
+      url: https://rex-radar.inria.fr/report/2023/astra/index.html
+      publisher: Inria
+      year: 2023
+      source_type: activity_report
+      supports: Cruise4U listed among Valeo road vehicles in the ASTRA inventory.
+    - title: Valeo SCALA LiDAR
+      url: https://www.valeo.com/en/valeo-scala-lidar/
+      publisher: Valeo
+      year: 2024
+      source_type: corporate_technology_page
+      supports: Cruise4U field demonstrations from 2015 to 2018.
+  media: []
 
 - id: drive4u
-  title: Drive4U
-  summary: A Valeo automated-driving demonstrator for urban autonomous-driving research and validation, presented as a partner platform rather than an ASTRA-owned vehicle.
-  group: valeo
+  name: Drive4U
+  platform_type: Automated-driving demonstrator
+  relationship: valeo_partner
+  temporal_status: historical
+  evidence_status: directly_documented
+  summary: Drive4U is a Valeo automated-driving demonstrator presented in real urban conditions, including a demonstration in central Paris in 2018.
+  ownership_context: Valeo demonstrator reported in ASTRA’s 2023 partner inventory
+  evidence_as_of: '2023'
+  sources:
+    - title: ASTRA 2023 activity report
+      url: https://rex-radar.inria.fr/report/2023/astra/index.html
+      publisher: Inria
+      year: 2023
+      source_type: activity_report
+      supports: Drive4U listed among Valeo road vehicles in the ASTRA inventory.
+    - title: Valeo SCALA LiDAR
+      url: https://www.valeo.com/en/valeo-scala-lidar/
+      publisher: Valeo
+      year: 2024
+      source_type: corporate_technology_page
+      supports: Drive4U automated-driving demonstration in central Paris in 2018.
+  media: []
 
 - id: navya
-  title: NAVYA shuttle
-  summary: A Valeo-associated autonomous shuttle platform available in the broader experimental ecosystem supporting autonomous-mobility research.
-  group: valeo
+  name: NAVYA shuttle
+  platform_type: Autonomous-shuttle demonstrator
+  relationship: valeo_partner
+  temporal_status: reported_inventory
+  evidence_status: historically_documented
+  summary: The NAVYA shuttle is part of the autonomous-mobility platforms associated with ASTRA’s collaboration with Valeo.
+  ownership_context: Valeo partner inventory reported for ASTRA
+  evidence_as_of: '2023'
+  sources:
+    - title: ASTRA 2023 activity report
+      url: https://rex-radar.inria.fr/report/2023/astra/index.html
+      publisher: Inria
+      year: 2023
+      source_type: activity_report
+      supports: Valeo NAVYA shuttle listed in the ASTRA inventory.
+  media: []

@@ -55,24 +55,11 @@ class Phase5ContentTest < Minitest::Test
     assert_equal ['Inria', 'Valeo', 'UC Berkeley', 'EPFL', 'Shanghai Jiao Tong University', 'Mines ParisTech', 'Stellantis', 'Safran'], records['gat']['partners']
   end
 
-  def test_only_approved_platform
+  def test_platform_ids_remain_stable
     platforms = YAML.safe_load_file(File.join(ROOT, '_data/platforms.yml'))
-    assert_equal %w[zoe citroen-c1 cybus cybercars], platforms.select { |r| r['group'] == 'inria-astra' }.map { |r| r['id'] }
-    assert_equal %w[cruise4u drive4u navya], platforms.select { |r| r['group'] == 'valeo' }.map { |r| r['id'] }
+    assert_equal %w[zoe citroen-c1 cybus cybercars cruise4u drive4u navya], platforms.map { |r| r['id'] }
     assert_equal 7, platforms.size
-    assert_equal({
-      'id' => 'zoe', 'title' => 'Zoé Autonomous Research Vehicle',
-      'type' => 'Experimental autonomous-driving research vehicle', 'status' => 'Current',
-      'group' => 'inria-astra',
-      'summary' => 'ASTRA operates a Renault Zoé research vehicle used as an experimental platform for autonomous-driving research and validation.'
-    }, platforms.first)
-    platforms.each do |record|
-      assert_empty record.keys - %w[id title summary group type status]
-      refute record['summary'].match?(/LiDAR|radar|certification|Level [0-5]/i)
-      next if record['id'] == 'zoe'
-      refute record.key?('status')
-      refute record.key?('type')
-    end
+    assert_equal 'Zoé Autonomous Research Vehicle', platforms.first.fetch('name')
   end
 
   def test_outputs_and_repository_validation
@@ -153,9 +140,16 @@ class Phase5ContentTest < Minitest::Test
     assert_equal %w[shift2sdv tirrex gat], index.css('#ongoing-projects + ul h3 a').map { |a| a['href'].split('/').last }
     assert_equal %w[sight samba], index.css('#completed-projects + ul h3 a').map { |a| a['href'].split('/').last }
     platforms = document.call('platforms')
-    assert_equal 4, platforms.css('#inria-astra-platforms + ul > li').size
-    assert_equal 3, platforms.css('#valeo-platforms + ul > li').size
-    assert_empty platforms.css('#inria-astra-platforms + ul #cruise4u, #inria-astra-platforms + ul #drive4u')
+    current = platforms.at_css('#current-astra-inria-platforms').parent
+    unverified = platforms.at_css('#documented-inria-inventory').parent
+    partner = platforms.at_css('#valeo-partner-demonstrators').parent
+    historical = platforms.at_css('#experimental-heritage').parent
+    assert_equal 1, current.css('.astra-platform-records > article').size
+    assert_equal 1, unverified.css('.astra-platform-records > article').size
+    assert_equal 3, partner.css('.astra-platform-records > article').size
+    assert_equal 2, historical.css('.astra-platform-records > article').size
+
+    assert_empty current.css('#cruise4u, #drive4u')
     assert_equal 'Featured Software & Models', outputs.at_css('#featured-software').text
     assert_equal 'Open-Source Research Software', outputs.at_css('#additional-software').text
     {

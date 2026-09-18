@@ -108,9 +108,23 @@ class ValidationTest < Minitest::Test
     SiteValidation.records([{ 'id' => 'fixture', 'title' => 'Test', 'url' => '/outputs/' }])
     assert_raises(RuntimeError) { SiteValidation.records({}) }
     assert_raises(RuntimeError) { SiteValidation.records([{ 'title' => 'No ID' }]) }
+    assert_raises(RuntimeError) { SiteValidation.records([{ 'id' => 'fixture', 'name' => 'No Title' }]) }
     record = { 'id' => 'fixture', 'title' => 'Test' }
     assert_raises(RuntimeError) { SiteValidation.records([record, record]) }
     assert_raises(RuntimeError) { SiteValidation.records([record.merge('url' => 'javascript:void(0)')]) }
+  end
+
+  def test_platform_record_contract
+    SiteValidation.platform_records([])
+    SiteValidation.platform_records([{ 'id' => 'fixture', 'name' => 'Test', 'url' => '/platforms/' }])
+    assert_raises(RuntimeError) { SiteValidation.platform_records({}) }
+    assert_raises(RuntimeError) { SiteValidation.platform_records([{ 'name' => 'No ID' }]) }
+    assert_raises(RuntimeError) { SiteValidation.platform_records([{ 'id' => 'fixture', 'title' => 'No Name' }]) }
+    record = { 'id' => 'fixture', 'name' => 'Test' }
+    assert_raises(RuntimeError) { SiteValidation.platform_records([record, record]) }
+    assert_raises(RuntimeError) { SiteValidation.platform_records([record.merge('url' => 'javascript:void(0)')]) }
+    platforms = YAML.safe_load_file(File.join(SiteValidation::ROOT, '_data/platforms.yml'))
+    SiteValidation.platform_records(platforms)
   end
 
   def test_research_boundaries_and_navigation

@@ -3,33 +3,35 @@ layout: page
 title: Platforms & Demonstrators
 permalink: /platforms/
 content_type: platforms_index
-groups:
-  - group: inria-astra
-    title: Inria / ASTRA Experimental Platforms
-  - group: valeo
-    title: Valeo Partner Demonstrators
 ---
 
-ASTRA’s research combines simulation with experimental validation on real vehicles and robotic platforms. Through Inria and Valeo, the team has access to a range of research vehicles, autonomous shuttles and industrial demonstrators supporting work in perception, localization, mapping, decision-making, planning and cooperative mobility.
+ASTRA develops and evaluates autonomous-driving technologies using experimental vehicles, research platforms, and demonstrators developed within Inria and in collaboration with Valeo.
 
-{% for group in page.groups %}
-{% assign records = site.data.platforms | where: 'group', group.group %}
-<section aria-labelledby="{{ group.group }}-platforms">
-<h2 id="{{ group.group }}-platforms">{{ group.title | escape }}</h2>
-{% include structured_records.html records=records %}
+{% assign current_records = site.data.platforms | where: 'temporal_status', 'current' %}
+{% assign unverified_inria_records = site.data.platforms | where: 'temporal_status', 'status_unverified' %}
+{% assign partner_records = site.data.platforms | where: 'relationship', 'valeo_partner' %}
+{% assign historical_records = site.data.platforms | where: 'relationship', 'inria_historical_heritage' %}
+
+<section aria-labelledby="current-astra-inria-platforms">
+<h2 id="current-astra-inria-platforms">Current ASTRA / Inria Platforms</h2>
+<p>ASTRA’s current experimental platform includes the Renault Zoé autonomous research vehicle used for perception, localization, and autonomous-driving experiments.</p>
+{% include platform_records.html records=current_records %}
 </section>
-{% endfor %}
+
+<section aria-labelledby="documented-inria-inventory">
+<h2 id="documented-inria-inventory">Other Inria Research Platforms</h2>
+<p>ASTRA has also used other Inria experimental vehicles in its autonomous-driving research activities.</p>
+{% include platform_records.html records=unverified_inria_records %}
+</section>
+
+<section aria-labelledby="valeo-partner-demonstrators">
+<h2 id="valeo-partner-demonstrators">Valeo / Partner Demonstrators</h2>
+<p>ASTRA’s collaboration with Valeo also connects the team with several automated-driving demonstrators and autonomous mobility platforms.</p>
+{% include platform_records.html records=partner_records %}
+</section>
 
 <section class="astra-experimental-heritage" aria-labelledby="experimental-heritage">
 <h2 id="experimental-heritage">Experimental Heritage</h2>
-<p>These historical demonstrators provide context for earlier Inria mobility research. They are not presented as ASTRA’s current platform inventory.</p>
-<ul class="list-unstyled">
-{% for platform in site.data.scientific_heritage.platform_heritage %}
-  <li id="{{ platform.id | escape }}" class="astra-research-card">
-    <p class="astra-meta"><span class="astra-record-status">{{ platform.type | escape }}</span> · {{ platform.period | escape }}</p>
-    <h3 class="h5">{{ platform.title | escape }}</h3>
-    <p>{{ platform.summary | escape }}</p>
-  </li>
-{% endfor %}
-</ul>
+<p>ASTRA builds on a long history of Inria research in autonomous vehicles and intelligent transportation systems.</p>
+{% include platform_records.html records=historical_records %}
 </section>

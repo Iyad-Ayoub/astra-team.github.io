@@ -77,6 +77,23 @@ module SiteValidation
     raise 'duplicate record id' unless ids.uniq.size == ids.size
   end
 
+  def self.platform_records(records)
+    raise 'platform records must be a list' unless records.is_a?(Array)
+    ids = records.map do |record|
+      raise 'platform record requires a stable id and name' unless record.is_a?(Hash) &&
+        record['id'].is_a?(String) && record['id'].match?(/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/) &&
+        record['name'].is_a?(String) && !record['name'].strip.empty?
+      if record['url'] && !record['url'].match?(%r{\A(?:https?://|/(?!/))})
+        raise 'record URL must be HTTP(S) or root-relative'
+      end
+      if record['repository'] && !(record['repository'].is_a?(String) && record['repository'].match?(%r{\Ahttps://github[.]com/[^/\s]+/[^/\s]+\z}))
+        raise 'repository must be an HTTPS GitHub repository URL'
+      end
+      record['id']
+    end
+    raise 'duplicate platform id' unless ids.uniq.size == ids.size
+  end
+
   def self.team_records(records)
     raise 'team roster must be a list' unless records.is_a?(Array)
     ids = records.map do |record|
@@ -105,9 +122,8 @@ module SiteValidation
       output_ids: YAML.safe_load_file(File.join(root, '_data/outputs.yml')).map { |r| r['id'] },
       project_ids: Dir[File.join(root, '_projects/*.md')].map { |p| front_matter(p)['content_id'] })
     team_records(YAML.safe_load_file(File.join(root, '_data/team_roster.yml')))
-    %w[outputs platforms].each do |type|
-      records(YAML.safe_load_file(File.join(root, "_data/#{type}.yml")))
-    end
+    records(YAML.safe_load_file(File.join(root, '_data/outputs.yml')))
+    platform_records(YAML.safe_load_file(File.join(root, '_data/platforms.yml')))
     %w[_research_axes _projects].each do |directory|
       ids = Dir[File.join(root, directory, '*.md')].map do |path|
         data = front_matter(path)
