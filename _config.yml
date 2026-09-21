@@ -191,6 +191,8 @@ exclude:
   - .github
   - .git
   - .env
+  - .env.example
+  - supabase
   - _.htaccess
   - _.htpasswd
 keep_files:
