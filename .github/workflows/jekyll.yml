@@ -113,6 +113,10 @@ jobs:
         env:
           JEKYLL_ENV: production
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # Browser-safe configuration emitted only into the isolated admin app.
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          CMS_REQUIRE_CONFIG: 'true'
           # Only the authoritative repository is indexable, even for a root-hosted fork.
           ASTRA_BUILD_CONTEXT: ${{ github.repository == 'astra-team/astra-team.github.io' && 'production' || 'staging' }}
       - name: Upload artifact

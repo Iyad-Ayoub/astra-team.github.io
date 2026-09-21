@@ -1,0 +1,34 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, sans-serif;
+  color: #1d2630;
+  background: #f2f5f6;
+}
+
+.astra-admin-body { margin: 0; min-height: 100vh; }
+.astra-admin-shell { box-sizing: border-box; margin: 0 auto; max-width: 760px; padding: 48px 24px; }
+.astra-admin-brand { margin-bottom: 28px; }
+.astra-admin-brand h1, .astra-admin-card h2 { margin: 0 0 10px; }
+.astra-admin-brand > p:last-child, .astra-admin-help { color: #52616d; line-height: 1.5; }
+.astra-admin-kicker { color: #006d77; font-size: .78rem; font-weight: 700; letter-spacing: .12em; margin: 0 0 8px; text-transform: uppercase; }
+.astra-admin-card { background: #fff; border: 1px solid #d8e0e3; border-radius: 10px; box-shadow: 0 8px 20px rgb(24 39 52 / 7%); padding: 28px; }
+.astra-admin-card + .astra-admin-card { margin-top: 16px; }
+.astra-admin-card form { display: grid; gap: 9px; margin-top: 20px; }
+.astra-admin-card input { border: 1px solid #9aa9b2; border-radius: 5px; box-sizing: border-box; font: inherit; padding: 10px; width: 100%; }
+.astra-admin-card button { background: #006d77; border: 1px solid #006d77; border-radius: 5px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; margin-top: 8px; padding: 10px 14px; }
+.astra-admin-card button:hover, .astra-admin-card button:focus { background: #00555d; }
+.astra-admin-link-button { background: transparent !important; border: 0 !important; color: #006d77 !important; font-weight: 600 !important; margin-left: -14px; }
+.astra-admin-secondary { background: #fff !important; color: #006d77 !important; }
+.astra-admin-message { color: #a12828; line-height: 1.45; min-height: 1.4em; }
+.astra-admin-dashboard-header { align-items: flex-start; display: flex; gap: 24px; justify-content: space-between; }
+.astra-admin-role { margin-bottom: 0; }
+.astra-admin-nav { border-top: 1px solid #d8e0e3; list-style: none; margin: 28px 0 0; padding: 12px 0 0; }
+.astra-admin-nav li { border-bottom: 1px solid #e5ebed; font-weight: 600; padding: 14px 4px; }
+.astra-admin-nav small { color: #64737c; font-weight: 400; margin-left: 8px; }
+.astra-admin-text-link { color: #006d77; font-weight: 700; }
+
+@media (max-width: 520px) {
+  .astra-admin-shell { padding: 30px 16px; }
+  .astra-admin-card { padding: 22px; }
+  .astra-admin-dashboard-header { flex-direction: column; }
+}

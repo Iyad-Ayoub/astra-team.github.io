@@ -7,12 +7,14 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "supabase/migrations/20260921000000_cms_foundation.sql"
+GRANTS_MIGRATION = ROOT / "supabase/migrations/20260921000001_cms_authenticated_grants.sql"
 
 
 class SupabaseFoundationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.sql = MIGRATION.read_text(encoding="utf-8")
+        cls.grants_sql = GRANTS_MIGRATION.read_text(encoding="utf-8")
 
     def test_profiles_are_constrained_and_rls_protected(self):
         self.assertRegex(self.sql, r"create table public\.profiles")
@@ -36,6 +38,14 @@ class SupabaseFoundationTest(unittest.TestCase):
         self.assertIn("create policy \"cms users read own audit events\"", self.sql)
         self.assertIn("create policy \"cms editors read editorial audit events\"", self.sql)
         self.assertIn("create policy \"cms admins read all audit events\"", self.sql)
+
+    def test_authenticated_table_grants_remain_minimal_and_rls_protected(self):
+        self.assertIn("grant select, update on public.profiles to authenticated;", self.grants_sql)
+        self.assertIn("grant select on public.audit_events to authenticated;", self.grants_sql)
+        self.assertIn("revoke insert, delete on public.profiles from authenticated;", self.grants_sql)
+        self.assertIn("revoke insert, update, delete on public.audit_events from authenticated;", self.grants_sql)
+        self.assertNotIn("grant all", self.grants_sql.lower())
+        self.assertNotIn("disable row level security", self.grants_sql.lower())
 
     def test_private_media_bucket_and_policies_are_restricted(self):
         self.assertIn("'cms-media-private'", self.sql)

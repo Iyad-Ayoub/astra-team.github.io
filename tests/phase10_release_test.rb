@@ -41,7 +41,7 @@ class Phase10ReleaseTest < Minitest::Test
   def test_public_artifact
     dest = ENV['PHASE10_SITE']
     skip 'Set PHASE10_SITE to validate generated HTML' unless dest
-    files = Dir[File.join(dest, '**/*.html')]
+    files = Dir[File.join(dest, '**/*.html')].reject { |file| file.include?('/admin/') }
     assert_equal 36, files.size
     descriptions = []
     files.each do |file|

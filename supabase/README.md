@@ -1,9 +1,9 @@
 # ASTRA CMS Supabase foundation
 
-Phase 13B-1 creates only the authentication, authorization, audit, and private
-media-storage foundation for the future ASTRA control panel. It does not add a
-control panel, content tables, publishing/export code, GitHub App, or public
-website changes.
+Phase 13B establishes the authentication, authorization, audit, private
+media-storage foundation, and the first static ASTRA CMS control-panel shell.
+It does not add content tables, publishing/export code, a GitHub App, or public
+website content changes.
 
 ## Local setup
 
@@ -55,6 +55,13 @@ process once audit writes are added in the server layer.
 Roles are fixed: `admin`, `editor`, and `contributor`. Account status is either
 `active` or `suspended`. `profiles` and `audit_events` have RLS enabled.
 
+The project has automatic Data API privileges for new tables disabled. Migration
+`20260921000001_cms_authenticated_grants.sql` explicitly grants authenticated
+users `SELECT, UPDATE` on `profiles` and `SELECT` on `audit_events`; it revokes
+all client insert/delete access and audit updates. These grants do not bypass
+RLS: normal users still cannot update any profile, and only the existing Admin
+RLS policy permits profile updates.
+
 - Active users can read only their profile.
 - Users receive no direct profile update policy, so they cannot self-promote or
   reactivate themselves.
@@ -85,10 +92,50 @@ Supabase secret/service credentials and GitHub publishing credentials are
 server-side secrets. They must never be committed, embedded in the public
 Jekyll site, placed in `.env.example`, or exposed to browser code.
 
-## Deferred to Phase 13B-2+
+## Phase 13B-2 control-panel shell
+
+The static control panel is available at `/admin/`, with invitation and
+password-reset callbacks at `/admin/auth/callback/`. It uses the browser-safe
+Supabase URL and publishable key only. At build time,
+`_plugins/cms_admin_config.rb` emits those values into
+`/assets/js/admin/config.js`; it never reads or emits a privileged credential.
+
+For a local preview, provide the values only to the build process:
+
+```sh
+SUPABASE_URL='https://<project-ref>.supabase.co' \
+SUPABASE_PUBLISHABLE_KEY='<publishable-key>' \
+scripts/preview-local.sh
+```
+
+For the production GitHub Pages build, configure these two **repository
+variables**:
+
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY`
+
+The main Pages build fails if either variable is absent. Do not add a Supabase
+secret/service key or GitHub credential as a repository variable or workflow
+environment value.
+
+In Supabase Dashboard **Authentication → URL Configuration**, set the Site URL
+to `https://iyad-ayoub.github.io/astra-team.github.io/admin/` and add these Redirect URLs:
+
+```text
+http://127.0.0.1:4000/admin/auth/callback/
+http://localhost:4000/admin/auth/callback/
+https://iyad-ayoub.github.io/astra-team.github.io/admin/auth/callback/
+```
+
+The callback establishes the invitation or password-reset session, asks the
+user to set a password, then reads `profiles` through RLS. Missing, suspended,
+or RLS-denied profiles are signed out and denied access. The role displayed in
+the dashboard comes only from the RLS-protected `profiles` row. The shell has
+no sign-up or role/status-editing capability.
+
+## Deferred to Phase 13B-3+
 
 - News/Event and Media Asset tables and their content workflow
-- Control-panel authentication UI and invitation administration
 - Content/media checksum and lifecycle logic
 - Markdown sanitization and Jekyll export validation
 - GitHub App, exporter, PR creation, CI/deployment status, and rollback UI
