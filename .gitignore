@@ -11,3 +11,5 @@ _site
 vendor
 resources
 supabase/.temp/
+auth-broker/.dev.vars
+auth-broker/.wrangler/

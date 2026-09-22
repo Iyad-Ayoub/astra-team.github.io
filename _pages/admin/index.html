@@ -22,6 +22,32 @@ sitemap: false
 
     <section id="admin-loading" class="astra-admin-card"><p>Checking your session…</p></section>
 
+    <section id="admin-github-login" class="astra-admin-card" hidden>
+      <h2>Sign in</h2>
+      <p class="astra-admin-help">Use the GitHub account that has access to the ASTRA repository.</p>
+      <button id="admin-github-login-button" type="button">Sign in with GitHub</button>
+      <p id="admin-github-login-message" class="astra-admin-message" role="alert"></p>
+    </section>
+
+    <section id="admin-github-dashboard" class="astra-admin-card" hidden>
+      <div class="astra-admin-dashboard-header">
+        <div>
+          <p class="astra-admin-kicker">GitHub authenticated</p>
+          <h2>Welcome, <span id="admin-github-login"></span></h2>
+          <p id="admin-github-repository" class="astra-admin-help"></p>
+        </div>
+        <img id="admin-github-avatar" class="astra-admin-avatar" alt="" hidden>
+        <button id="admin-github-logout" class="astra-admin-secondary" type="button">Log out</button>
+      </div>
+      <nav aria-label="Control panel sections">
+        <ul class="astra-admin-nav">
+          <li><a href="{{ '/admin/' | relative_url }}" aria-current="page">Dashboard</a></li>
+          <li><a href="{{ '/admin/news/' | relative_url }}">News &amp; Events</a></li>
+          <li><a href="{{ '/admin/media/' | relative_url }}">Media</a></li>
+        </ul>
+      </nav>
+    </section>
+
     <section id="admin-login" class="astra-admin-card" hidden>
       <h2>Sign in</h2>
       <p class="astra-admin-help">Use the email address invited to the ASTRA CMS.</p>
@@ -61,11 +87,73 @@ sitemap: false
       <nav aria-label="Control panel sections">
         <ul class="astra-admin-nav">
           <li><span aria-current="page">Dashboard</span></li>
-          <li>News &amp; Events <small>Coming next</small></li>
+          <li><button id="admin-news-nav" class="astra-admin-nav-button" type="button">News &amp; Events</button></li>
           <li>Media <small>Coming next</small></li>
           <li id="admin-users-nav" hidden>Users <small>Coming later</small></li>
         </ul>
       </nav>
+    </section>
+
+    <section id="admin-news-list" class="astra-admin-card" hidden>
+      <div class="astra-admin-dashboard-header">
+        <div>
+          <p class="astra-admin-kicker">Draft workspace</p>
+          <h2>News &amp; Events</h2>
+        </div>
+        <button id="admin-news-back" class="astra-admin-secondary" type="button">Dashboard</button>
+      </div>
+      <button id="admin-news-new" type="button">New News or Event</button>
+      <p id="admin-news-list-message" class="astra-admin-message" role="alert"></p>
+      <div id="admin-news-items" class="astra-admin-news-items"></div>
+    </section>
+
+    <section id="admin-news-form-panel" class="astra-admin-card" hidden>
+      <div class="astra-admin-dashboard-header">
+        <div>
+          <p class="astra-admin-kicker">Draft workspace</p>
+          <h2 id="admin-news-form-title">New News or Event</h2>
+        </div>
+        <button id="admin-news-form-back" class="astra-admin-secondary" type="button">Back to list</button>
+      </div>
+      <form id="admin-news-form" novalidate>
+        <label for="admin-news-title">Title</label>
+        <input id="admin-news-title" name="title" type="text" maxlength="180" required>
+        <label for="admin-news-type">Type</label>
+        <select id="admin-news-type" name="type" required>
+          <option value="news">News</option>
+          <option value="event">Event</option>
+          <option value="award">Award</option>
+          <option value="project">Project</option>
+          <option value="open-source">Open-source</option>
+          <option value="team">Team</option>
+          <option value="collaboration">Collaboration</option>
+          <option value="demo">Demo</option>
+        </select>
+        <label for="admin-news-summary">Summary</label>
+        <textarea id="admin-news-summary" name="summary" maxlength="600" required></textarea>
+        <label for="admin-news-body">Body</label>
+        <textarea id="admin-news-body" name="body" maxlength="30000" required></textarea>
+        <label for="admin-news-content-date">Content date</label>
+        <input id="admin-news-content-date" name="content_date" type="date" required>
+        <div id="admin-news-event-fields" hidden>
+          <label for="admin-news-event-date">Event date</label>
+          <input id="admin-news-event-date" name="event_date" type="date">
+        </div>
+        <label for="admin-news-end-date">End date <span class="astra-admin-optional">(optional)</span></label>
+        <input id="admin-news-end-date" name="end_date" type="date">
+        <label for="admin-news-location">Location <span class="astra-admin-optional">(optional)</span></label>
+        <input id="admin-news-location" name="location" type="text" maxlength="160">
+        <label for="admin-news-external-url">External URL <span class="astra-admin-optional">(optional)</span></label>
+        <input id="admin-news-external-url" name="external_url" type="url">
+        <label class="astra-admin-checkbox"><input id="admin-news-featured" name="featured" type="checkbox"> Featured</label>
+        <label class="astra-admin-checkbox"><input id="admin-news-homepage" name="homepage" type="checkbox"> Homepage</label>
+        <div class="astra-admin-form-actions">
+          <button id="admin-news-save" type="submit">Save draft</button>
+          <button id="admin-news-submit" class="astra-admin-secondary" type="button">Submit for review</button>
+          <button id="admin-news-return" class="astra-admin-secondary" type="button" hidden>Return to draft</button>
+        </div>
+      </form>
+      <p id="admin-news-form-message" class="astra-admin-message" role="alert"></p>
     </section>
 
     <section id="admin-denied" class="astra-admin-card" hidden>

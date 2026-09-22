@@ -17,7 +17,7 @@ class Phase13BAdminTest < Minitest::Test
     assert_includes callback, 'permalink: /admin/auth/callback/'
     assert_includes admin, 'admin-login-form'
     assert_includes admin, 'admin-reset-form'
-    assert_includes callback, 'admin-password-form'
+    assert_includes callback, 'Completing GitHub sign-in'
     assert_includes admin, "{{ '/assets/js/admin/app.js' | relative_url }}"
     assert_includes callback, "{{ '/admin/' | relative_url }}"
     refute_match(/sign[ -]?up|register/i, admin)
@@ -47,7 +47,7 @@ class Phase13BAdminTest < Minitest::Test
     assert_match(/async function loadProfile\(session\).*?show\('admin-dashboard'\)/m, app)
   end
 
-  def test_valid_callback_auth_events_require_password_setup
+  def test_legacy_supabase_auth_events_remain_available_during_the_pivot
     app = File.read(APP)
     assert_includes app, "event === 'PASSWORD_RECOVERY'"
     assert_includes app, "event === 'SIGNED_IN'"
@@ -69,6 +69,32 @@ class Phase13BAdminTest < Minitest::Test
     assert_includes generator, "ENV.fetch('SUPABASE_PUBLISHABLE_KEY'"
     refute_match(PRIVILEGED_MARKERS, generator.gsub('privileged credential', ''))
     assert_includes generator, "'assets/js/admin'"
+  end
+
+  def test_news_event_draft_ui_has_the_required_fields_and_no_publish_control
+    admin = File.read(ADMIN_PAGE)
+    %w[admin-news-list admin-news-form-panel admin-news-nav admin-news-new admin-news-save admin-news-submit admin-news-return].each do |hook|
+      assert_includes admin, hook
+    end
+    %w[admin-news-title admin-news-type admin-news-summary admin-news-body admin-news-content-date admin-news-event-date admin-news-end-date admin-news-location admin-news-external-url admin-news-featured admin-news-homepage].each do |field|
+      assert_includes admin, field
+    end
+    %w[news event award project open-source team collaboration demo].each { |type| assert_includes admin, "value=\"#{type}\"" }
+    refute_match(/>\s*Publish\s*</i, admin)
+  end
+
+  def test_news_event_client_uses_only_authenticated_draft_crud_hooks
+    app = File.read(APP)
+    assert_includes app, "from('cms_news')"
+    %w[collectNewsPayload validateNewsPayload loadNews saveNews submitNewsForReview returnNewsToDraft].each do |hook|
+      assert_includes app, "function #{hook}"
+    end
+    assert_includes app, "status: 'in_review'"
+    assert_includes app, "status: 'draft'"
+    assert_includes app, "event date is required for an event"
+    assert_includes app, 'Liquid syntax, script tags, and inline event handlers are not allowed.'
+    refute_match(/\.delete\(\)/, app)
+    refute_match(PRIVILEGED_MARKERS, app)
   end
 
   def test_rendered_admin_routes_when_artifact_supplied

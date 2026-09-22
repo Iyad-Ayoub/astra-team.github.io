@@ -1,0 +1,6 @@
+name = "astra-cms-auth-broker"
+main = "src/index.ts"
+compatibility_date = "2025-02-01"
+
+[vars]
+GITHUB_APP_CLIENT_ID = "Iv23lioxfjVy65Y7Kb6R"
