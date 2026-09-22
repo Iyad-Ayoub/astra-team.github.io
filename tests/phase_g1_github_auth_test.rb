@@ -60,11 +60,8 @@ class PhaseG1GitHubAuthTest < Minitest::Test
     refute_includes File.read(APP), 'localStorage.setItem(githubSessionKey'
   end
 
-  def test_supabase_is_retained_as_a_fallback_during_the_pivot
+  def test_github_auth_is_the_active_path_during_the_pivot
     app = File.read(APP)
-    assert_includes app, "from('profiles')"
-    assert_includes app, "from('cms_news')"
-    assert File.exist?(File.join(ROOT, 'supabase/migrations/20260921000000_cms_foundation.sql'))
-    assert File.exist?(File.join(ROOT, 'supabase/migrations/20260921000002_cms_news_drafts.sql'))
+    assert_match(/if \(githubSettings\(\)\) \{\s+await bootGithub\(\);\s+return;\s+\}\s+await bootSupabase\(\);/m, app)
   end
 end
