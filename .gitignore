@@ -3,7 +3,13 @@ _site
 .sass-cache
 .jekyll-cache
 .jekyll-metadata
+.env
+.env.*
+!.env.example
 .DS_store
 .tweet-cache
 vendor
 resources
+supabase/.temp/
+auth-broker/.dev.vars
+auth-broker/.wrangler/

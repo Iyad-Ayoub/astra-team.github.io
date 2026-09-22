@@ -1,0 +1,88 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, sans-serif;
+  color: #1d2630;
+  background: #f2f5f6;
+}
+
+.astra-admin-body { margin: 0; min-height: 100vh; }
+.astra-admin-shell { box-sizing: border-box; margin: 0 auto; max-width: 1160px; padding: 32px 24px; }
+.astra-admin-brand { margin-bottom: 28px; }
+.astra-admin-brand h1, .astra-admin-card h2 { margin: 0 0 10px; }
+.astra-admin-brand > p:last-child, .astra-admin-help { color: #52616d; line-height: 1.5; }
+.astra-admin-kicker { color: #006d77; font-size: .78rem; font-weight: 700; letter-spacing: .12em; margin: 0 0 8px; text-transform: uppercase; }
+.astra-admin-card { background: #fff; border: 1px solid #d8e0e3; border-radius: 10px; box-shadow: 0 8px 20px rgb(24 39 52 / 7%); padding: 28px; }
+.astra-admin-card + .astra-admin-card { margin-top: 16px; }
+.astra-admin-card form { display: grid; gap: 9px; margin-top: 20px; }
+.astra-admin-card input, .astra-admin-card select, .astra-admin-card textarea { border: 1px solid #9aa9b2; border-radius: 5px; box-sizing: border-box; font: inherit; padding: 10px; width: 100%; }
+.astra-admin-card textarea { min-height: 110px; resize: vertical; }
+.astra-admin-card button { background: #006d77; border: 1px solid #006d77; border-radius: 5px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; margin-top: 8px; padding: 10px 14px; }
+.astra-admin-card button:hover, .astra-admin-card button:focus { background: #00555d; }
+.astra-admin-link-button { background: transparent !important; border: 0 !important; color: #006d77 !important; font-weight: 600 !important; margin-left: -14px; }
+.astra-admin-secondary { background: #fff !important; color: #006d77 !important; }
+.astra-admin-message { color: #a12828; line-height: 1.45; min-height: 1.4em; }
+.astra-admin-dashboard-header { align-items: flex-start; display: flex; gap: 24px; justify-content: space-between; }
+.astra-admin-avatar { border-radius: 50%; flex: 0 0 64px; height: 64px; object-fit: cover; width: 64px; }
+.astra-admin-workspace { background: #fff; border: 1px solid #d8e0e3; border-radius: 10px; box-shadow: 0 8px 20px rgb(24 39 52 / 7%); overflow: hidden; }
+.astra-admin-topbar { align-items: center; border-bottom: 1px solid #d8e0e3; display: flex; gap: 24px; justify-content: space-between; padding: 18px 24px; }
+.astra-admin-wordmark { color: #1d2630; font-weight: 700; text-decoration: none; }
+.astra-admin-account { align-items: center; display: flex; gap: 12px; min-width: 0; }
+.astra-admin-account .astra-admin-help { font-size: .85rem; margin: 3px 0 0; overflow-wrap: anywhere; }
+.astra-admin-account .astra-admin-secondary { margin: 0; white-space: nowrap; }
+.astra-admin-panel { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: 460px; }
+.astra-admin-sidebar { background: #f7f9f9; border-right: 1px solid #d8e0e3; display: grid; align-content: start; gap: 4px; padding: 16px 12px; }
+.astra-admin-sidebar a { border-radius: 5px; color: #33414a; font-weight: 700; padding: 10px 12px; text-decoration: none; }
+.astra-admin-sidebar a:hover, .astra-admin-sidebar a:focus { background: #e5eeee; color: #006d77; }
+.astra-admin-sidebar a[aria-current="page"] { background: #006d77; color: #fff; }
+.astra-admin-content { min-width: 0; padding: 32px; }
+.astra-admin-content h1 { margin: 0 0 10px; }
+.astra-admin-content form { display: grid; gap: 9px; margin-top: 20px; }
+.astra-admin-content input, .astra-admin-content select, .astra-admin-content textarea { border: 1px solid #9aa9b2; border-radius: 5px; box-sizing: border-box; font: inherit; padding: 10px; width: 100%; }
+.astra-admin-content textarea { min-height: 110px; resize: vertical; }
+.astra-admin-content button, .astra-admin-primary-link { background: #006d77; border: 1px solid #006d77; border-radius: 5px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; margin-top: 8px; padding: 10px 14px; text-decoration: none; }
+.astra-admin-content button:hover, .astra-admin-content button:focus, .astra-admin-primary-link:hover, .astra-admin-primary-link:focus { background: #00555d; }
+.astra-admin-content-header { align-items: center; display: flex; gap: 16px; justify-content: space-between; }
+.astra-admin-content-header .astra-admin-primary-link { margin: 0; white-space: nowrap; }
+.astra-admin-summary-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 24px; }
+.astra-admin-summary-card { border: 1px solid #d8e0e3; border-radius: 8px; color: #1d2630; padding: 20px; text-decoration: none; }
+.astra-admin-summary-card:hover, .astra-admin-summary-card:focus { border-color: #006d77; box-shadow: 0 4px 12px rgb(24 39 52 / 10%); }
+.astra-admin-summary-card h2 { font-size: 1.1rem; margin: 0 0 8px; }.astra-admin-summary-card p { color: #52616d; line-height: 1.5; margin: 0; }
+.astra-admin-role { margin-bottom: 0; }
+.astra-admin-nav { border-top: 1px solid #d8e0e3; list-style: none; margin: 28px 0 0; padding: 12px 0 0; }
+.astra-admin-nav li { border-bottom: 1px solid #e5ebed; font-weight: 600; padding: 14px 4px; }
+.astra-admin-nav small { color: #64737c; font-weight: 400; margin-left: 8px; }
+.astra-admin-nav-button { background: transparent !important; border: 0 !important; color: #1d2630 !important; margin: 0 !important; padding: 0 !important; }
+.astra-admin-nav-button:hover, .astra-admin-nav-button:focus { color: #006d77 !important; text-decoration: underline; }
+.astra-admin-text-link { color: #006d77; font-weight: 700; }
+.astra-admin-optional { color: #64737c; font-size: .9em; font-weight: 400; }
+.astra-admin-checkbox { align-items: center; display: flex; gap: 8px; }
+.astra-admin-checkbox input { width: auto; }
+.astra-admin-form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.astra-admin-form-actions button { margin-top: 0; }
+.astra-admin-news-items { display: grid; gap: 10px; margin-top: 18px; }
+.astra-admin-news-item { background: #f7f9f9; border: 1px solid #d8e0e3; border-radius: 5px; color: #1d2630; margin: 0 !important; text-align: left; }
+.astra-admin-news-item small { display: block; font-weight: 400; margin-top: 4px; }
+.astra-admin-media-upload { border: 1px solid #d8e0e3; border-radius: 8px; display: grid; gap: 9px; margin: 20px 0; padding: 18px; }
+.astra-admin-media-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.astra-admin-media-item { border: 1px solid #d8e0e3; border-radius: 8px; overflow: hidden; padding: 10px; }
+.astra-admin-media-item img, .astra-admin-cover-preview img { display: block; height: 130px; object-fit: cover; width: 100%; }
+.astra-admin-media-item p { font-size: .9rem; margin: 10px 0 4px; overflow-wrap: anywhere; }.astra-admin-media-item small { color: #52616d; }
+.astra-admin-cover-preview { border: 1px solid #d8e0e3; border-radius: 6px; margin-top: 10px; max-width: 300px; overflow: hidden; }
+
+@media (max-width: 760px) {
+  .astra-admin-panel { grid-template-columns: 1fr; }
+  .astra-admin-sidebar { border-bottom: 1px solid #d8e0e3; border-right: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .astra-admin-sidebar a { text-align: center; }
+}
+
+@media (max-width: 520px) {
+  .astra-admin-shell { padding: 30px 16px; }
+  .astra-admin-card { padding: 22px; }
+  .astra-admin-dashboard-header { flex-direction: column; }
+  .astra-admin-topbar { align-items: flex-start; flex-direction: column; padding: 16px; }
+  .astra-admin-account { width: 100%; }
+  .astra-admin-account .astra-admin-secondary { margin-left: auto; }
+  .astra-admin-content { padding: 24px 16px; }
+  .astra-admin-content-header { align-items: flex-start; flex-direction: column; }
+  .astra-admin-summary-grid { grid-template-columns: 1fr; }
+}

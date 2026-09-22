@@ -1,0 +1,18 @@
+---
+layout: admin
+title: Media
+permalink: /admin/media/
+sitemap: false
+admin_active: media
+admin_route: media
+---
+<p class="astra-admin-kicker">Shared library</p>
+<h1>Media</h1>
+<p class="astra-admin-help">Upload images for News &amp; Events drafts. Published-site media is not created in this phase.</p>
+<form id="admin-media-upload-form" class="astra-admin-media-upload" novalidate>
+  <label for="admin-media-file">Select image</label><input id="admin-media-file" type="file" accept="image/jpeg,image/png,image/webp" required>
+  <label for="admin-media-alt-text">Alt text <span class="astra-admin-optional">(optional)</span></label><input id="admin-media-alt-text" maxlength="300">
+  <button id="admin-media-upload-button" type="submit">Upload image</button>
+</form>
+<p id="admin-media-message" class="astra-admin-message" role="alert"></p>
+<div id="admin-media-items" class="astra-admin-media-grid"></div>

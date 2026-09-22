@@ -113,6 +113,16 @@ jobs:
         env:
           JEKYLL_ENV: production
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # Browser-safe configuration emitted only into the isolated admin app.
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          # Browser-safe GitHub App values. The OAuth broker keeps every
+          # confidential GitHub App credential outside the Pages artifact.
+          GITHUB_APP_CLIENT_ID: ${{ vars.ASTRA_GITHUB_APP_CLIENT_ID }}
+          GITHUB_AUTH_BROKER_URL: ${{ vars.ASTRA_GITHUB_AUTH_BROKER_URL }}
+          GITHUB_REPO_OWNER: Iyad-Ayoub
+          GITHUB_REPO_NAME: astra-team.github.io
+          CMS_REQUIRE_CONFIG: 'true'
           # Only the authoritative repository is indexable, even for a root-hosted fork.
           ASTRA_BUILD_CONTEXT: ${{ github.repository == 'astra-team/astra-team.github.io' && 'production' || 'staging' }}
       - name: Upload artifact

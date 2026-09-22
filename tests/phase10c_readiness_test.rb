@@ -28,7 +28,7 @@ class Phase10CReadinessTest < Minitest::Test
     skip 'Set PHASE10_SITE for generated checks' unless dest
     base = ENV.fetch('PHASE10_BASEURL', '')
     staging = AstraIndexing.staging?(base)
-    files = Dir[File.join(dest, '**/*.html')]
+    files = Dir[File.join(dest, '**/*.html')].reject { |file| file.include?('/admin/') }
     routes = files.map { |file| '/' + file.delete_prefix(dest + '/').sub(/index\.html\z/, '') }
     %w[legal privacy accessibility].each { |route| assert_includes routes, "/#{route}/" }
     files.each do |file|

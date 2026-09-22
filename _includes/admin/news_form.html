@@ -1,0 +1,17 @@
+<form id="admin-github-news-form" novalidate>
+  <label for="admin-news-title">Title</label><input id="admin-news-title" maxlength="180" required>
+  <label for="admin-news-type">Type</label>
+  <select id="admin-news-type"><option value="news">News</option><option value="event">Event</option><option value="award">Award</option><option value="project">Project</option><option value="open-source">Open-source</option><option value="team">Team</option><option value="collaboration">Collaboration</option><option value="demo">Demo</option></select>
+  <label for="admin-news-summary">Summary</label><textarea id="admin-news-summary" maxlength="600" required></textarea>
+  <label for="admin-news-body">Body</label><textarea id="admin-news-body" maxlength="30000" required></textarea>
+  <label for="admin-news-content-date">Content date</label><input id="admin-news-content-date" type="date" required>
+  <div id="admin-news-event-fields" hidden><label for="admin-news-event-date">Event date</label><input id="admin-news-event-date" type="date"></div>
+  <label for="admin-news-end-date">End date</label><input id="admin-news-end-date" type="date">
+  <label for="admin-news-location">Location</label><input id="admin-news-location" maxlength="160">
+  <label for="admin-news-external-url">External URL</label><input id="admin-news-external-url" type="url">
+  <label for="admin-news-cover-media-id">Cover image <span class="astra-admin-optional">(optional)</span></label><select id="admin-news-cover-media-id"><option value="">No cover image</option></select>
+  <div id="admin-news-cover-preview" class="astra-admin-cover-preview" hidden></div>
+  <label class="astra-admin-checkbox"><input id="admin-news-featured" type="checkbox"> Featured</label>
+  <label class="astra-admin-checkbox"><input id="admin-news-homepage" type="checkbox"> Homepage</label>
+  <button type="submit">Save draft</button>
+</form>

@@ -1,0 +1,31 @@
+---
+layout: none
+permalink: /admin/auth/callback/
+sitemap: false
+---
+<!doctype html>
+<html lang="{{ site.lang | default: 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>ASTRA CMS — GitHub sign in</title>
+  <link rel="stylesheet" href="{{ '/assets/css/admin.css' | relative_url }}">
+</head>
+<body class="astra-admin-body" data-admin-mode="callback">
+  <main class="astra-admin-shell" aria-live="polite">
+    <section class="astra-admin-brand" aria-label="ASTRA CMS">
+      <p class="astra-admin-kicker">ASTRA CMS</p>
+      <h1>GitHub sign in</h1>
+    </section>
+    <section id="admin-loading" class="astra-admin-card"><p>Completing GitHub sign-in…</p></section>
+    <section id="admin-denied" class="astra-admin-card" hidden>
+      <h2>GitHub sign-in unavailable</h2>
+      <p id="admin-denied-message">This sign-in link is invalid, expired, or no longer available.</p>
+      <a class="astra-admin-text-link" href="{{ '/admin/' | relative_url }}">Return to sign in</a>
+    </section>
+  </main>
+  <script src="{{ '/assets/js/admin/config.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/admin/app.js' | relative_url }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+---
+layout: admin
+title: Control Panel
+permalink: /admin/
+sitemap: false
+admin_mode: app
+admin_active: dashboard
+legacy_supabase: true
+---
+<p class="astra-admin-kicker">Dashboard</p>
+<h1>Control Panel</h1>
+<p class="astra-admin-help">Manage ASTRA editorial work through the connected GitHub repository.</p>
+<div class="astra-admin-summary-grid">
+  <a class="astra-admin-summary-card" href="{{ '/admin/news/' | relative_url }}"><h2>News &amp; Events</h2><p>Create and continue GitHub-backed drafts.</p></a>
+  <a class="astra-admin-summary-card" href="{{ '/admin/media/' | relative_url }}"><h2>Media</h2><p>Shared media management will be available here in a later phase.</p></a>
+</div>
