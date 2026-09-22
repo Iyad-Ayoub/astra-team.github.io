@@ -139,7 +139,7 @@ module SiteValidation
   def self.forbidden_path?(relative)
     parts = relative.split('/')
     return true if parts.any? { |p| p.start_with?('.') && p != '.nojekyll' }
-    return true if %w[scripts tests docs bin vendor node_modules supabase _responsive].include?(parts.first)
+    return true if %w[scripts tests docs bin vendor node_modules supabase auth-broker _responsive].include?(parts.first)
     relative.match?(/(?:\A|\/)(?:Dockerfile[^\/]*|(?:docker-)?compose[^\/]*\.ya?ml|Gemfile(?:\.lock)?|README(?:\.md)?|CONTRIBUTING\.md|TODO\.txt|.*htpasswd|.*htaccess|jsconfig\.json|package(?:-lock)?\.json)\z/i) ||
       relative.match?(/\.(?:py|rb|sh|ya?ml|env|lock|log)\z/i)
   end

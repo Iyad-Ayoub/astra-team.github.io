@@ -19,9 +19,9 @@ class Phase9ResearchVisualsTest < Minitest::Test
     'perception' => '86bfb69eff6a6d160a987ab7a706a02ca259eb60d8dc747376ea0e1e99dee00b'
   }.freeze
   PIPELINE_HASHES = {
-    # Phase 13B adds only internal Supabase and environment-file exclusions.
+    # Phase 13B/G2 adds only internal Supabase, environment-file, and Worker exclusions.
     # Retain a full-config pin: no image-pipeline setting has changed.
-    '_config.yml' => '9e4c6e3c84be3934f8cc283c15ede1591698636138b8e7e637325b7b91a82cf5',
+    '_config.yml' => 'e17df4d5cfbf9ac5f85bafde0bd08f7d6e9a7a18a0c7040f612190e578ff096e',
     # Phase 10D: Ruby baseline and same-version native source variants only.
     # phase10d_runtime_test independently pins all 90 existing gem versions.
     'Gemfile' => 'e703ea4b078a59be2035256c0f810aa1987ab7808fefd975954870e28eadf7cc',

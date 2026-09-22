@@ -193,6 +193,7 @@ exclude:
   - .env
   - .env.example
   - supabase
+  - auth-broker
   - _.htaccess
   - _.htpasswd
 keep_files:

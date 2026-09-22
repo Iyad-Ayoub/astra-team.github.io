@@ -72,7 +72,7 @@ class ValidationTest < Minitest::Test
   end
 
   def test_forbidden_files
-    %w[scripts/tool.py Dockerfile deploy.sh Gemfile.lock .env .env.example _.htpasswd assets/jsconfig.json supabase/README.md supabase/migrations/20260921000000_cms_foundation.sql].each do |path|
+    %w[scripts/tool.py Dockerfile deploy.sh Gemfile.lock .env .env.example _.htpasswd assets/jsconfig.json supabase/README.md supabase/migrations/20260921000000_cms_foundation.sql auth-broker/README.md auth-broker/src/index.ts auth-broker/wrangler.toml].each do |path|
       assert SiteValidation.forbidden_path?(path), path
     end
     File.write(File.join(@dir, 'deploy.sh'), 'echo unsafe')
@@ -82,6 +82,7 @@ class ValidationTest < Minitest::Test
   def test_internal_phase13b_sources_are_excluded_from_jekyll
     excludes = YAML.safe_load_file(File.join(__dir__, '..', '_config.yml')).fetch('exclude')
     assert_includes excludes, 'supabase'
+    assert_includes excludes, 'auth-broker'
     assert_includes excludes, '.env.example'
   end
 
