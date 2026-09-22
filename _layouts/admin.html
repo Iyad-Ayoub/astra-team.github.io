@@ -1,0 +1,56 @@
+---
+layout: none
+---
+<!doctype html>
+<html lang="{{ site.lang | default: 'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>ASTRA CMS — {{ page.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/css/admin.css' | relative_url }}">
+</head>
+<body class="astra-admin-body" data-admin-mode="{{ page.admin_mode | default: 'github-route' }}"{% if page.admin_route %} data-admin-route="{{ page.admin_route }}"{% endif %}>
+  <main class="astra-admin-shell" aria-live="polite">
+    <section id="admin-loading" class="astra-admin-card"><p>Checking your GitHub session…</p></section>
+
+    <section id="admin-github-login" class="astra-admin-card" hidden>
+      <p class="astra-admin-kicker">ASTRA CMS</p>
+      <h1>Sign in</h1>
+      <p class="astra-admin-help">Use the GitHub account that has access to the ASTRA repository.</p>
+      <button id="admin-github-login-button" type="button">Sign in with GitHub</button>
+      <p id="admin-github-login-message" class="astra-admin-message" role="alert"></p>
+    </section>
+
+    <section id="admin-github-dashboard" class="astra-admin-workspace" hidden>
+      <header class="astra-admin-topbar">
+        <a class="astra-admin-wordmark" href="{{ '/admin/' | relative_url }}">ASTRA CMS</a>
+        <div class="astra-admin-account">
+          <img id="admin-github-avatar" class="astra-admin-avatar" alt="" hidden>
+          <div><strong id="admin-github-login"></strong><p id="admin-github-repository" class="astra-admin-help"></p></div>
+          <button id="admin-github-logout" class="astra-admin-secondary" type="button">Log out</button>
+        </div>
+      </header>
+      <div class="astra-admin-panel">
+        <nav class="astra-admin-sidebar" aria-label="Control panel sections">
+          <a href="{{ '/admin/' | relative_url }}"{% if page.admin_active == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
+          <a href="{{ '/admin/news/' | relative_url }}"{% if page.admin_active == 'news' %} aria-current="page"{% endif %}>News &amp; Events</a>
+          <a href="{{ '/admin/media/' | relative_url }}"{% if page.admin_active == 'media' %} aria-current="page"{% endif %}>Media</a>
+        </nav>
+        <section id="admin-github-route" class="astra-admin-content">{{ content }}</section>
+      </div>
+    </section>
+
+    {% if page.legacy_supabase %}{% include admin/supabase_legacy.html %}{% endif %}
+
+    <section id="admin-denied" class="astra-admin-card" hidden>
+      <h1>Access unavailable</h1>
+      <p id="admin-denied-message"></p>
+      <a class="astra-admin-text-link" href="{{ '/admin/' | relative_url }}">Return to sign in</a>
+    </section>
+  </main>
+  {% if page.legacy_supabase %}<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>{% endif %}
+  <script src="{{ '/assets/js/admin/config.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/admin/app.js' | relative_url }}" defer></script>
+</body>
+</html>

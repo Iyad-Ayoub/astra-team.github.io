@@ -26,20 +26,43 @@ class PhaseG2AuthBrokerTest < Minitest::Test
     assert_includes @worker, 'SameSite=None; Secure'
   end
 
-  def test_authorize_validates_fixed_client_callback_state_and_pkce
-    assert_includes @worker, "url.searchParams.get('client_id') !== env.GITHUB_APP_CLIENT_ID"
-    %w[callbackAllowed state code_challenge code_challenge_method S256].each { |term| assert_includes @worker, term }
+  def test_worker_generates_state_and_pkce_after_validating_callback_and_return_path
+    %w[callbackAllowed returnToAllowed randomValue pkceVerifier state code_challenge code_challenge_method S256].each { |term| assert_includes @worker, term }
+    assert_includes @worker, "url.searchParams.get('return_to')"
     assert_includes @worker, 'https://github.com/login/oauth/authorize'
     assert_includes @worker, "redirect_uri: githubCallback(request)"
   end
 
-  def test_exchange_fails_closed_and_uses_server_side_secret
+  def test_worker_exchanges_code_before_issuing_ticket_and_exchange_fails_closed
     assert_includes @worker, "await fetch('https://github.com/login/oauth/access_token'"
     assert_includes @worker, 'client_secret: env.GITHUB_APP_CLIENT_SECRET'
     assert_includes @worker, "error: 'invalid_or_expired_session'"
-    assert_includes @worker, "error: 'token_exchange_failed'"
+    assert_includes @worker, "safeErrorRedirect(transaction.callback, transaction.state, 'token_exchange_failed', request)"
     assert_includes @worker, 'clearTransactionCookie(request)'
-    assert_includes @worker, 'challengeFor(body.code_verifier)'
+    assert_includes @worker, 'code_verifier: transaction.pkceVerifier'
+    assert_includes @worker, 'accessToken: result.access_token'
+    refute_includes @worker, 'body.code_verifier'
+    assert_includes @worker, 'const TICKET_TTL_MS = 60 * 1000;'
+    assert_includes @worker, 'nonce: randomValue()'
+    assert_includes @worker, 'equal(ticket.callback, body.redirect_uri || \'\')'
+    assert_includes @worker, "'Set-Cookie': clearTransactionCookie(request)"
+  end
+
+  def test_final_ticket_exchange_does_not_depend_on_oauth_transaction_cookie
+    exchange = @worker.split('async function exchange', 2).last.split('export default', 2).first
+    refute_includes exchange, 'cookie(request, COOKIE_NAME)'
+    refute_includes exchange, 'unseal<Transaction>'
+    assert_includes exchange, 'unseal<Ticket>(body.ticket'
+    assert_includes exchange, 'ticket.expiresAt < Date.now()'
+  end
+
+  def test_broker_restores_and_clears_an_encrypted_http_only_browser_session
+    assert_includes @worker, 'CMS_SESSIONS'
+    assert_includes @worker, 'async function restore'
+    assert_includes @worker, "url.pathname === '/session/restore'"
+    assert_includes @worker, "url.pathname === '/session/logout'"
+    assert_includes @worker, 'CMS_SESSIONS.get'
+    assert_includes @worker, 'CMS_SESSIONS.delete'
   end
 
   def test_worker_contains_no_tracked_secret_value

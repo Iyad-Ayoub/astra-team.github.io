@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "supabase/migrations/20260921000000_cms_foundation.sql"
 GRANTS_MIGRATION = ROOT / "supabase/migrations/20260921000001_cms_authenticated_grants.sql"
+NEWS_MIGRATION = ROOT / "supabase/migrations/20260921000002_cms_news_drafts.sql"
 
 
 class SupabaseFoundationTest(unittest.TestCase):
@@ -15,6 +16,7 @@ class SupabaseFoundationTest(unittest.TestCase):
     def setUpClass(cls):
         cls.sql = MIGRATION.read_text(encoding="utf-8")
         cls.grants_sql = GRANTS_MIGRATION.read_text(encoding="utf-8")
+        cls.news_sql = NEWS_MIGRATION.read_text(encoding="utf-8")
 
     def test_profiles_are_constrained_and_rls_protected(self):
         self.assertRegex(self.sql, r"create table public\.profiles")
@@ -46,6 +48,45 @@ class SupabaseFoundationTest(unittest.TestCase):
         self.assertIn("revoke insert, update, delete on public.audit_events from authenticated;", self.grants_sql)
         self.assertNotIn("grant all", self.grants_sql.lower())
         self.assertNotIn("disable row level security", self.grants_sql.lower())
+
+    def test_news_draft_schema_workflow_and_database_validation(self):
+        sql = self.news_sql
+        self.assertIn("create table public.cms_news", sql)
+        self.assertIn("alter table public.cms_news enable row level security", sql)
+        for content_type in ("'news'", "'event'", "'award'", "'project'", "'open-source'", "'team'", "'collaboration'", "'demo'"):
+            self.assertIn(content_type, sql)
+        self.assertIn("check (type <> 'event' or event_date is not null)", sql)
+        self.assertIn("check (end_date is null or event_date is null or end_date >= event_date)", sql)
+        self.assertIn("between 1 and 180", sql)
+        self.assertIn("between 1 and 600", sql)
+        self.assertIn("between 1 and 30000", sql)
+        self.assertIn("body not like '%{{%'", sql)
+        self.assertIn("body not like '%{%'", sql)
+        self.assertIn("title not like '%{{%'", sql)
+        self.assertIn("summary not like '%{{%'", sql)
+        self.assertIn("'<[[:space:]]*script", sql)
+        self.assertIn("status in ('draft', 'in_review')", sql)
+
+    def test_news_draft_rls_grants_and_audit_are_limited(self):
+        sql = self.news_sql
+        self.assertIn("cms users create own news drafts", sql)
+        self.assertIn("cms users update own news drafts", sql)
+        self.assertIn("cms editorial users read all news drafts", sql)
+        self.assertIn("cms editorial users update all news drafts", sql)
+        self.assertIn("grant select on public.cms_news to authenticated;", sql)
+        self.assertIn("grant insert (title, type, summary, body", sql)
+        self.assertIn("grant update (title, type, summary, body", sql)
+        self.assertNotIn("grant delete", sql.lower())
+        self.assertIn("created_by = (select auth.uid()) and status = 'draft'", sql)
+        self.assertIn("public.cms_is_editor_or_admin()", sql)
+        self.assertIn("with check (public.cms_is_editor_or_admin() and status in ('draft', 'in_review'))", sql)
+        self.assertNotIn("status in ('draft', 'in_review',", sql)
+        self.assertNotIn("grant insert (id", sql.lower())
+        self.assertNotIn("created_by) on public.cms_news", sql)
+        self.assertIn("event_name = 'news_created'", sql)
+        self.assertIn("event_name = 'news_updated'", sql)
+        self.assertIn("event_name = 'news_submitted_for_review'", sql)
+        self.assertNotRegex(sql, r"on public\.audit_events for insert to authenticated")
 
     def test_private_media_bucket_and_policies_are_restricted(self):
         self.assertIn("'cms-media-private'", self.sql)

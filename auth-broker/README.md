@@ -66,13 +66,26 @@ Pages build needs to emit it.
 
 ## Endpoints
 
-- `GET /authorize` validates the fixed client ID, PKCE challenge, state, and
-  callback allowlist, then redirects to GitHub.
+- `GET /authorize` validates the callback and return path, then generates the
+  OAuth state, PKCE verifier, and S256 challenge inside the Worker before
+  redirecting to GitHub.
 - `GET /oauth/callback` validates the encrypted short-lived transaction cookie
-  and redirects to Pages with only an opaque ticket and state.
-- `POST /session/exchange` validates CORS, ticket, state, transaction cookie,
-  callback, and PKCE verifier; it exchanges the GitHub code server-side and
-  returns a short-lived GitHub user token plus expiry.
+  and exchanges the GitHub code server-side using the stored PKCE verifier. It
+  clears that cookie and redirects to Pages with only an opaque, one-minute
+  ticket containing the short-lived session result.
+- `POST /session/exchange` validates CORS, the encrypted ticket, its expiry,
+  nonce, and bound callback/return path. It does not require an OAuth
+  transaction cookie, then returns the short-lived GitHub user token, expiry,
+  and validated return path.
 
 The Worker never logs authorization codes, tokens, client secrets, or request
 bodies. It clears the transaction cookie after the exchange attempt.
+
+## Session restoration
+
+Cross-site Worker cookies can be blocked by browser privacy controls. For durable
+CMS login, bind a Cloudflare KV namespace named `CMS_SESSIONS` to this Worker.
+The browser retains only an opaque, origin-bound session handle; KV retains the
+encrypted GitHub session data and supports expiry and logout revocation. Create
+the namespace, add its ID as the `CMS_SESSIONS` binding in the Worker settings or
+`wrangler.toml`, then deploy. Do not store GitHub tokens in browser storage.

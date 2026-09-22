@@ -4,6 +4,8 @@ require 'nokogiri'
 class Phase13BAdminTest < Minitest::Test
   ROOT = File.expand_path('..', __dir__)
   ADMIN_PAGE = File.join(ROOT, '_pages/admin/index.html')
+  ADMIN_LAYOUT = File.join(ROOT, '_layouts/admin.html')
+  LEGACY_SHELL = File.join(ROOT, '_includes/admin/supabase_legacy.html')
   CALLBACK_PAGE = File.join(ROOT, '_pages/admin/auth/callback.html')
   APP = File.join(ROOT, 'assets/js/admin/app.js')
   CONFIG_GENERATOR = File.join(ROOT, '_plugins/cms_admin_config.rb')
@@ -11,16 +13,18 @@ class Phase13BAdminTest < Minitest::Test
 
   def test_admin_routes_are_isolated_and_have_no_signup_ui
     admin = File.read(ADMIN_PAGE)
+    layout = File.read(ADMIN_LAYOUT)
     callback = File.read(CALLBACK_PAGE)
-    assert_includes admin, 'layout: none'
+    assert_includes admin, 'layout: admin'
+    assert_includes layout, 'layout: none'
     assert_includes admin, 'permalink: /admin/'
     assert_includes callback, 'permalink: /admin/auth/callback/'
-    assert_includes admin, 'admin-login-form'
-    assert_includes admin, 'admin-reset-form'
+    assert_includes File.read(LEGACY_SHELL), 'admin-login-form'
+    assert_includes File.read(LEGACY_SHELL), 'admin-reset-form'
     assert_includes callback, 'Completing GitHub sign-in'
-    assert_includes admin, "{{ '/assets/js/admin/app.js' | relative_url }}"
+    assert_includes layout, "{{ '/assets/js/admin/app.js' | relative_url }}"
     assert_includes callback, "{{ '/admin/' | relative_url }}"
-    refute_match(/sign[ -]?up|register/i, admin)
+    refute_match(/sign[ -]?up|register/i, layout)
     refute_match(/sign[ -]?up|register/i, callback)
   end
 
@@ -72,7 +76,7 @@ class Phase13BAdminTest < Minitest::Test
   end
 
   def test_news_event_draft_ui_has_the_required_fields_and_no_publish_control
-    admin = File.read(ADMIN_PAGE)
+    admin = File.read(LEGACY_SHELL) + File.read(File.join(ROOT, '_includes/admin/news_form.html'))
     %w[admin-news-list admin-news-form-panel admin-news-nav admin-news-new admin-news-save admin-news-submit admin-news-return].each do |hook|
       assert_includes admin, hook
     end

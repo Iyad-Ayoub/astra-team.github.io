@@ -1,9 +1,9 @@
 # ASTRA CMS Supabase foundation
 
 Phase 13B establishes the authentication, authorization, audit, private
-media-storage foundation, and the first static ASTRA CMS control-panel shell.
-It does not add content tables, publishing/export code, a GitHub App, or public
-website content changes.
+media-storage foundation, a static ASTRA CMS control-panel shell, and a
+draft-only News/Event workspace. It does not add publishing/export code, a
+GitHub App, or public website content changes.
 
 ## Local setup
 
@@ -133,10 +133,32 @@ or RLS-denied profiles are signed out and denied access. The role displayed in
 the dashboard comes only from the RLS-protected `profiles` row. The shell has
 no sign-up or role/status-editing capability.
 
-## Deferred to Phase 13B-3+
+## Phase 13B-3 / 13C-1 News & Events drafts
 
-- News/Event and Media Asset tables and their content workflow
-- Content/media checksum and lifecycle logic
+Migration `20260921000002_cms_news_drafts.sql` adds `public.cms_news` for the
+frozen News/Event fields. It accepts only the `draft` and `in_review` states;
+there is no client or database publishing path. The database requires the core
+content fields, requires an event date for `event`, validates date order and
+safe URLs, and rejects Liquid delimiters, script tags, and inline HTML event
+handlers in the body.
+
+The authenticated Data API has explicit, column-limited grants because this
+project disables automatic privileges for new tables. RLS then enforces the
+editorial boundary: Contributors can read and update their own draft, including
+the one-way `draft` to `in_review` submission; Editors and Admins can read and
+update all records, including returning an item from review to draft. There is
+no client delete policy or grant. Insert/update triggers protect system fields,
+increment revisions, and append only controlled `news_created`, `news_updated`,
+and `news_submitted_for_review` audit events through a security-definer trigger.
+
+The `/admin/` workspace lists the records visible through RLS and supports new,
+edit, save-draft, submit-for-review, and editorial return-to-draft actions. It
+uses only the browser publishable key. It neither creates Jekyll news files nor
+publishes content or media.
+
+## Deferred to later Phase 13 work
+
+- Media Asset table, content/media checksum, and lifecycle logic
 - Markdown sanitization and Jekyll export validation
 - GitHub App, exporter, PR creation, CI/deployment status, and rollback UI
 - Project, team, platform, output, and publication CMS support
