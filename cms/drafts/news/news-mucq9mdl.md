@@ -1,10 +1,10 @@
 ---
 content_id: "news-mucq9mdl"
 title: "G6 Publication Test"
-type: "news"
+type: "event"
 summary: "Go to News & Events.\nCreate a test draft, for example:\nTitle: G6 Publication Test"
 content_date: "2026-09-22"
-event_date: null
+event_date: "2026-09-23"
 end_date: null
 location: null
 external_url: null
