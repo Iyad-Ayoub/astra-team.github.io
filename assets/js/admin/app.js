@@ -5,7 +5,7 @@
   var mode = document.body.dataset.adminMode;
   var client;
   var validRoles = ['admin', 'editor', 'contributor'];
-  var validNewsTypes = ['news', 'event', 'award', 'project', 'open-source', 'team', 'collaboration', 'demo'];
+  var validNewsTypes = ['event', 'award', 'project', 'open-source', 'team', 'collaboration', 'demo'];
   var passwordSetupRequired = false;
   var currentProfile;
   var editingNews;
@@ -239,7 +239,7 @@
     });
     record.id = record.content_id;
     if (!Object.prototype.hasOwnProperty.call(record, 'cover_media_id')) record.cover_media_id = null;
-    if (!/^news-[a-z0-9]+$/.test(record.id) || record.status !== 'draft' || validateNewsPayload(record)) throw new Error('Invalid CMS draft content.');
+    if (!/^news-[a-z0-9]+$/.test(record.id) || record.status !== 'draft' || validateNewsPayload(record, true)) throw new Error('Invalid CMS draft content.');
     return record;
   }
 
@@ -255,6 +255,38 @@
   function currentDraftId() {
     var id = new URLSearchParams(window.location.search).get('id');
     return id && /^news-[a-z0-9]+$/.test(id) ? id : null;
+  }
+
+  function publicationBranch(id) { if (!/^news-[a-z0-9]+$/.test(id)) throw new Error('Invalid draft identifier.'); return 'cms-publish/news/' + id; }
+  function publicSlug(record) { var words = record.title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 72); return (words || 'news') + '-' + record.id.replace(/^news-/, '').slice(-8); }
+  function publicNewsPath(record) { return '_news/' + publicSlug(record) + '.md'; }
+  function publicMediaPath(record, media) { return 'assets/img/news/' + record.id + '/' + media.path.split('/').pop(); }
+  function publicationMessage(value) { message('admin-publication-message', value); }
+  function serializePublicNews(record, media) {
+    var fields = { layout: 'news', content_id: record.id, slug: publicSlug(record), title: record.title, status: 'published', type: record.type, event_date: record.event_date, summary: record.summary, featured: record.featured, homepage: record.homepage, end_date: record.end_date, location: record.location, external_url: record.external_url, date_precision: 'day', image: media ? '/' + publicMediaPath(record, media) : null, image_alt: media ? media.alt_text || media.filename : null };
+    return '---\n' + Object.keys(fields).filter(function (key) { return fields[key] !== null && fields[key] !== ''; }).map(function (key) { return key + ': ' + JSON.stringify(fields[key]); }).join('\n') + '\n---\n\n' + record.body.trim() + '\n';
+  }
+  function setPublicationStatus(value, link) { text('admin-publication-status', value); var button = element('admin-news-publish'); if (button) button.disabled = value !== 'Draft'; if (link) { var anchor = document.createElement('a'); anchor.href = link; anchor.textContent = 'View pull request'; anchor.className = 'astra-admin-text-link'; var box = element('admin-publication-message'); box.replaceChildren(anchor); } }
+  async function loadPublicationStatus(session, record) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(record.id); try { var pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session); if (pulls.length) { setPublicationStatus('Submitted', pulls[0].html_url); return; } var publicFile = await githubResponse(base + '/contents/' + publicNewsPath(record) + '?ref=main', session); if (publicFile) { setPublicationStatus('Published'); return; } } catch (error) { if (error.status !== 404) { setPublicationStatus('Error'); publicationMessage(friendlyError(error, 'Unable to determine publication status.')); return; } } setPublicationStatus('Draft'); }
+  async function submitGithubPublication() {
+    var id = currentDraftId(), session = storedGithubSession();
+    if (!id || !session) { publicationMessage('Save and sign in before submitting for publication.'); return; }
+    try {
+      await verifyGithubRepositoryAccess(session);
+      var draft = await readGithubDraft(session, id), record = draft.record, github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(id);
+      if (validNewsTypes.indexOf(record.type) === -1) throw new Error('This draft uses a legacy unsupported type. Select a canonical public type before publication.');
+      var pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session);
+      if (pulls.length) { setPublicationStatus('Submitted', pulls[0].html_url); publicationMessage('Submitted: existing pull request #' + pulls[0].number + '.'); return; }
+      var main = await githubResponse(base + '/git/ref/heads/main', session);
+      try { await githubResponse(base + '/git/refs', session, { method: 'POST', body: { ref: 'refs/heads/' + branch, sha: main.object.sha } }); } catch (error) { if (error.status !== 422) throw error; publicationMessage('Publication branch already exists and needs review before reuse.'); return; }
+      var media = null;
+      if (record.cover_media_id) { await readMediaIndex(session); media = mediaIndex.find(function (item) { return item.id === record.cover_media_id; }); if (!media) throw new Error('Referenced cover media is missing.'); }
+      var newsBody = { message: 'cms: prepare news publication ' + id, content: utf8Base64(serializePublicNews(record, media)), branch: branch };
+      await githubResponse(base + '/contents/' + publicNewsPath(record), session, { method: 'PUT', body: newsBody });
+      if (media) { var image = await githubMediaBlob(session, media); var bytes = new Uint8Array(await image.arrayBuffer()); await githubResponse(base + '/contents/' + publicMediaPath(record, media), session, { method: 'PUT', body: { message: 'cms: copy news cover ' + id, content: bytesBase64(bytes), branch: branch } }); }
+      var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Publish News: ' + record.title, head: branch, base: 'main', body: 'CMS publication\n\nContent ID: ' + id + '\nType: ' + record.type + '\nCover media: ' + (media ? 'included' : 'none') + '\nSource: ' + githubDraftBranch + '/' + draftPath(id) } });
+      setPublicationStatus('Submitted', pr.html_url); publicationMessage('Submitted: pull request #' + pr.number + ' created.');
+    } catch (error) { publicationMessage(friendlyError(error, 'Unable to submit this draft for publication.')); }
   }
 
   async function saveGithubDraft(event) {
@@ -318,7 +350,7 @@
         await readMediaIndex(session);
         var id = route === 'news-edit' ? currentDraftId() : null;
         if (route === 'news-edit' && !id) throw new Error('A valid draft identifier is required.');
-        if (id) { var loaded = await readGithubDraft(session, id); loaded.record.githubSha = loaded.sha; resetNewsForm(loaded.record); populateCoverMedia(loaded.record, session); } else { resetNewsForm(null); populateCoverMedia(null, session); }
+        if (id) { var loaded = await readGithubDraft(session, id); loaded.record.githubSha = loaded.sha; resetNewsForm(loaded.record); populateCoverMedia(loaded.record, session); await loadPublicationStatus(session, loaded.record); } else { resetNewsForm(null); populateCoverMedia(null, session); }
       }
     } catch (error) { githubDraftMessage(friendlyError(error, 'Unable to load GitHub drafts.')); }
   }
@@ -466,6 +498,7 @@
     document.querySelectorAll('#admin-github-login-button').forEach(function (button) { button.addEventListener('click', beginGithubLogin); });
     document.querySelectorAll('#admin-github-logout').forEach(function (button) { button.addEventListener('click', logoutGithub); });
     if (element('admin-github-news-form')) element('admin-github-news-form').addEventListener('submit', saveGithubDraft);
+    if (element('admin-news-publish')) element('admin-news-publish').addEventListener('click', submitGithubPublication);
     if (newsField('type')) newsField('type').addEventListener('change', toggleEventFields);
     if (element('admin-media-upload-form')) element('admin-media-upload-form').addEventListener('submit', uploadMedia);
     if (newsField('cover-media-id')) newsField('cover-media-id').addEventListener('change', function () { renderCoverPreview(mediaIndex.find(function (item) { return item.id === newsField('cover-media-id').value; }), storedGithubSession()); });
@@ -535,9 +568,9 @@
     };
   }
 
-  function validateNewsPayload(payload) {
+  function validateNewsPayload(payload, allowLegacy) {
     if (!payload.title || !payload.summary || !payload.body || !payload.content_date) return 'Complete the required fields.';
-    if (validNewsTypes.indexOf(payload.type) === -1) return 'Choose a supported content type.';
+    if (validNewsTypes.indexOf(payload.type) === -1 && !(allowLegacy && payload.type === 'news')) return 'Choose a supported content type.';
     if (payload.title.length > 180 || payload.summary.length > 600 || payload.body.length > 30000 || (payload.location && payload.location.length > 160)) return 'One or more fields are too long.';
     if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.content_date)) return 'Enter a valid content date.';
     if (payload.type === 'event' && !payload.event_date) return 'An event date is required for an event.';
@@ -559,7 +592,7 @@
     editingNews = record || null;
     text('admin-news-form-title', record ? 'Edit News or Event' : 'New News or Event');
     newsField('title').value = record ? record.title : '';
-    newsField('type').value = record ? record.type : 'news';
+    newsField('type').value = record && validNewsTypes.indexOf(record.type) !== -1 ? record.type : 'event';
     newsField('summary').value = record ? record.summary : '';
     newsField('body').value = record ? record.body : '';
     newsField('content-date').value = record ? record.content_date : '';
