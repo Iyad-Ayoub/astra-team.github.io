@@ -10,8 +10,8 @@ module AstraCms
     def generate(site)
       url = ENV.fetch('SUPABASE_URL', '').strip
       key = ENV.fetch('SUPABASE_PUBLISHABLE_KEY', '').strip
-      if ENV['CMS_REQUIRE_CONFIG'] == 'true' && (url.empty? || key.empty?)
-        raise 'SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are required for the CMS production build'
+      if url.empty? != key.empty?
+        raise 'SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be configured together for the legacy CMS fallback'
       end
 
       github_client_id = ENV.fetch('GITHUB_APP_CLIENT_ID', '').strip
@@ -21,18 +21,25 @@ module AstraCms
       unless github_repo_owner == 'Iyad-Ayoub' && github_repo_name == 'astra-team.github.io'
         raise 'GitHub CMS repository identity must remain Iyad-Ayoub/astra-team.github.io'
       end
+      if ENV['CMS_REQUIRE_CONFIG'] == 'true' && (github_client_id.empty? || github_broker_url.empty?)
+        raise 'GITHUB_APP_CLIENT_ID and GITHUB_AUTH_BROKER_URL are required for the CMS production build'
+      end
 
-      page = Jekyll::PageWithoutAFile.new(site, site.source, 'assets/js/admin', 'config.js')
-      page.content = "window.ASTRA_CMS_CONFIG = Object.freeze(#{JSON.generate({
-        supabaseUrl: url,
-        supabasePublishableKey: key,
+      config = {
         githubAuth: {
           clientId: github_client_id,
           brokerUrl: github_broker_url,
           repoOwner: github_repo_owner,
           repoName: github_repo_name
         }
-      })});\n"
+      }
+      if !url.empty?
+        config[:supabaseUrl] = url
+        config[:supabasePublishableKey] = key
+      end
+
+      page = Jekyll::PageWithoutAFile.new(site, site.source, 'assets/js/admin', 'config.js')
+      page.content = "window.ASTRA_CMS_CONFIG = Object.freeze(#{JSON.generate(config)});\n"
       page.data['layout'] = nil
       page.data['sitemap'] = false
       site.pages << page
