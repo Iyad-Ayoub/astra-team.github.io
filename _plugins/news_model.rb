@@ -48,7 +48,8 @@ module AstraNews
       end
       if r['image'] && !r['image'].empty?
         path = r['image']
-        raise 'news image must be an existing local asset' unless path.match?(%r{\A/assets/img/[a-zA-Z0-9_./-]+\.(?:png|jpe?g|gif|webp)\z}) && !path.split('/').include?('..') && File.file?(File.join(root, path.delete_prefix('/')))
+        expected = %r{\A/assets/img/news/#{Regexp.escape(r['content_id'])}/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|gif|webp)\z}
+        raise 'news image must be an existing public asset owned by its News item' unless path.match?(expected) && File.file?(File.join(root, path.delete_prefix('/')))
         raise 'news image requires alt text' unless r['image_alt'].is_a?(String) && !r['image_alt'].strip.empty?
       end
       raise 'unknown related news output' if r['related_output'] && !output_ids.include?(r['related_output'])
