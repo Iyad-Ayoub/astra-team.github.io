@@ -8,6 +8,48 @@ require_relative '../_plugins/publication_presentation'
 class Phase10ReleaseTest < Minitest::Test
   FILTER = Object.new.extend(AstraRelease::Filters)
   ROOT = File.expand_path('..', __dir__)
+  REQUIRED_RELEASE_ARTIFACTS = %w[
+    404.html
+    index.html
+    about/index.html
+    accessibility/index.html
+    info/index.html
+    legal/index.html
+    news/index.html
+    outputs/index.html
+    platforms/index.html
+    privacy/index.html
+    projects/index.html
+    publications/index.html
+    research/index.html
+    research/vision/index.html
+    team/index.html
+    team/fawzi-nashashibi.html
+    research/perception/index.html
+    research/mapping/index.html
+    research/decision/index.html
+    research/cooperative/index.html
+    research/cross-cutting/index.html
+    projects/gat/index.html
+    projects/samba/index.html
+    projects/shift2sdv/index.html
+    projects/sight/index.html
+    projects/tirrex/index.html
+    news/2025-01-20-plenary/index.html
+    news/acvss-2025/index.html
+    news/acvss-nairobi-2024/index.html
+    news/ieee-iv-2025/index.html
+    news/matswap-egsr-2025/index.html
+    news/open-source-2023/index.html
+    news/open-source-2024/index.html
+    news/pasco-cvpr-2024/index.html
+    news/raoul-dr-2024/index.html
+    news/visapp-2022-best-paper/index.html
+  ].freeze
+
+  def assert_release_baseline(artifacts)
+    REQUIRED_RELEASE_ARTIFACTS.each { |artifact| assert_includes artifacts, artifact }
+  end
 
   def test_canonical_and_profile_policy
     %w[/about/ /about/index.html /about/?x=1#anchor //about///].each do |route|
@@ -42,7 +84,8 @@ class Phase10ReleaseTest < Minitest::Test
     dest = ENV['PHASE10_SITE']
     skip 'Set PHASE10_SITE to validate generated HTML' unless dest
     files = Dir[File.join(dest, '**/*.html')].reject { |file| file.include?('/admin/') }
-    assert_equal 36, files.size
+    artifacts = files.map { |file| file.delete_prefix(dest + '/') }
+    assert_release_baseline(artifacts)
     descriptions = []
     files.each do |file|
       html = File.read(file)
@@ -77,5 +120,10 @@ class Phase10ReleaseTest < Minitest::Test
     if pub.text.include?('978-3-031-39991-6')
       refute_nil pub.at_css('a[href="https://doi.org/10.1007/978-3-031-39991-6_7"]')
     end
+  end
+
+  def test_release_baseline_allows_an_additional_valid_news_artifact
+    artifacts = REQUIRED_RELEASE_ARTIFACTS + ['news/cms-created-item/index.html']
+    assert_release_baseline(artifacts)
   end
 end
