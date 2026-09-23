@@ -1,0 +1,62 @@
+name: CMS publication validation
+
+on:
+  push:
+    branches:
+      - 'cms-publish/**'
+
+permissions: {}
+
+concurrency:
+  group: cms-publication-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: CMS publication validation
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    env:
+      BUNDLE_FROZEN: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout publication branch and main baseline
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install ImageMagick and native build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick build-essential patch pkg-config libssl-dev zlib1g-dev liblzma-dev
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b
+        with:
+          bundler-cache: true
+          cache-version: 0
+      - name: Validate controlled CMS publication changes
+        run: |
+          set -euo pipefail
+          git diff --check origin/main...HEAD
+          bundle exec ruby scripts/validate_cms_publication.rb origin/main
+          bundle exec ruby scripts/validate_site.rb --source-only
+          bundle exec ruby tests/phase7_news_test.rb
+          bundle exec ruby tests/phase9_research_visuals_test.rb
+          bundle exec ruby tests/phase10_release_test.rb
+          bundle exec ruby tests/validation_test.rb
+      - name: Build and validate the published News artifact
+        env:
+          JEKYLL_ENV: production
+        run: |
+          set -euo pipefail
+          destination="$RUNNER_TEMP/astra-cms-publication"
+          baseurl="/astra-team.github.io"
+          bundle exec jekyll build --destination "$destination" --baseurl "$baseurl"
+          export PHASE7_SITE="$destination" PHASE7_BASEURL="$baseurl"
+          export PHASE9_SITE="$destination" PHASE9_BASEURL="$baseurl"
+          export PHASE10_SITE="$destination" PHASE10_BASEURL="$baseurl"
+          bundle exec ruby tests/phase7_news_test.rb
+          bundle exec ruby tests/phase9_research_visuals_test.rb
+          bundle exec ruby tests/phase10_release_test.rb
+          bundle exec ruby scripts/validate_site.rb "$destination" "$baseurl"
