@@ -41,15 +41,12 @@ layout: none
       </div>
     </section>
 
-    {% if page.legacy_supabase %}{% include admin/supabase_legacy.html %}{% endif %}
-
     <section id="admin-denied" class="astra-admin-card" hidden>
       <h1>Access unavailable</h1>
       <p id="admin-denied-message"></p>
       <a class="astra-admin-text-link" href="{{ '/admin/' | relative_url }}">Return to sign in</a>
     </section>
   </main>
-  {% if page.legacy_supabase %}<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>{% endif %}
   <script src="{{ '/assets/js/admin/config.js' | relative_url }}"></script>
   <script src="{{ '/assets/js/admin/app.js' | relative_url }}" defer></script>
 </body>

@@ -46,8 +46,8 @@ class PhaseG3GitHubDraftsTest < Minitest::Test
     [NEW, EDIT].each { |path| assert_includes File.read(path), '{% include admin/news_form.html %}' }
   end
 
-  def test_github_draft_flow_does_not_call_supabase
-    flow = @app.split('async function ensureGithubDraftBranch', 2).last.split('async function loadProfile', 2).first
+  def test_github_draft_flow_has_no_legacy_database_calls
+    flow = @app.split('async function ensureGithubDraftBranch', 2).last.split('async function bootGithub', 2).first
     refute_includes flow, "from('cms_news')"
     refute_includes flow, "from('profiles')"
     assert_includes flow, 'verifyGithubRepositoryAccess(session)'

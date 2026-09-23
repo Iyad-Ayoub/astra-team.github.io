@@ -1,19 +1,13 @@
 require 'json'
 
-# Emits browser-safe configuration for the temporary Supabase fallback and the
-# GitHub App browser flow. No privileged credential is ever emitted.
+# Emits browser-safe configuration for the GitHub App browser flow. No
+# privileged credential is ever emitted.
 module AstraCms
   class AdminConfigGenerator < Jekyll::Generator
     safe true
     priority :lowest
 
     def generate(site)
-      url = ENV.fetch('SUPABASE_URL', '').strip
-      key = ENV.fetch('SUPABASE_PUBLISHABLE_KEY', '').strip
-      if url.empty? != key.empty?
-        raise 'SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be configured together for the legacy CMS fallback'
-      end
-
       github_client_id = ENV.fetch('GITHUB_APP_CLIENT_ID', '').strip
       github_broker_url = ENV.fetch('GITHUB_AUTH_BROKER_URL', '').strip.sub(%r{/\z}, '')
       github_repo_owner = ENV.fetch('GITHUB_REPO_OWNER', 'Iyad-Ayoub').strip
@@ -33,11 +27,6 @@ module AstraCms
           repoName: github_repo_name
         }
       }
-      if !url.empty?
-        config[:supabaseUrl] = url
-        config[:supabasePublishableKey] = key
-      end
-
       page = Jekyll::PageWithoutAFile.new(site, site.source, 'assets/js/admin', 'config.js')
       page.content = "window.ASTRA_CMS_CONFIG = Object.freeze(#{JSON.generate(config)});\n"
       page.data['layout'] = nil

@@ -3,11 +3,7 @@
 
   var config = window.ASTRA_CMS_CONFIG || {};
   var mode = document.body.dataset.adminMode;
-  var client;
-  var validRoles = ['admin', 'editor', 'contributor'];
   var validNewsTypes = ['event', 'award', 'project', 'open-source', 'team', 'collaboration', 'demo'];
-  var passwordSetupRequired = false;
-  var currentProfile;
   var editingNews;
   var githubSession;
   var githubSessionHandleKey = 'astra-cms-session-handle';
@@ -22,25 +18,6 @@
   function setHidden(id, hidden) { var node = element(id); if (node) node.hidden = hidden; }
   function text(id, value) { var node = element(id); if (node) node.textContent = value || ''; }
   function message(id, value) { text(id, value); }
-
-  function show(name) {
-    ['admin-loading', 'admin-login', 'admin-reset', 'admin-dashboard', 'admin-news-list', 'admin-news-form-panel', 'admin-denied', 'admin-password-setup'].forEach(function (id) {
-      setHidden(id, id !== name);
-    });
-  }
-
-  function callbackUrl() {
-    return new URL('auth/callback/', window.location.href).toString();
-  }
-
-  function loginUrl() {
-    return new URL('../../', window.location.href).toString();
-  }
-
-  function deny(reason) {
-    text('admin-denied-message', reason);
-    show('admin-denied');
-  }
 
   function friendlyError(error, fallback) {
     return error && error.message ? error.message : fallback;
@@ -528,35 +505,6 @@
     if (newsField('cover-media-id')) newsField('cover-media-id').addEventListener('change', function () { renderCoverPreview(mediaIndex.find(function (item) { return item.id === newsField('cover-media-id').value; }), storedGithubSession()); });
   }
 
-  async function loadProfile(session) {
-    var response = await client.from('profiles')
-      .select('id, display_name, role, status')
-      .eq('id', session.user.id)
-      .maybeSingle();
-
-    if (response.error || !response.data) {
-      await client.auth.signOut();
-      deny('Your verified account does not have an active CMS profile. Contact an administrator.');
-      return;
-    }
-    if (response.data.status !== 'active' || validRoles.indexOf(response.data.role) === -1) {
-      await client.auth.signOut();
-      deny('This CMS account is unavailable. Contact an administrator.');
-      return;
-    }
-
-    text('admin-display-name', response.data.display_name || session.user.email || 'ASTRA CMS user');
-    text('admin-user-email', session.user.email || '');
-    text('admin-role', response.data.role.charAt(0).toUpperCase() + response.data.role.slice(1));
-    setHidden('admin-users-nav', response.data.role !== 'admin');
-    currentProfile = response.data;
-    show('admin-dashboard');
-  }
-
-  function isEditorialUser() {
-    return currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'editor');
-  }
-
   function newsField(name) {
     return element('admin-news-' + name);
   }
@@ -627,219 +575,13 @@
     newsField('featured').checked = Boolean(record && record.featured);
     newsField('homepage').checked = Boolean(record && record.homepage);
     if (newsField('cover-media-id')) newsField('cover-media-id').value = record && record.cover_media_id ? record.cover_media_id : '';
-    setHidden('admin-news-return', !(record && record.status === 'in_review' && isEditorialUser()));
-    setNewsMessage(record && record.status === 'in_review' && !isEditorialUser() ? 'This item is in review and cannot be changed by its contributor.' : '');
+    setNewsMessage('');
     toggleEventFields();
-  }
-
-  async function loadNews() {
-    message('admin-news-list-message', '');
-    var response = await client.from('cms_news')
-      .select('id, title, type, summary, body, content_date, event_date, end_date, location, external_url, featured, homepage, status, updated_at, created_by')
-      .order('updated_at', { ascending: false });
-    var container = element('admin-news-items');
-    container.replaceChildren();
-    if (response.error) {
-      message('admin-news-list-message', friendlyError(response.error, 'Unable to load News & Events.'));
-      return;
-    }
-    if (!response.data.length) {
-      var empty = document.createElement('p');
-      empty.textContent = 'No News or Events drafts yet.';
-      container.appendChild(empty);
-      return;
-    }
-    response.data.forEach(function (record) {
-      var button = document.createElement('button');
-      var detail = document.createElement('small');
-      button.type = 'button';
-      button.className = 'astra-admin-news-item';
-      button.dataset.newsId = record.id;
-      button.textContent = record.title;
-      detail.textContent = record.type + ' · ' + record.content_date + ' · ' + record.status + ' · Updated ' + new Date(record.updated_at).toLocaleString();
-      button.appendChild(detail);
-      button.addEventListener('click', function () { openNewsForm(record); });
-      container.appendChild(button);
-    });
-  }
-
-  async function openNewsList() {
-    show('admin-news-list');
-    await loadNews();
-  }
-
-  function openNewsForm(record) {
-    resetNewsForm(record);
-    show('admin-news-form-panel');
-  }
-
-  async function saveNews(event) {
-    if (event) event.preventDefault();
-    var payload = collectNewsPayload();
-    var validationError = validateNewsPayload(payload);
-    if (validationError) { setNewsMessage(validationError); return false; }
-    if (editingNews && editingNews.status === 'in_review' && !isEditorialUser()) {
-      setNewsMessage('This item is in review and cannot be changed by its contributor.');
-      return false;
-    }
-    setNewsMessage('Saving draft…');
-    var response = editingNews
-      ? await client.from('cms_news').update(payload).eq('id', editingNews.id).select().single()
-      : await client.from('cms_news').insert(payload).select().single();
-    if (response.error) { setNewsMessage(friendlyError(response.error, 'Unable to save this draft.')); return false; }
-    editingNews = response.data;
-    resetNewsForm(editingNews);
-    setNewsMessage('Draft saved.');
-    return true;
-  }
-
-  async function submitNewsForReview() {
-    if (!editingNews) {
-      var saved = await saveNews();
-      if (!saved) return;
-    }
-    if (editingNews.status !== 'draft') {
-      setNewsMessage('This item is already in review.');
-      return;
-    }
-    var response = await client.from('cms_news').update({ status: 'in_review' }).eq('id', editingNews.id).select().single();
-    if (response.error) { setNewsMessage(friendlyError(response.error, 'Unable to submit this item for review.')); return; }
-    editingNews = response.data;
-    resetNewsForm(editingNews);
-    setNewsMessage('Submitted for review. Publishing is not available in this phase.');
-  }
-
-  async function returnNewsToDraft() {
-    if (!editingNews || !isEditorialUser()) return;
-    var response = await client.from('cms_news').update({ status: 'draft' }).eq('id', editingNews.id).select().single();
-    if (response.error) { setNewsMessage(friendlyError(response.error, 'Unable to return this item to draft.')); return; }
-    editingNews = response.data;
-    resetNewsForm(editingNews);
-    setNewsMessage('Returned to draft.');
-  }
-
-  async function handleSession(session) {
-    if (!session) {
-      if (mode === 'callback') {
-        deny('This invitation or password-reset link is invalid, expired, or already used.');
-      } else {
-        show('admin-login');
-      }
-      return;
-    }
-    if (passwordSetupRequired) {
-      show('admin-password-setup');
-      return;
-    }
-    await loadProfile(session);
-  }
-
-  async function handleAuthState(event, session) {
-    // Supabase reports a recovery link as PASSWORD_RECOVERY and an invitation
-    // redirect as an authenticated SIGNED_IN event. Do not inspect callback
-    // query/hash parameters or client metadata to decide this state.
-    if (mode === 'callback' && session && (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN')) {
-      passwordSetupRequired = true;
-    }
-    await handleSession(session);
-  }
-
-  async function signIn(event) {
-    event.preventDefault();
-    var email = element('admin-email').value.trim();
-    var password = element('admin-password').value;
-    if (!email || !password) {
-      message('admin-login-message', 'Enter your email address and password.');
-      return;
-    }
-    message('admin-login-message', '');
-    var response = await client.auth.signInWithPassword({ email: email, password: password });
-    if (response.error) message('admin-login-message', friendlyError(response.error, 'Unable to sign in.'));
-  }
-
-  async function requestReset(event) {
-    event.preventDefault();
-    var email = element('admin-reset-email').value.trim();
-    if (!email) {
-      message('admin-reset-message', 'Enter your email address.');
-      return;
-    }
-    var response = await client.auth.resetPasswordForEmail(email, { redirectTo: callbackUrl() });
-    message('admin-reset-message', response.error ? friendlyError(response.error, 'Unable to send reset link.') : 'If this address has an ASTRA CMS account, a reset link has been sent.');
-  }
-
-  async function setPassword(event) {
-    event.preventDefault();
-    var password = element('admin-new-password').value;
-    var confirmation = element('admin-confirm-password').value;
-    if (password.length < 14) {
-      message('admin-password-message', 'Use at least 14 characters.');
-      return;
-    }
-    if (password !== confirmation) {
-      message('admin-password-message', 'The passwords do not match.');
-      return;
-    }
-    var response = await client.auth.updateUser({ password: password });
-    if (response.error) {
-      message('admin-password-message', friendlyError(response.error, 'Unable to set your password.'));
-      return;
-    }
-    window.history.replaceState({}, document.title, window.location.pathname);
-    passwordSetupRequired = false;
-    await handleAuthState('USER_UPDATED', (await client.auth.getSession()).data.session);
-  }
-
-  async function logout() {
-    await client.auth.signOut();
-    currentProfile = null;
-    editingNews = null;
-    if (mode === 'callback') window.location.assign(loginUrl());
-  }
-
-  function bindEvents() {
-    var loginForm = element('admin-login-form');
-    var resetForm = element('admin-reset-form');
-    var passwordForm = element('admin-password-form');
-    if (loginForm) loginForm.addEventListener('submit', signIn);
-    if (resetForm) resetForm.addEventListener('submit', requestReset);
-    if (passwordForm) passwordForm.addEventListener('submit', setPassword);
-    if (element('admin-reset-link')) element('admin-reset-link').addEventListener('click', function () { show('admin-reset'); });
-    if (element('admin-back-to-login')) element('admin-back-to-login').addEventListener('click', function () { show('admin-login'); });
-    if (element('admin-news-nav')) element('admin-news-nav').addEventListener('click', openNewsList);
-    if (element('admin-news-back')) element('admin-news-back').addEventListener('click', function () { show('admin-dashboard'); });
-    if (element('admin-news-new')) element('admin-news-new').addEventListener('click', function () { openNewsForm(null); });
-    if (element('admin-news-form-back')) element('admin-news-form-back').addEventListener('click', openNewsList);
-    if (element('admin-news-form')) element('admin-news-form').addEventListener('submit', saveNews);
-    if (element('admin-news-submit')) element('admin-news-submit').addEventListener('click', submitNewsForReview);
-    if (element('admin-news-return')) element('admin-news-return').addEventListener('click', returnNewsToDraft);
-    if (newsField('type')) newsField('type').addEventListener('change', toggleEventFields);
-    ['admin-logout', 'admin-denied-logout'].forEach(function (id) { if (element(id)) element(id).addEventListener('click', logout); });
-  }
-
-  async function bootSupabase() {
-    if (!config.supabaseUrl || !config.supabasePublishableKey || !window.supabase) {
-      deny('The ASTRA CMS is not configured for this build. Contact an administrator.');
-      return;
-    }
-    client = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    });
-    client.auth.onAuthStateChange(function (event, session) {
-      window.setTimeout(function () { handleAuthState(event, session); }, 0);
-    });
-    var response = await client.auth.getSession();
-    await handleAuthState('INITIAL_SESSION', response.data.session);
   }
 
   async function boot() {
     bindGithubEvents();
-    if (githubSettings()) {
-      await bootGithub();
-      return;
-    }
-    bindEvents();
-    await bootSupabase();
+    await bootGithub();
   }
 
   boot();

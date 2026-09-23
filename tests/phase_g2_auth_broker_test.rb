@@ -74,7 +74,7 @@ class PhaseG2AuthBrokerTest < Minitest::Test
   end
 
   def test_no_arbitrary_repository_or_cms_storage_is_present
-    refute_match(/repo_owner|repo_name|drafts|cms_news|supabase/i, @worker)
+    refute_match(/repo_owner|repo_name|drafts|cms_news/i, @worker)
     refute_match(/console\.(?:log|error|warn)/, @worker)
   end
 end

@@ -67,8 +67,9 @@ class PhaseG1GitHubAuthTest < Minitest::Test
     refute_includes File.read(APP), 'localStorage.setItem(githubSessionKey'
   end
 
-  def test_github_auth_is_the_active_path_during_the_pivot
+  def test_github_auth_is_the_only_admin_auth_path
     app = File.read(APP)
-    assert_match(/if \(githubSettings\(\)\) \{\s+await bootGithub\(\);\s+return;\s+\}\s+bindEvents\(\);\s+await bootSupabase\(\);/m, app)
+    assert_match(/async function boot\(\) \{\s+bindGithubEvents\(\);\s+await bootGithub\(\);\s+\}/m, app)
+    refute_match(/cms_news|signInWithPassword|createClient\(/i, app)
   end
 end

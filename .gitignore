@@ -10,6 +10,5 @@ _site
 .tweet-cache
 vendor
 resources
-supabase/.temp/
 auth-broker/.dev.vars
 auth-broker/.wrangler/
