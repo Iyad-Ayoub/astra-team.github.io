@@ -34,24 +34,13 @@ class CmsAdminConfigTest < Minitest::Test
   end
 
   def github_env
-    { 'CMS_REQUIRE_CONFIG' => 'true', 'GITHUB_APP_CLIENT_ID' => 'client-id', 'GITHUB_AUTH_BROKER_URL' => 'https://broker.example', 'GITHUB_REPO_OWNER' => 'Iyad-Ayoub', 'GITHUB_REPO_NAME' => 'astra-team.github.io', 'SUPABASE_URL' => '', 'SUPABASE_PUBLISHABLE_KEY' => '' }
+    { 'CMS_REQUIRE_CONFIG' => 'true', 'GITHUB_APP_CLIENT_ID' => 'client-id', 'GITHUB_AUTH_BROKER_URL' => 'https://broker.example', 'GITHUB_REPO_OWNER' => 'Iyad-Ayoub', 'GITHUB_REPO_NAME' => 'astra-team.github.io' }
   end
 
   def test_github_configuration_is_sufficient_for_production
     config = generated(github_env)
     assert_equal 'client-id', config.dig('githubAuth', 'clientId')
-    refute config.key?('supabaseUrl')
-  end
-
-  def test_complete_legacy_configuration_is_preserved
-    config = generated(github_env.merge('SUPABASE_URL' => 'https://legacy.example', 'SUPABASE_PUBLISHABLE_KEY' => 'publishable'))
-    assert_equal 'https://legacy.example', config['supabaseUrl']
-    assert_equal 'publishable', config['supabasePublishableKey']
-  end
-
-  def test_partial_legacy_configuration_is_rejected
-    error = assert_raises(RuntimeError) { generated(github_env.merge('SUPABASE_URL' => 'https://legacy.example')) }
-    assert_match(/configured together/, error.message)
+    assert_equal %w[githubAuth], config.keys
   end
 
   def test_required_github_configuration_is_rejected_when_missing
