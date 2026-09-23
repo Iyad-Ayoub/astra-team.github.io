@@ -13,7 +13,7 @@ class PhaseG6PublicationTest < Minitest::Test
     assert_includes @app, "'_news/' + publicSlug(record) + '.md'"
   end
   def test_public_slug_is_human_readable_sanitized_and_collision_safe
-    assert_includes @app, "function publicSlug(record)"
+    assert_includes @app, "function publicSlug(record, published)"
     assert_includes @app, "replace(/[^a-z0-9]+/g, '-')"
     assert_includes @app, "record.id.replace(/^news-/, '').slice(-8)"
     assert_includes @app, "'_news/' + publicSlug(record) + '.md'"
