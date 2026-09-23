@@ -21,7 +21,7 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
   def test_submission_resolves_status_after_creating_the_pull_request
     assert_includes @app, 'await loadPublicationStatus(session, record);'
     assert_includes @app, 'View pull request'
-    assert_operator @app.index("pull request #' + pr.number + ' created."), :<, @app.index('await loadPublicationStatus(session, record);', @app.index("pull request #' + pr.number + ' created."))
+    assert_includes @app, "renderPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url"
   end
 
   def test_expired_session_preserves_the_target_route_before_reauthentication

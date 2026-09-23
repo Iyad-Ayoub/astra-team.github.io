@@ -30,6 +30,7 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/cms-publish/')
     runs-on: ubuntu-22.04
     permissions:
       contents: read
