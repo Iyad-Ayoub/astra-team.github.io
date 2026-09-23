@@ -30,7 +30,8 @@ class PhaseG5AuthPersistenceTest < Minitest::Test
   end
 
   def test_tokens_are_memory_only_and_not_browser_persistent_storage
-    refute_includes @app, 'sessionStorage.setItem'
+    assert_includes @app, "sessionStorage.setItem('astra-cms-reauth-draft'"
+    refute_match(/sessionStorage\.setItem\([^\n]*(?:accessToken|access_token|githubSession)/, @app)
     refute_includes @app, 'localStorage.setItem(githubSessionKey'
     assert_includes @app, 'var githubSession;'
   end
