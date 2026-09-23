@@ -1,6 +1,8 @@
 require 'minitest/autorun'
 require 'digest'
 require 'nokogiri'
+require 'fileutils'
+require 'tmpdir'
 require_relative '../scripts/validate_site'
 
 class Phase9ResearchVisualsTest < Minitest::Test
@@ -10,6 +12,11 @@ class Phase9ResearchVisualsTest < Minitest::Test
     'mapping' => ['axis_localization.jpg', 672, 397],
     'decision' => ['axis_decision.jpg', 659, 536]
   }.freeze
+  PROTECTED_IMAGE_DIRECTORIES = %w[
+    assets/img/research
+    _responsive/assets/img/research
+  ].freeze
+  PROTECTED_RESEARCH_IMAGE_HASH = '1af5495e580ce801b24543a719994b0f141ae88bb58d5fd946635ed3cfcf58f9'
   BODY_HASHES = {
     # Pre-Phase-10 explicitly approved replacement; other scientific snapshots unchanged.
     'cooperative' => 'd7bdf77f2bdbb42574e6c26a96269215113820e29a5d597d95e9cadcaf6e56f6',
@@ -48,16 +55,63 @@ class Phase9ResearchVisualsTest < Minitest::Test
     end
   end
 
-  def test_pipeline_and_all_image_bytes_preserved
-    PIPELINE_HASHES.each { |path, hash| assert_equal hash, Digest::SHA256.file(File.join(ROOT, path)).hexdigest, path }
-    files = %w[_responsive assets/img].flat_map { |dir| Dir[File.join(ROOT, dir, '**/*')].select { |p| File.file?(p) }.sort }
+  def protected_research_image_digest(root = ROOT)
+    files = PROTECTED_IMAGE_DIRECTORIES.flat_map do |directory|
+      Dir[File.join(root, directory, '**/*')].select { |path| File.file?(path) }.sort
+    end
     digest = Digest::SHA256.new
-    files.each { |path| digest.update(path.delete_prefix(ROOT + '/') + "\0"); digest.update(File.binread(path)) }
-    assert_equal '9282457eb36df2c0ad27cdf76e0b8478eb5e206c29867ba306125fe0c50a0295', digest.hexdigest
+    files.each do |path|
+      digest.update(path.delete_prefix(root + '/') + "\0")
+      digest.update(File.binread(path))
+    end
+    digest.hexdigest
+  end
+
+  def test_pipeline_and_protected_research_image_bytes_preserved
+    PIPELINE_HASHES.each { |path, hash| assert_equal hash, Digest::SHA256.file(File.join(ROOT, path)).hexdigest, path }
+    assert_equal PROTECTED_RESEARCH_IMAGE_HASH, protected_research_image_digest
     css = File.read(File.join(ROOT, '_sass/_astra.scss')).split('.astra-axis-illustration {', 2).last.split('@media', 2).first
     assert_includes css, 'max-width: 100%'
     assert_includes css, 'height: auto'
     refute_match(/object-fit|aspect-ratio|(?<![\w-])height:\s*\d/, css)
+  end
+
+  def test_cms_news_cover_does_not_change_the_protected_research_visual_baseline
+    Dir.mktmpdir('astra-phase9-research-') do |root|
+      PROTECTED_IMAGE_DIRECTORIES.each do |directory|
+        FileUtils.mkdir_p(File.join(root, File.dirname(directory)))
+        FileUtils.cp_r(File.join(ROOT, directory), File.join(root, File.dirname(directory)))
+      end
+      assert_equal PROTECTED_RESEARCH_IMAGE_HASH, protected_research_image_digest(root)
+
+      cover = File.join(root, 'assets/img/news/news-fixturecover/cover.png')
+      FileUtils.mkdir_p(File.dirname(cover))
+      File.binwrite(cover, 'valid additional CMS cover fixture')
+      assert_equal PROTECTED_RESEARCH_IMAGE_HASH, protected_research_image_digest(root)
+
+      protected = File.join(root, 'assets/img/research/axis_astra-vision.png')
+      File.binwrite(protected, File.binread(protected) + 'modified')
+      refute_equal PROTECTED_RESEARCH_IMAGE_HASH, protected_research_image_digest(root)
+      FileUtils.rm_f(protected)
+      refute_equal PROTECTED_RESEARCH_IMAGE_HASH, protected_research_image_digest(root)
+    end
+  end
+
+  def assert_non_axis_page_visuals(relative, doc, base)
+    assert_empty doc.css('figure.astra-axis-illustration'), relative
+    if relative.match?(%r{\A(?:research|projects|platforms|outputs)/})
+      assert_empty doc.css('article img'), relative
+    elsif relative.start_with?('news/')
+      doc.css('article img').each do |image|
+        assert_match(%r{\A#{Regexp.escape(base)}/assets/img/news/news-[a-z0-9]+/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|gif|webp)\z}, image['src'], relative)
+        refute_empty image['alt'].to_s.strip, relative
+      end
+    end
+  end
+
+  def test_additional_cms_news_detail_with_a_cover_is_not_an_excluded_visual_page
+    doc = Nokogiri::HTML('<article><img src="/assets/img/news/news-fixturecover/cover.png" alt="Fixture cover"></article>')
+    assert_non_axis_page_visuals('news/fixture-cover/index.html', doc, '')
   end
 
   def test_generated_placements_and_excluded_pages
@@ -71,11 +125,9 @@ class Phase9ResearchVisualsTest < Minitest::Test
       relative = path.delete_prefix(destination + '/')
       expected = IMAGES.keys.find { |id| relative == "research/#{id}/index.html" }
       unless expected
-        assert_empty figures, relative
-        # All other research pages and catalog/news routes remain image-free.
-        if relative.match?(%r{\A(?:research|projects|platforms|outputs|news)/})
-          assert_empty doc.css('article img'), relative
-        end
+        # Research and catalog pages remain image-free. CMS News pages may have
+        # an optional validated cover image under their content-owned public path.
+        assert_non_axis_page_visuals(relative, doc, base)
         next
       end
       found << expected
