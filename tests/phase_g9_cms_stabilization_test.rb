@@ -16,12 +16,35 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
     assert_includes @app, "Submitting publication request…"
     assert_includes @app, 'setPublicationBusy(true)'
     assert_includes @app, 'finally { setPublicationBusy(false); }'
+    assert_includes @app, "renderPublicationState('Submitting publication request…', '')"
+  end
+
+  def test_initial_lookup_hides_submission_until_a_draft_is_confirmed
+    assert_includes @app, "function setPublicationLoading() { publicationStatusEpoch += 1; stopPublicationStatusPolling(); renderPublicationState('Checking publication status…', ''); }"
+    assert_includes @app, 'if (id) { setPublicationLoading();'
+    assert_includes @app, "if (epoch === publicationStatusEpoch) renderPublicationState('Draft', '');"
   end
 
   def test_submission_resolves_status_after_creating_the_pull_request
-    assert_includes @app, 'await loadPublicationStatus(session, record);'
+    assert_includes @app, 'await loadPublicationStatus(session, record, pr);'
     assert_includes @app, 'View pull request'
     assert_includes @app, "renderPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url"
+    refute_includes @app, "pull request #' + pr.number + ' created."
+  end
+
+  def test_stale_requests_and_propagation_cannot_restore_draft_after_a_known_pr
+    assert_includes @app, 'publicationStatusEpoch += 1;'
+    assert_includes @app, 'if (epoch !== publicationStatusEpoch) return;'
+    assert_includes @app, 'async function loadPublicationStatus(session, record, knownPull)'
+    assert_includes @app, "if (knownPull) { renderPublicationState('Submitted', 'Validation in progress…', knownPull.html_url);"
+    assert_includes @app, 'schedulePublicationStatusPolling(session, record, knownPull);'
+  end
+
+  def test_validation_states_poll_neutrally_until_conclusive
+    assert_includes @app, 'setTimeout(function () { loadPublicationStatus(session, record, knownPull); }, 15000)'
+    assert_includes @app, "validation === 'passed' ? 'Validation passed. Ready to publish.'"
+    assert_includes @app, "validation === 'failed' ? 'Validation failed.' : 'Validation in progress…'"
+    assert_includes @app, "if (validation === 'pending' || validation === 'unknown')"
   end
 
   def test_expired_session_preserves_the_target_route_before_reauthentication
