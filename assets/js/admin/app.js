@@ -5,6 +5,7 @@
   var mode = document.body.dataset.adminMode;
   var validNewsTypes = ['event', 'award', 'project', 'open-source', 'team', 'collaboration', 'demo'];
   var editingNews;
+  var publicationSubmitting = false;
   var githubSession;
   var githubSessionHandleKey = 'astra-cms-session-handle';
   var githubDraftBranch = 'cms-drafts';
@@ -249,12 +250,28 @@
   function publicationLinks(pullLink, publicLink) { var box = element('admin-publication-message'); if (!box) return; box.replaceChildren(); [[pullLink, 'View pull request'], [publicLink, 'View public News page']].forEach(function (entry) { if (!entry[0]) return; var anchor = document.createElement('a'); anchor.href = entry[0]; anchor.textContent = entry[1]; anchor.className = 'astra-admin-text-link'; box.appendChild(anchor); }); }
   function publicNewsUrl(published) { if (!published) return null; var prefix = adminRootUrl().replace(/admin\/$/, ''); return new URL('news/' + publicSlug({}, published) + '/', prefix).toString(); }
   function setPublicationStatus(value, pullLink, publicLink) { text('admin-publication-status', value); var button = element('admin-news-publish'), update = element('admin-news-update'), unpublish = element('admin-news-unpublish'); if (button) { button.hidden = value !== 'Draft'; button.disabled = value !== 'Draft'; } if (update) { update.hidden = value !== 'Update available'; update.disabled = value !== 'Update available'; } if (unpublish) { unpublish.hidden = value !== 'Published'; unpublish.disabled = value !== 'Published'; } publicationLinks(pullLink, publicLink); }
+  async function createPublicationCommit(session, branch, record, media, published) {
+    var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName;
+    var ref = await githubResponse(base + '/git/ref/heads/' + branch, session);
+    var parent = await githubResponse(base + '/git/commits/' + ref.object.sha, session);
+    var files = [{ path: publicNewsPath(record, published), mode: '100644', type: 'blob', content: utf8Base64(serializePublicNews(record, media, published)) }];
+    if (media) { var image = await githubMediaBlob(session, media); var bytes = new Uint8Array(await image.arrayBuffer()); files.push({ path: publicMediaPath(record, media), mode: '100644', type: 'blob', content: bytesBase64(bytes) }); }
+    var blobs = await Promise.all(files.map(function (file) { return githubResponse(base + '/git/blobs', session, { method: 'POST', body: { content: file.content, encoding: 'base64' } }); }));
+    var tree = await githubResponse(base + '/git/trees', session, { method: 'POST', body: { base_tree: parent.tree.sha, tree: files.map(function (file, index) { return { path: file.path, mode: file.mode, type: file.type, sha: blobs[index].sha }; }) } });
+    var commit = await githubResponse(base + '/git/commits', session, { method: 'POST', body: { message: 'cms: prepare news publication ' + record.id, tree: tree.sha, parents: [ref.object.sha] } });
+    await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: commit.sha, force: false } });
+  }
   async function ensureLifecycleBranch(session, branch) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, main = await githubResponse(base + '/git/ref/heads/main', session); try { await githubResponse(base + '/git/refs', session, { method: 'POST', body: { ref: 'refs/heads/' + branch, sha: main.object.sha } }); return; } catch (error) { if (error.status !== 422) throw error; } var closed = await githubResponse(base + '/pulls?state=closed&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session); if (!closed.some(function (pull) { return pull.merged_at; })) throw new Error('An existing publication branch needs review before it can be reused.'); try { await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: main.object.sha, force: false } }); } catch (error) { throw new Error('The previous publication branch cannot be safely updated from main.'); } }
   async function publicationBranchMatchesDraft(session, record, branch, published, media) { try { var github = githubSettings(), path = publicNewsPath(record, published), data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + path + '?ref=' + encodeURIComponent(branch), session); return fromBase64(data.content) === serializePublicNews(record, media, published); } catch (error) { return false; } }
   async function loadPublicationStatus(session, record) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(record.id), removal = unpublishBranch(record.id); try { var published = await publishedNewsByContentId(session, record.id), media = await draftMedia(session, record), pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session), removals = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + removal), session); if (removals.length) { setPublicationStatus('Unpublish submitted', removals[0].html_url); return; } if (pulls.length) { setPublicationStatus(published ? 'Update submitted' : 'Submitted', pulls[0].html_url, publicNewsUrl(published)); if (!await publicationBranchMatchesDraft(session, record, branch, published, media)) publicationMessage('Draft changed after submission. The existing request remains unchanged.'); return; } if (published) { if (serializePublicNews(record, media, published) === published.markdown) setPublicationStatus('Published', null, publicNewsUrl(published)); else setPublicationStatus('Update available', null, publicNewsUrl(published)); return; } } catch (error) { setPublicationStatus('Error/Conflict'); publicationMessage(friendlyError(error, 'Unable to determine publication status.')); return; } setPublicationStatus('Draft'); }
+  function setPublicationBusy(busy) { publicationSubmitting = busy; ['admin-news-publish', 'admin-news-update'].forEach(function (id) { var button = element(id); if (button) button.disabled = busy || button.hidden; }); }
+  function preserveNewsFormForReauthentication() { var form = element('admin-github-news-form'); if (!form) return; try { sessionStorage.setItem('astra-cms-reauth-draft', JSON.stringify({ route: window.location.pathname + window.location.search, fields: collectNewsPayload() })); } catch (_) {} }
+  function restoreNewsFormAfterReauthentication() { try { var saved = JSON.parse(sessionStorage.getItem('astra-cms-reauth-draft') || 'null'); if (!saved || saved.route !== window.location.pathname + window.location.search || !saved.fields) return; Object.keys(saved.fields).forEach(function (key) { var field = newsField(key.replace(/_/g, '-')); if (!field) return; if (field.type === 'checkbox') field.checked = Boolean(saved.fields[key]); else field.value = saved.fields[key] || ''; }); sessionStorage.removeItem('astra-cms-reauth-draft'); toggleEventFields(); } catch (_) {} }
   async function submitGithubPublication() {
-    var id = currentDraftId(), session = storedGithubSession();
-    if (!id || !session) { publicationMessage('Save and sign in before submitting for publication.'); return; }
+    if (publicationSubmitting) return;
+    var id = currentDraftId(), session = storedGithubSession() || await restoreGithubSession();
+    if (!id || !session) { preserveNewsFormForReauthentication(); publicationMessage('Your GitHub session has expired. Sign in again to continue this publication request.'); await beginGithubLogin(); return; }
+    setPublicationBusy(true); publicationMessage('Submitting publication request…');
     try {
       await verifyGithubRepositoryAccess(session);
       var draft = await readGithubDraft(session, id), record = draft.record, github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(id), published = await publishedNewsByContentId(session, id);
@@ -263,13 +280,12 @@
       if (pulls.length) { setPublicationStatus(published ? 'Update submitted' : 'Submitted', pulls[0].html_url, publicNewsUrl(published)); publicationMessage((published ? 'Update submitted' : 'Submitted') + ': existing pull request #' + pulls[0].number + '.'); return; }
       await ensureLifecycleBranch(session, branch);
       var media = await draftMedia(session, record);
-      var newsBody = { message: 'cms: prepare news publication ' + id, content: utf8Base64(serializePublicNews(record, media, published)), branch: branch };
-      if (published) newsBody.sha = published.sha;
-      await githubResponse(base + '/contents/' + publicNewsPath(record, published), session, { method: 'PUT', body: newsBody });
-      if (media) { var image = await githubMediaBlob(session, media); var bytes = new Uint8Array(await image.arrayBuffer()); await githubResponse(base + '/contents/' + publicMediaPath(record, media), session, { method: 'PUT', body: { message: 'cms: copy news cover ' + id, content: bytesBase64(bytes), branch: branch } }); }
+      await createPublicationCommit(session, branch, record, media, published);
       var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Publish News: ' + record.title, head: branch, base: 'main', body: 'CMS publication\n\nContent ID: ' + id + '\nType: ' + record.type + '\nCover media: ' + (media ? 'included' : 'none') + '\nSource: ' + githubDraftBranch + '/' + draftPath(id) } });
-      setPublicationStatus(published ? 'Update submitted' : 'Submitted', pr.html_url, publicNewsUrl(published)); publicationMessage((published ? 'Update submitted' : 'Submitted') + ': pull request #' + pr.number + ' created.');
+      publicationMessage((published ? 'Update submitted' : 'Submitted') + ': pull request #' + pr.number + ' created.');
+      await loadPublicationStatus(session, record);
     } catch (error) { publicationMessage(friendlyError(error, 'Unable to submit this draft for publication.')); }
+    finally { setPublicationBusy(false); }
   }
 
   async function submitGithubUnpublish() {
@@ -577,6 +593,7 @@
     if (newsField('cover-media-id')) newsField('cover-media-id').value = record && record.cover_media_id ? record.cover_media_id : '';
     setNewsMessage('');
     toggleEventFields();
+    restoreNewsFormAfterReauthentication();
   }
 
   async function boot() {

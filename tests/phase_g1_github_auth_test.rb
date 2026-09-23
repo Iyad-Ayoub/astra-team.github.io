@@ -63,7 +63,10 @@ class PhaseG1GitHubAuthTest < Minitest::Test
     end
     assert_includes File.read(APP), "new URL('/session/restore'"
     assert_includes File.read(APP), "new URL('/session/logout'"
-    refute_includes File.read(APP), 'sessionStorage.setItem'
+    # Session storage may preserve an unsaved News form across a required
+    # reauthentication, but it must never hold a GitHub session or token.
+    assert_includes File.read(APP), "sessionStorage.setItem('astra-cms-reauth-draft'"
+    refute_match(/sessionStorage\.setItem\([^\n]*(?:accessToken|access_token|githubSession)/, File.read(APP))
     refute_includes File.read(APP), 'localStorage.setItem(githubSessionKey'
   end
 

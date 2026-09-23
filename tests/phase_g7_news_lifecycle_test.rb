@@ -18,7 +18,9 @@ class PhaseG7NewsLifecycleTest < Minitest::Test
     assert_includes @app, "return published.path.replace(/^_news\\//, '').replace(/\\.md$/, '')"
     assert_includes @app, 'function publicNewsPath(record, published)'
     assert_includes @app, 'serializePublicNews(record, media, published)'
-    assert_includes @app, 'if (published) newsBody.sha = published.sha'
+    assert_includes @app, 'async function createPublicationCommit(session, branch, record, media, published)'
+    assert_includes @app, "base_tree: parent.tree.sha"
+    assert_includes @app, "force: false"
   end
 
   def test_lifecycle_states_and_stale_submission_are_derived_from_github

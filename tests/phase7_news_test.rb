@@ -80,7 +80,11 @@ class Phase7NewsTest < Minitest::Test
       image = File.join(root, item['image'].delete_prefix('/'))
       FileUtils.mkdir_p(File.dirname(image))
       FileUtils.cp(File.join(ROOT, 'assets/img/publication_preview/2023-pasco.gif'), image)
-      validate(records + [item], root: root)
+      # The temporary root contains only this fixture image. Validate the
+      # repository inventory against ROOT separately so real CMS cover assets
+      # are not incorrectly expected in this isolated fixture tree.
+      validate(records)
+      validate([item], root: root)
       assert_baseline_inventory(records + [item])
       assert_raises(RuntimeError) { validate([item.merge('image' => 'cms/media/news/cover.gif')], root: root) }
     end
@@ -200,7 +204,7 @@ class Phase7NewsTest < Minitest::Test
       assert_image_matches(r, doc, baseurl)
       assert_empty doc.css('.astra-news-date time') if r['date_precision'] == 'year'
       assert_empty doc.css('iframe, .astra-news-body script')
-      refute_includes doc.text, r['source']
+      refute_includes doc.text, r['source'] if r['source']
       assert doc.css('a').any? { |a| a['href'] == baseurl + '/news/' }
       assert_includes doc.text, r['summary'] if NEW_IDS.include?(r['content_id'])
     end
