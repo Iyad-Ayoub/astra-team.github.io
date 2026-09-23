@@ -10,6 +10,8 @@ class Phase7NewsTest < Minitest::Test
   NEW_IDS = %w[news-ieee-iv-2025 news-matswap-egsr-2025 news-acvss-2025
     news-pasco-cvpr-2024 news-acvss-nairobi-2024 news-raoul-dr-2024
     news-open-source-2024 news-open-source-2023 news-visapp-2022-best-paper].freeze
+  BASELINE_IDS = (NEW_IDS + %w[news-astra-creation-2022 news-plenary-2025]).freeze
+  BASELINE_PUBLISHED_IDS = (NEW_IDS + ['news-plenary-2025']).freeze
   HOME_IDS = %w[news-ieee-iv-2025 news-matswap-egsr-2025 news-acvss-2025].freeze
 
   def records
@@ -20,19 +22,43 @@ class Phase7NewsTest < Minitest::Test
     AstraNews.validate(items, root: ROOT, output_ids: ['pasco'], project_ids: [])
   end
 
+  def assert_baseline_inventory(items)
+    assert_operator items.size, :>=, BASELINE_IDS.size
+    assert_equal BASELINE_IDS.sort, items.select { |item| BASELINE_IDS.include?(item['content_id']) }.map { |item| item['content_id'] }.sort
+    assert_equal BASELINE_PUBLISHED_IDS.sort, items.select { |item| BASELINE_PUBLISHED_IDS.include?(item['content_id']) && item['status'] == 'published' }.map { |item| item['content_id'] }.sort
+  end
+
+  def published_years(items)
+    items.select { |item| item['status'] == 'published' }.map { |item| item['event_date'][0, 4] }.uniq.sort.reverse
+  end
+
   def test_inventory_and_evidence_boundaries
-    assert_equal 11, records.size
-    assert_equal NEW_IDS.sort, records.reject { |r| %w[news-astra-creation-2022 news-plenary-2025].include?(r['content_id']) }.map { |r| r['content_id'] }.sort
-    assert_equal (NEW_IDS + ['news-plenary-2025']).sort, records.select { |r| r['status'] == 'published' }.map { |r| r['content_id'] }.sort
+    assert_baseline_inventory(records)
     assert records.all? { |r| AstraNews::TYPES.include?(r['type']) }
     assert records.all? { |r| !r['image'] && !r['author'] && !r['published_at'] }
     assert_equal ['https://github.com/astra-vision/PaSCo', 'https://ieee-iv.org/2025/'], records.filter_map { |r| r['external_url'] }.sort
     assert_nil records.find { |r| r['content_id'] == 'news-matswap-egsr-2025' }['related_output']
     assert_equal 'pasco', records.find { |r| r['content_id'] == 'news-pasco-cvpr-2024' }['related_output']
     validate(records)
-    assert_equal 7, records.count { |r| r['date_precision'] == 'year' }
-    assert_equal HOME_IDS, AstraNews.ordered(records.select { |r| r['homepage'] }).first(3).map { |r| r['content_id'] }
+    baseline = records.select { |r| BASELINE_IDS.include?(r['content_id']) }
+    assert_equal 7, baseline.count { |r| r['date_precision'] == 'year' }
+    assert_equal HOME_IDS, AstraNews.ordered(baseline.select { |r| r['homepage'] }).first(3).map { |r| r['content_id'] }
     assert_equal AstraNews.ordered(records), AstraNews.ordered(records.reverse)
+  end
+
+  def test_additional_valid_news_item_preserves_the_baseline_and_adds_its_year
+    item = records.find { |record| record['content_id'] == 'news-acvss-2025' }.merge(
+      'content_id' => 'news-fixture-future', 'slug' => 'fixture-future', 'title' => 'Fixture future News item',
+      'event_date' => '2026-03-01', 'date_precision' => 'day', 'homepage' => false)
+    items = records + [item]
+    validate(items)
+    assert_baseline_inventory(items)
+    assert_equal %w[2026 2025 2024 2023 2022], published_years(items)
+  end
+
+  def test_baseline_news_entries_remain_required
+    items = records.reject { |record| record['content_id'] == 'news-plenary-2025' }
+    assert_raises(Minitest::Assertion) { assert_baseline_inventory(items) }
   end
 
   def test_creation_is_stored_as_draft_with_unchanged_body
@@ -116,14 +142,15 @@ class Phase7NewsTest < Minitest::Test
     skip 'Set PHASE7_SITE to inspect a production artifact' unless destination
     baseurl = ENV.fetch('PHASE7_BASEURL', '')
     archive = Nokogiri::HTML(File.read(File.join(destination, 'news/index.html')))
-    assert_equal %w[2025 2024 2023 2022], archive.css('[id^="news-year-"]').map(&:text)
-    assert_equal 10, archive.css('.astra-news-row').size
-    assert_equal 10, archive.css('.astra-news-type').size
-    assert_empty archive.css('.astra-news-image, .astra-news-row img')
     published = records.select { |r| r['status'] == 'published' }
+    assert_baseline_inventory(records)
+    assert_equal published_years(records), archive.css('[id^="news-year-"]').map(&:text)
+    assert_equal published.size, archive.css('.astra-news-row').size
+    assert_equal published.size, archive.css('.astra-news-type').size
+    assert_empty archive.css('.astra-news-image, .astra-news-row img')
     expected = AstraNews.ordered(published).map { |r| r['content_id'] }
     assert_equal expected, archive.css('.astra-news-row').map { |n| n['data-news-id'] }
-    assert_equal (NEW_IDS + ['news-plenary-2025']).sort, expected.sort
+    assert_equal BASELINE_PUBLISHED_IDS.sort, expected.select { |id| BASELINE_PUBLISHED_IDS.include?(id) }.sort
     assert_empty archive.css('#news-legacy, [data-news-id="news-astra-creation-2022"]')
     refute File.exist?(File.join(destination, 'news/2022-07-01-astra-creation/index.html'))
     # Check all public text artifacts, including sitemap/feed, not just listings.
@@ -146,10 +173,11 @@ class Phase7NewsTest < Minitest::Test
       assert_includes doc.text, r['summary'] if NEW_IDS.include?(r['content_id'])
     end
     home = Nokogiri::HTML(File.read(File.join(destination, 'index.html')))
-    assert_equal HOME_IDS, home.css('.astra-news-row').map { |n| n['data-news-id'] }
+    expected_home = AstraNews.ordered(published.select { |r| r['homepage'] }).first(3).map { |r| r['content_id'] }
+    assert_equal expected_home, home.css('.astra-news-row').map { |n| n['data-news-id'] }
     assert_empty home.css('[data-news-id="news-astra-creation-2022"]')
     assert home.css('.astra-news a').any? { |a| a.text.include?('View all news') && a['href'] == baseurl + '/news/' }
-    assert_equal 3, home.css('.astra-news .news-title').size
+    assert_equal expected_home.size, home.css('.astra-news .news-title').size
     %w[open-source-2023 open-source-2024 pasco-cvpr-2024].each do |slug|
       doc = Nokogiri::HTML(File.read(File.join(destination, "news/#{slug}/index.html")))
       target = baseurl + '/outputs/' + (slug.start_with?('pasco') ? '#pasco' : '')
