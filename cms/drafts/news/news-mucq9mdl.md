@@ -6,7 +6,7 @@ summary: "ASTRA participated in the ELLIS Summer School on Autonomous Driving 20
 content_date: "2026-09-21"
 event_date: "2026-09-15"
 end_date: null
-location: null
+location: "UAB Casa Convalescència in Barcelona"
 external_url: "https://pages.cvc.uab.es/ssadriving"
 featured: true
 homepage: false
