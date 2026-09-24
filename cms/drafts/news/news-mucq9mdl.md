@@ -2,7 +2,7 @@
 content_id: "news-mucq9mdl"
 title: "G6 Publication Test"
 type: "event"
-summary: "Go to News & Events.\nCreate a test draft, for example:\nTitle: G6 Publication Test"
+summary: "ASTRA participated in the ELLIS Summer School on Autonomous Driving 2026 in Barcelona, with Alexandre Boulch contributing a session on multi-sensor pre-training and Iyad Abuhadrous attending the scientific programme and exchanges."
 content_date: "2026-09-22"
 event_date: "2026-09-23"
 end_date: null
