@@ -1,6 +1,6 @@
 ---
 content_id: "news-mucq9mdl"
-title: "G6 Publication Test"
+title: "ASTRA at the ELLIS Summer School on Autonomous Driving 2026"
 type: "event"
 summary: "ASTRA participated in the ELLIS Summer School on Autonomous Driving 2026 in Barcelona, with Alexandre Boulch contributing a session on multi-sensor pre-training and Iyad Abuhadrous attending the scientific programme and exchanges."
 content_date: "2026-09-22"
