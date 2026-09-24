@@ -36,6 +36,12 @@ class PhaseG9bFastPublicationTest < Minitest::Test
     assert_includes FULL_WORKFLOW, "if: github.ref == 'refs/heads/main'"
   end
 
+  def test_cms_and_jekyll_workflows_use_distinct_cms_publish_concurrency_namespaces
+    assert_includes FAST_WORKFLOW, 'group: cms-publication-${{ github.ref }}'
+    assert_includes FULL_WORKFLOW, "format('jekyll-{0}', github.ref)"
+    refute_includes FULL_WORKFLOW, "format('cms-publication-{0}', github.ref)"
+  end
+
   def test_fast_validator_locks_branch_identity_and_changed_paths
     assert_includes VALIDATOR, 'cms-publish/news/(news-[a-z0-9]+)'
     assert_includes VALIDATOR, 'CMS publication must change exactly one public News Markdown file'

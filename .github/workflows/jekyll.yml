@@ -24,7 +24,7 @@ permissions: {}
 # Keep production deployment runs intact. A CMS publication branch is safe to
 # cancel and restart because its final atomic commit supersedes setup commits.
 concurrency:
-  group: ${{ startsWith(github.ref, 'refs/heads/cms-publish/') && format('cms-publication-{0}', github.ref) || 'pages' }}
+  group: ${{ startsWith(github.ref, 'refs/heads/cms-publish/') && format('jekyll-{0}', github.ref) || 'pages' }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/cms-publish/') }}
 
 jobs:
