@@ -16,6 +16,14 @@
       "mime": "image/png",
       "uploaded_at": "2026-09-22T12:05:16.025Z",
       "alt_text": "test2"
+    },
+    {
+      "id": "media-mufgnd58",
+      "path": "cms/media/news/media-mufgnd58.jpg",
+      "filename": "summer_school_barcelone.jpg",
+      "mime": "image/jpeg",
+      "uploaded_at": "2026-09-24T11:40:36.812Z",
+      "alt_text": "Summer School Bacelona 2026"
     }
   ]
 }
