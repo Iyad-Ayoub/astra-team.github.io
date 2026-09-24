@@ -7,7 +7,7 @@ content_date: "2026-09-22"
 event_date: "2026-09-23"
 end_date: null
 location: null
-external_url: null
+external_url: "https://pages.cvc.uab.es/ssadriving"
 featured: true
 homepage: false
 cover_media_id: "media-mufgnd58"
