@@ -10,7 +10,7 @@ location: null
 external_url: null
 featured: true
 homepage: false
-cover_media_id: "media-mucmnd6h"
+cover_media_id: "media-mufgnd58"
 status: "draft"
 ---
 
