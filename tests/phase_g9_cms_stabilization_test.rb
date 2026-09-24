@@ -26,7 +26,7 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
   end
 
   def test_submission_resolves_status_after_creating_the_pull_request
-    assert_includes @app, 'await loadPublicationStatus(session, record, pr);'
+    assert_includes @app, "await loadPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pr, unpublish: false });"
     assert_includes @app, 'View pull request'
     assert_includes @app, "renderPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url"
     refute_includes @app, "pull request #' + pr.number + ' created."
@@ -35,14 +35,14 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
   def test_stale_requests_and_propagation_cannot_restore_draft_after_a_known_pr
     assert_includes @app, 'publicationStatusEpoch += 1;'
     assert_includes @app, 'if (epoch !== publicationStatusEpoch) return;'
-    assert_includes @app, 'async function loadPublicationStatus(session, record, knownPull)'
-    assert_includes @app, "if (knownPull) { renderPublicationState('Submitted', 'Validation in progress…', knownPull.html_url);"
-    assert_includes @app, 'schedulePublicationStatusPolling(session, record, knownPull);'
+    assert_includes @app, 'async function loadPublicationStatus(session, record, knownLifecycle)'
+    assert_includes @app, "if (knownLifecycle) { renderPublicationState(knownLifecycle.state, 'Validation in progress…', knownLifecycle.pull.html_url);"
+    assert_includes @app, 'schedulePublicationStatusPolling(session, record, knownLifecycle);'
   end
 
   def test_validation_states_poll_neutrally_until_conclusive
-    assert_includes @app, 'setTimeout(function () { loadPublicationStatus(session, record, knownPull); }, 15000)'
-    assert_includes @app, "validation === 'passed' ? 'Validation passed. Ready to publish.'"
+    assert_includes @app, 'setTimeout(function () { loadPublicationStatus(session, record, knownLifecycle); }, 15000)'
+    assert_includes @app, "if (validation === 'passed') return unpublish ? 'Validation passed. Ready to merge.' : 'Validation passed. Ready to publish.';"
     assert_includes @app, "validation === 'failed' ? 'Validation failed.' : 'Validation in progress…'"
     assert_includes @app, "if (validation === 'pending' || validation === 'unknown')"
   end
