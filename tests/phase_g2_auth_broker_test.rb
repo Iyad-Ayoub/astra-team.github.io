@@ -56,6 +56,18 @@ class PhaseG2AuthBrokerTest < Minitest::Test
     assert_includes exchange, 'ticket.expiresAt < Date.now()'
   end
 
+  def test_github_expiry_seconds_are_converted_to_bounded_session_milliseconds
+    assert_includes @worker, 'function sessionTtlMs(expiresIn: unknown)'
+    assert_includes @worker, 'const milliseconds = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : SESSION_MAX_TTL_MS;'
+    assert_includes @worker, 'sessionExpiresAt: new Date(Date.now() + sessionTtlMs(result.expires_in)).toISOString()'
+
+    # Regression values for GitHub's seconds-based expires_in contract.
+    assert_equal 8 * 60 * 60 * 1000, [28_800 * 1000, 60 * 1000].max
+    assert_equal 8 * 60 * 60 * 1000, [28_800 * 1000, 8 * 60 * 60 * 1000].min
+    assert_equal 8 * 60 * 60 * 1000, [0, 8 * 60 * 60 * 1000].max
+    assert_includes @worker, 'Number.isFinite(seconds) && seconds > 0'
+  end
+
   def test_broker_restores_and_clears_an_encrypted_http_only_browser_session
     assert_includes @worker, 'CMS_SESSIONS'
     assert_includes @worker, 'async function restore'

@@ -136,6 +136,12 @@ function randomValue() {
   return encoded(crypto.getRandomValues(new Uint8Array(32)));
 }
 
+function sessionTtlMs(expiresIn: unknown) {
+  const seconds = Number(expiresIn);
+  const milliseconds = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : SESSION_MAX_TTL_MS;
+  return Math.min(Math.max(milliseconds, 60 * 1000), SESSION_MAX_TTL_MS);
+}
+
 async function sessionKey(handle: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(handle));
   return `session:${encoded(new Uint8Array(digest))}`;
@@ -206,14 +212,13 @@ async function oauthCallback(request: Request, env: Env) {
   });
   const result = await github.json() as { access_token?: string; expires_in?: number; error?: string };
   if (!github.ok || !result.access_token || result.error) return safeErrorRedirect(transaction.callback, transaction.state, 'token_exchange_failed', request);
-  const ttl = Math.min(Math.max(Number(result.expires_in) || SESSION_MAX_TTL_MS, 60 * 1000), SESSION_MAX_TTL_MS);
   const ticket = await seal({
     accessToken: result.access_token,
     callback: transaction.callback,
     expiresAt: Math.min(transaction.expiresAt, Date.now() + TICKET_TTL_MS),
     nonce: randomValue(),
     returnTo: transaction.returnTo,
-    sessionExpiresAt: new Date(Date.now() + ttl).toISOString()
+    sessionExpiresAt: new Date(Date.now() + sessionTtlMs(result.expires_in)).toISOString()
   }, env.GITHUB_APP_CLIENT_SECRET);
   const redirect = new URL(transaction.callback);
   redirect.searchParams.set('ticket', ticket);
