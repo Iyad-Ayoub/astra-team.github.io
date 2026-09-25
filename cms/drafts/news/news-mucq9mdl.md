@@ -5,7 +5,7 @@ type: "event"
 summary: "ASTRA participated in the ELLIS Summer School on Autonomous Driving 2026 in Barcelona, with Alexandre Boulch contributing a session on multi-sensor pre-training and Iyad Abuhadrous attending the scientific programme and exchanges."
 content_date: "2026-09-21"
 event_date: "2026-09-15"
-end_date: null
+end_date: "2026-09-18"
 location: "UAB Casa Convalescència in Barcelona"
 external_url: "https://pages.cvc.uab.es/ssadriving"
 featured: true
