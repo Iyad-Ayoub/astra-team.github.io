@@ -11,8 +11,8 @@ class PhaseG5AuthPersistenceTest < Minitest::Test
   end
 
   def test_login_establishes_a_restorable_broker_backed_session
-    assert_includes @app, 'async function restoreGithubSession()'
-    assert_includes @app, "new URL('/session/restore'"
+    assert_includes @app, 'async function restoreGithubSession(handleOverride, commitState)'
+    assert_includes @app, "new URL('/v2/session/restore'"
     assert_includes @worker, 'CMS_SESSIONS.put'
     assert_includes @app, 'localStorage.setItem(githubSessionHandleKey'
   end
@@ -24,8 +24,9 @@ class PhaseG5AuthPersistenceTest < Minitest::Test
   end
 
   def test_expiration_and_logout_clear_the_broker_session
-    assert_includes @worker, 'Date.parse(session.sessionExpiresAt) <= Date.now()'
-    assert_includes @app, "new URL('/session/logout'"
+    assert_includes @worker, 'session.accessExpiresAt <= Date.now()'
+    assert_includes @worker, 'accessExpiresAt'
+    assert_includes @app, "new URL('/v2/session/logout'"
     assert_includes @worker, 'CMS_SESSIONS.delete'
   end
 

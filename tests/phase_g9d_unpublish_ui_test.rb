@@ -24,9 +24,8 @@ class PhaseG9dUnpublishUiTest < Minitest::Test
     assert_includes APP, "function unpublishBranch(id)"
     assert_includes APP, "return 'cms-unpublish/news/' + id;"
     assert_includes handler, 'branch = unpublishBranch(id)'
-    assert_includes handler, "method: 'DELETE'"
-    assert_includes handler, "branch: branch"
-    assert_includes handler, "base: 'main'"
+    assert_includes handler, "githubOperation('unpublish_prepare'"
+    assert_includes handler, "githubOperation('create_pr'"
     assert_includes handler, 'Public media remains in place until it can be proven unreferenced.'
     refute_match(/contents\/cms\/drafts\/news.*method: 'DELETE'/m, handler)
     refute_match(/contents\/cms\/media\/news.*method: 'DELETE'/m, handler)

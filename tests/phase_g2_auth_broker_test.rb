@@ -63,6 +63,7 @@ class PhaseG2AuthBrokerTest < Minitest::Test
     assert_includes @worker, "url.pathname === '/session/logout'"
     assert_includes @worker, 'CMS_SESSIONS.get'
     assert_includes @worker, 'CMS_SESSIONS.delete'
+    assert_includes @worker, "url.pathname === '/v2/session/restore'"
   end
 
   def test_worker_contains_no_tracked_secret_value
@@ -74,7 +75,21 @@ class PhaseG2AuthBrokerTest < Minitest::Test
   end
 
   def test_no_arbitrary_repository_or_cms_storage_is_present
-    refute_match(/repo_owner|repo_name|drafts|cms_news/i, @worker)
+    assert_includes @worker, "const REPO_PREFIX = '/repos/Iyad-Ayoub/astra-team.github.io';"
+    assert_includes @worker, 'async function v2Github'
+    assert_includes @worker, 'cmsOperation'
+    refute_includes @worker, 'function githubProxy'
+    refute_includes @worker, 'body.method'
     refute_match(/console\.(?:log|error|warn)/, @worker)
+  end
+
+  def test_v2_operations_derive_paths_and_branches_server_side
+    assert_includes @worker, "operation === 'draft_save'"
+    assert_includes @worker, "branch: 'cms-drafts'"
+    assert_includes @worker, "operation === 'publication_prepare'"
+    assert_includes @worker, "operation === 'unpublish_prepare'"
+    assert_includes @worker, "base: 'main'"
+    refute_includes @worker, 'queryBranch'
+    refute_includes @worker, 'body.branch'
   end
 end
