@@ -73,19 +73,40 @@ Pages build needs to emit it.
   and exchanges the GitHub code server-side using the stored PKCE verifier. It
   clears that cookie and redirects to Pages with only an opaque, one-minute
   ticket containing the short-lived session result.
-- `POST /session/exchange` validates CORS, the encrypted ticket, its expiry,
-  nonce, and bound callback/return path. It does not require an OAuth
-  transaction cookie, then returns the short-lived GitHub user token, expiry,
-  and validated return path.
+- `POST /v2/session/exchange` and `/v2/session/restore` are the credential-safe
+  contract used by the current admin app. They return safe identity metadata
+  and an opaque session handle; GitHub credentials remain in the Worker.
+- `POST /v2/github` accepts named CMS operations only (drafts, media, lifecycle
+  preparation, pull requests, and checks). It is not a generic GitHub proxy.
+- The unversioned `/session/exchange` and `/session/restore` routes are
+  temporary legacy compatibility endpoints. **TEMPORARY — remove immediately after the new frontend is deployed and manually verified.** They exist only for the already-deployed frontend and
+  retain its token response contract. They must not be expanded or used by the
+  v2 frontend.
 
 The Worker never logs authorization codes, tokens, client secrets, or request
 bodies. It clears the transaction cookie after the exchange attempt.
 
-## Session restoration
+## Compatibility rollout
+
+Deploy this Worker with both the legacy session routes and the `/v2` routes
+available. The already-deployed frontend continues using the legacy token
+contract. Then deploy the frontend that uses `/v2/session/*` and `/v2/github`,
+verify login, drafts, media, publication preparation, and unpublish flows, and
+only afterward remove the legacy token-returning routes in a separate cleanup.
+
+## Session restoration and expiry
 
 Cross-site Worker cookies can be blocked by browser privacy controls. For durable
 CMS login, bind a Cloudflare KV namespace named `CMS_SESSIONS` to this Worker.
-The browser retains only an opaque, origin-bound session handle; KV retains the
-encrypted GitHub session data and supports expiry and logout revocation. Create
-the namespace, add its ID as the `CMS_SESSIONS` binding in the Worker settings or
-`wrangler.toml`, then deploy. Do not store GitHub tokens in browser storage.
+The browser retains only an opaque, origin-bound session handle and safe identity
+metadata. KV retains only a sealed access token and its expiry. The v2 session
+does not retain or rotate GitHub refresh tokens; when the access token expires,
+the CMS session is invalidated and the user must sign in again. Create the
+namespace, add its ID as the `CMS_SESSIONS` binding in the Worker settings or
+`wrangler.toml`, then deploy. Do not store GitHub credentials in browser storage.
+
+Legacy plaintext KV records are rejected and require one-time reauthentication
+after deployment. If another browser tab signs in, the admin listens for the
+opaque handle change and restores the session without discarding the current
+News form. When reauthentication is unavoidable, that form is kept only in
+ephemeral `sessionStorage`.

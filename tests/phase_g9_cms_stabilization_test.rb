@@ -55,8 +55,8 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
 
   def test_publication_uses_one_atomic_commit_after_branch_setup
     assert_includes @app, 'async function createPublicationCommit'
-    %w[/git/blobs /git/trees /git/commits /git/refs/heads/].each { |path| assert_includes @app, path }
-    assert_includes @app, 'force: false'
+    assert_includes @app, "githubOperation('publication_prepare'"
+    refute_match(%r{/git/(?:blobs|trees|commits|refs/heads/)}, @app)
     refute_includes @app, "'/contents/' + publicNewsPath(record, published)"
   end
 

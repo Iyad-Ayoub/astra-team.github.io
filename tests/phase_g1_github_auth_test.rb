@@ -31,7 +31,7 @@ class PhaseG1GitHubAuthTest < Minitest::Test
     app = File.read(APP)
     assert_includes admin, 'Sign in with GitHub'
     assert_includes callback, 'Completing GitHub sign-in'
-    %w[redirect_uri return_to /authorize /session/exchange].each do |hook|
+    %w[redirect_uri return_to /authorize /v2/session/exchange].each do |hook|
       assert_includes app, hook
     end
     assert_includes app, "params.get('ticket')"
@@ -50,7 +50,7 @@ class PhaseG1GitHubAuthTest < Minitest::Test
     assert_includes config, "github_repo_name == 'astra-team.github.io'"
     assert_includes app, "github.repoOwner !== 'Iyad-Ayoub'"
     assert_includes app, "github.repoName !== 'astra-team.github.io'"
-    assert_includes app, "repository.permissions.push !== true"
+    assert_includes app, "session.repository.push !== true"
     %w[GITHUB_APP_CLIENT_ID= GITHUB_AUTH_BROKER_URL= GITHUB_REPO_OWNER=Iyad-Ayoub GITHUB_REPO_NAME=astra-team.github.io].each do |setting|
       assert_includes environment, setting
     end
@@ -61,8 +61,8 @@ class PhaseG1GitHubAuthTest < Minitest::Test
       contents = File.read(path)
       refute_match SECRET_MARKERS, contents, path
     end
-    assert_includes File.read(APP), "new URL('/session/restore'"
-    assert_includes File.read(APP), "new URL('/session/logout'"
+    assert_includes File.read(APP), "new URL('/v2/session/restore'"
+    assert_includes File.read(APP), "new URL('/v2/session/logout'"
     # Session storage may preserve an unsaved News form across a required
     # reauthentication, but it must never hold a GitHub session or token.
     assert_includes File.read(APP), "sessionStorage.setItem('astra-cms-reauth-draft'"
@@ -72,7 +72,7 @@ class PhaseG1GitHubAuthTest < Minitest::Test
 
   def test_github_auth_is_the_only_admin_auth_path
     app = File.read(APP)
-    assert_match(/async function boot\(\) \{\s+bindGithubEvents\(\);\s+await bootGithub\(\);\s+\}/m, app)
+    assert_match(/async function boot\(\) \{[\s\S]*bindGithubEvents\(\);[\s\S]*await bootGithub\(\);[\s\S]*\}/m, app)
     refute_match(/cms_news|signInWithPassword|createClient\(/i, app)
   end
 end
