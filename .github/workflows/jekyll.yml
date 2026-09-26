@@ -9,7 +9,7 @@ name: Deploy astra-team with jekyll
 on:
   # Runs validation and baseline builds on every pushed branch.
   push:
-    branches: ["**"]
+    branches-ignore: ["cms-drafts"]
   
   schedule:
     # Every Monday at 2am UTC
