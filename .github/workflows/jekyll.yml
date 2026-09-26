@@ -9,7 +9,7 @@ name: Deploy astra-team with jekyll
 on:
   # Runs validation and baseline builds on every pushed branch.
   push:
-    branches: ["**"]
+    branches-ignore: ["cms-drafts"]
   
   schedule:
     # Every Monday at 2am UTC
@@ -21,15 +21,16 @@ on:
 # Each job receives only the permissions it needs.
 permissions: {}
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Keep production deployment runs intact. A CMS publication branch is safe to
+# cancel and restart because its final atomic commit supersedes setup commits.
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: ${{ startsWith(github.ref, 'refs/heads/cms-publish/') && format('jekyll-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/cms-publish/') }}
 
 jobs:
   # Build job
   build:
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/cms-publish/')
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -113,6 +114,14 @@ jobs:
         env:
           JEKYLL_ENV: production
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          # Browser-safe configuration emitted only into the isolated admin app.
+          # Browser-safe GitHub App values. The OAuth broker keeps every
+          # confidential GitHub App credential outside the Pages artifact.
+          GITHUB_APP_CLIENT_ID: ${{ vars.ASTRA_GITHUB_APP_CLIENT_ID }}
+          GITHUB_AUTH_BROKER_URL: ${{ vars.ASTRA_GITHUB_AUTH_BROKER_URL }}
+          GITHUB_REPO_OWNER: Iyad-Ayoub
+          GITHUB_REPO_NAME: astra-team.github.io
+          CMS_REQUIRE_CONFIG: 'true'
           # Only the authoritative repository is indexable, even for a root-hosted fork.
           ASTRA_BUILD_CONTEXT: ${{ github.repository == 'astra-team/astra-team.github.io' && 'production' || 'staging' }}
       - name: Upload artifact
