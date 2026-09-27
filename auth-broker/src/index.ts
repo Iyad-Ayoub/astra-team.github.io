@@ -146,9 +146,20 @@ function randomValue() {
 }
 
 
+function sessionTtlMs(expiresIn: unknown) {
+  const seconds = Number(expiresIn);
+  const milliseconds = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : SESSION_MAX_TTL_MS;
+  return Math.min(Math.max(milliseconds, 60 * 1000), SESSION_MAX_TTL_MS);
+}
+
 function expiryFromSeconds(seconds: unknown, fallback: number) {
   const value = Number(seconds);
-  return Date.now() + (Number.isFinite(value) && value > 0 ? Math.min(value * 1000, SESSION_MAX_TTL_MS) : fallback);
+  const ttl =
+    Number.isFinite(value) && value > 0
+      ? sessionTtlMs(value)
+      : fallback;
+
+  return Date.now() + ttl;
 }
 
 function validHandle(handle: string) {
