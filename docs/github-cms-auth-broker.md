@@ -38,7 +38,7 @@ with only a one-time opaque `ticket`. On failure it
 returns a non-sensitive `error` value. It must not place an access token,
 refresh token, GitHub code, client secret, or repository credential in the URL.
 
-### `POST /session/exchange`
+### `POST /v2/session/exchange`
 
 The browser sends JSON containing `ticket` and `redirect_uri`. The broker
 validates the encrypted ticket, its nonce and expiry, and its bound approved
@@ -47,12 +47,32 @@ cookie, which is cleared once `/oauth/callback` has validated it. It returns
 only:
 
 ```json
-{ "access_token": "short-lived GitHub user token", "expires_at": "ISO-8601 timestamp", "return_to": "validated admin route" }
+{ "authenticated": true, "session_handle": "opaque handle", "expires_at": "ISO-8601 timestamp", "return_to": "/admin/", "login": "github-user", "avatar_url": "...", "repository": { "full_name": "Iyad-Ayoub/astra-team.github.io", "push": true } }
 ```
 
-The browser holds this short-lived token in `sessionStorage`, never
-`localStorage`, and clears it on logout, expiration, or access failure. It uses
-the token only for `GET /user` and fixed-repository access verification in G1.
+The browser receives no GitHub access or refresh token from the v2 contract. It stores only the
+opaque `session_handle` in `localStorage`, plus safe identity metadata in
+memory. All CMS GitHub API calls go through the broker's constrained
+`POST /v2/github` transport, which exposes named CMS operations and fixes the
+repository and CMS-owned paths. The unversioned token-returning session routes
+are **TEMPORARY — remove immediately after the new frontend is deployed and
+manually verified.** They are retained only for the old frontend and are
+scheduled for removal after the v2 rollout.
+
+The unversioned `POST /session/exchange` and `POST /session/restore` routes are
+legacy-only compatibility endpoints and are not used by the current frontend.
+
+## Session lifecycle
+
+The Worker seals the KV session record with AES-GCM. It stores only the GitHub
+access token and its expiry for the v2 CMS session. It does not retain or
+automatically rotate refresh tokens. When the access token expires, the session
+is deleted and the browser must sign in again. Existing plaintext legacy
+KV records are rejected and require one-time reauthentication after deployment.
+
+The admin listens for opaque session-handle changes from another tab and keeps
+the current News form. If a write encounters an expired or revoked session, the
+form is preserved ephemerally until the user completes reauthentication.
 
 ## Local development
 

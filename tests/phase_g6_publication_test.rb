@@ -4,8 +4,8 @@ class PhaseG6PublicationTest < Minitest::Test
   def setup; @app = File.read(APP); end
   def test_publication_is_fixed_branch_and_main_pr_only
     assert_includes @app, "'cms-publish/news/' + id"
-    assert_includes @app, "'/git/ref/heads/main'"
-    assert_includes @app, "base: 'main'"
+    assert_includes @app, "githubOperation('ensure_branch'"
+    assert_includes @app, "githubOperation('create_pr'"
     refute_includes @app, 'merge: true'
   end
   def test_publication_rereads_draft_and_copies_controlled_media
@@ -28,7 +28,7 @@ class PhaseG6PublicationTest < Minitest::Test
   end
   def test_permissions_and_duplicate_prs_are_checked
     assert_includes @app, 'verifyGithubRepositoryAccess(session)'
-    assert_includes @app, "/pulls?state=open&head="
-    assert_includes @app, 'error.status !== 422'
+    assert_includes @app, "githubOperation('pulls'"
+    assert_includes @app, "githubOperation('ensure_branch'"
   end
 end

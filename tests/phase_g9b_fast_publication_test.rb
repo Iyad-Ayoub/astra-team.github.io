@@ -20,7 +20,7 @@ class PhaseG9bFastPublicationTest < Minitest::Test
     %w[pending passed failed unknown].each { |state| assert_includes APP, "validation === '#{state}'" }
     assert_includes APP, 'Validation passed. Ready to publish.'
     assert_includes APP, 'Validation failed.'
-    assert_includes APP, "/check-runs?filter=latest"
+    assert_includes APP, "githubOperation('checks'"
     assert_includes APP, "check.name === 'CMS publication validation'"
   end
 

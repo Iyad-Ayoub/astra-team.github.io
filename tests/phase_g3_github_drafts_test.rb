@@ -22,12 +22,12 @@ class PhaseG3GitHubDraftsTest < Minitest::Test
     assert_includes @app, "var githubDraftBranch = 'cms-drafts';"
     assert_includes @app, "var githubDraftRoot = 'cms/drafts/news';"
     assert_includes @app, "return githubDraftRoot + '/' + id + '.md';"
-    assert_includes @app, "ref: 'refs/heads/' + githubDraftBranch"
+    assert_includes @app, "githubOperation('ensure_draft_branch'"
     refute_includes @app.split('function draftPath', 2).last.split('function utf8Base64', 2).first, '_news/'
   end
 
   def test_contents_api_creates_updates_with_sha_and_never_targets_main
-    assert_includes @app, "method: 'PUT'"
+    assert_includes @app, "githubOperation('draft_save'"
     assert_includes @app, 'if (existingSha) body.sha = existingSha;'
     assert_includes @app, "'cms: ' + (existingSha ? 'update' : 'create') + ' news draft ' + id"
     assert_includes @app, "branch: githubDraftBranch"

@@ -32,13 +32,13 @@ class PhaseG5MediaLibraryTest < Minitest::Test
     assert_includes upload, 'Your GitHub session has expired. Sign in again before uploading.'
     assert_includes upload, 'verifyGithubRepositoryAccess(session)'
     assert_includes upload, 'ensureGithubDraftBranch(session)'
-    assert_includes upload, "method: 'PUT'"
+    assert_includes upload, "githubOperation('media_upload'"
   end
 
   def test_media_is_listed_and_previewed_from_authenticated_api_not_token_urls
     assert_includes @app, 'async function readMediaIndex(session)'
     assert_includes @app, 'async function githubMediaBlob(session, item)'
-    assert_includes @app, "Accept: 'application/vnd.github.raw'"
+    assert_includes @app, "new URL('/v2/github'"
     assert_includes @app, 'URL.createObjectURL(blob)'
     refute_includes @app, 'access_token='
   end
