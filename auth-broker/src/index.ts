@@ -295,9 +295,15 @@ async function identityFor(session: SessionRecord) {
   const repositoryResponse = await githubApiRequest(session.accessToken, repositoryPath);
   if (repositoryResponse.status === 401) throw new Error('authentication_required');
   if (!repositoryResponse.ok) throw new Error('repository_access_unavailable');
-  const repository = await repositoryResponse.json() as { full_name?: string; permissions?: { push?: boolean } };
-  if (!user.login || !repository.full_name || !repository.permissions || repository.permissions.push !== true) throw new Error('repository_write_access_required');
-  return { login: user.login, avatarUrl: user.avatar_url || '', repository: { fullName: repository.full_name, push: repository.permissions.push === true } };
+  const repository = await repositoryResponse.json() as { full_name?: string };
+  if (!user.login || !repository.full_name) throw new Error('repository_write_access_required');
+  const permissionPath = `${repositoryPath}/collaborators/${encodeURIComponent(user.login)}/permission`;
+  const permissionResponse = await githubApiRequest(session.accessToken, permissionPath);
+  if (permissionResponse.status === 401) throw new Error('authentication_required');
+  if (!permissionResponse.ok) throw new Error('repository_access_unavailable');
+  const permission = await permissionResponse.json() as { permission?: string };
+  if (permission.permission !== 'admin' && permission.permission !== 'write') throw new Error('repository_write_access_required');
+  return { login: user.login, avatarUrl: user.avatar_url || '', repository: { fullName: repository.full_name, push: true } };
 }
 
 function publicSession(handle: string, session: SessionRecord): PublicSession {
