@@ -66,6 +66,14 @@ class PhaseG2AuthBrokerTest < Minitest::Test
     assert_includes @worker, 'publicSession(result.handle, result.session)'
   end
 
+  def test_v2_repository_verification_uses_collaborator_permission
+    assert_includes @worker, "const permissionPath = `${repositoryPath}/collaborators/${encodeURIComponent(user.login)}/permission`;"
+    assert_includes @worker, "permission.permission !== 'admin' && permission.permission !== 'write'"
+    refute_includes @worker, 'repository.permissions.push'
+    assert_includes @worker, "repository: { fullName: repository.full_name, push: true }"
+    assert_includes @worker, "throw new Error('repository_write_access_required')"
+  end
+
   def test_github_expiry_seconds_are_converted_to_bounded_session_milliseconds
     assert_includes @worker, 'function sessionTtlMs(expiresIn: unknown)'
     assert_includes @worker, 'const milliseconds = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : SESSION_MAX_TTL_MS;'
