@@ -56,6 +56,16 @@ class PhaseG2AuthBrokerTest < Minitest::Test
     assert_includes exchange, 'ticket.expiresAt < Date.now()'
   end
 
+  def test_legacy_exchange_preserves_old_frontend_contract_while_v2_verifies_identity
+    assert_includes @worker, 'exchangeSession(body, request, env, safe)'
+    assert_includes @worker, 'if (verifyIdentity) session.identity = await identityFor(session);'
+    assert_includes @worker, "url.pathname === '/session/exchange'"
+    assert_includes @worker, "url.pathname === '/v2/session/exchange'"
+    assert_includes @worker, 'restoreSession(body, request, env, safe)'
+    assert_includes @worker, 'access_token: result.session.accessToken'
+    assert_includes @worker, 'publicSession(result.handle, result.session)'
+  end
+
   def test_github_expiry_seconds_are_converted_to_bounded_session_milliseconds
     assert_includes @worker, 'function sessionTtlMs(expiresIn: unknown)'
     assert_includes @worker, 'const milliseconds = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : SESSION_MAX_TTL_MS;'

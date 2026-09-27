@@ -304,7 +304,7 @@ function publicSession(handle: string, session: SessionRecord): PublicSession {
   return { authenticated: true, session_handle: handle, expires_at: new Date(session.accessExpiresAt).toISOString(), return_to: session.returnTo, login: session.identity?.login || '', avatar_url: session.identity?.avatarUrl || '', repository: { full_name: session.identity?.repository.fullName || 'Iyad-Ayoub/astra-team.github.io', push: session.identity?.repository.push === true } };
 }
 
-async function exchangeSession(body: { ticket?: string; redirect_uri?: string }, request: Request, env: Env): Promise<SessionResult | Response> {
+async function exchangeSession(body: { ticket?: string; redirect_uri?: string }, request: Request, env: Env, verifyIdentity = true): Promise<SessionResult | Response> {
   const ticket = await unseal<Ticket>(body.ticket, env.GITHUB_APP_CLIENT_SECRET);
   if (!ticket || ticket.expiresAt < Date.now() || !ticket.nonce || !callbackAllowed(body.redirect_uri || null) || !equal(ticket.callback, body.redirect_uri || '') || !returnToAllowed(ticket.returnTo, ticket.callback)) {
     return json({ error: 'invalid_or_expired_session' }, 400, request);
@@ -312,7 +312,7 @@ async function exchangeSession(body: { ticket?: string; redirect_uri?: string },
   const session: SessionRecord = { accessToken: ticket.accessToken, accessExpiresAt: ticket.accessExpiresAt, callback: ticket.callback, returnTo: ticket.returnTo, origin: request.headers.get('Origin') || '', createdAt: Date.now(), updatedAt: Date.now() };
   const handle = randomValue();
   try {
-    session.identity = await identityFor(session);
+    if (verifyIdentity) session.identity = await identityFor(session);
     await saveSession(handle, session, env);
     return { handle, session };
   } catch (error) {
@@ -325,19 +325,19 @@ async function exchange(request: Request, env: Env, safe = true) {
   if (!originAllowed(request)) return json({ error: 'origin_not_allowed' }, 403, request);
   let body: { ticket?: string; redirect_uri?: string };
   try { body = await request.json(); } catch (_) { return json({ error: 'invalid_request' }, 400, request); }
-  const result = await exchangeSession(body, request, env);
+  const result = await exchangeSession(body, request, env, safe);
   if (result instanceof Response) return result;
   return json(safe ? publicSession(result.handle, result.session) : { access_token: result.session.accessToken, expires_at: new Date(result.session.accessExpiresAt).toISOString(), return_to: result.session.returnTo, session_handle: result.handle }, 200, request);
 }
 
-async function restoreSession(body: { redirect_uri?: string; session_handle?: string }, request: Request, env: Env): Promise<SessionResult | Response> {
+async function restoreSession(body: { redirect_uri?: string; session_handle?: string }, request: Request, env: Env, verifyIdentity = true): Promise<SessionResult | Response> {
   const handle = body.session_handle || '';
   let session = await usableSession(handle, env);
   if (!session || !equal(session.origin, request.headers.get('Origin') || '') || !callbackAllowed(body.redirect_uri || null) || !equal(session.callback, body.redirect_uri || '') || !returnToAllowed(session.returnTo, session.callback)) return json({ error: 'invalid_or_expired_session' }, 401, request);
   try {
-    session.identity = await identityFor(session);
+    if (verifyIdentity) session.identity = await identityFor(session);
     session.updatedAt = Date.now();
-    await saveSession(handle, session, env);
+    if (verifyIdentity) await saveSession(handle, session, env);
     return { handle, session };
   } catch (_) {
     await env.CMS_SESSIONS.delete(await sessionKey(handle));
@@ -349,7 +349,7 @@ async function restore(request: Request, env: Env, safe = true) {
   if (!originAllowed(request)) return json({ error: 'origin_not_allowed' }, 403, request);
   let body: { redirect_uri?: string; session_handle?: string };
   try { body = await request.json(); } catch (_) { return json({ error: 'invalid_request' }, 400, request); }
-  const result = await restoreSession(body, request, env);
+  const result = await restoreSession(body, request, env, safe);
   if (result instanceof Response) return result;
   return json(safe ? publicSession(result.handle, result.session) : { access_token: result.session.accessToken, expires_at: new Date(result.session.accessExpiresAt).toISOString(), return_to: result.session.returnTo, session_handle: result.handle }, 200, request);
 }
