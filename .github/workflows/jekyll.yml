@@ -106,6 +106,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v8, Node 24
         with:
           persist-credentials: false
+          fetch-depth: 2
       - name: Set up Node for minification and browser checks
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6, Node 24 action runtime
         with:

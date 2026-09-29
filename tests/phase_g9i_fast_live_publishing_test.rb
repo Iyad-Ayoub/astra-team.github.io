@@ -9,6 +9,7 @@ class PhaseG9iFastLivePublishingTest < Minitest::Test
     assert_includes WORKFLOW, 'classify-cms-merge:'
     assert_includes WORKFLOW, 'actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8'
     refute_includes WORKFLOW, 'actions/github-script@v7'
+    assert_includes WORKFLOW, 'fetch-depth: 2'
     assert_includes WORKFLOW, 'listPullRequestsAssociatedWithCommit'
     assert_includes WORKFLOW, 'compareCommits'
     assert_includes WORKFLOW, 'context.payload.before'
@@ -21,6 +22,7 @@ class PhaseG9iFastLivePublishingTest < Minitest::Test
     assert_includes WORKFLOW, "name.startsWith('assets/img/news/')"
     assert_includes WORKFLOW, "core.setOutput('fast', fast ? 'true' : 'false')"
     assert_includes WORKFLOW, 'using full pipeline'
+    assert_includes WORKFLOW, 'git diff --check "${{ github.event.before }}" "${{ github.sha }}"'
   end
 
   def test_fast_path_skips_expensive_steps_but_keeps_production_build_and_pages
