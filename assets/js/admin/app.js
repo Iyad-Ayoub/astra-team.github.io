@@ -10,6 +10,8 @@
   var publicationStatusEpoch = 0;
   var publicationStatusTimer;
   var githubSession;
+  var draftSaveSubmitting = false;
+  var draftSaveMessageTimer;
   var githubSessionHandleKey = 'astra-cms-session-handle';
   var githubDraftBranch = 'cms-drafts';
   var githubDraftRoot = 'cms/drafts/news';
@@ -231,7 +233,27 @@
     return { record: parseGithubDraft(fromBase64(data.content)), sha: data.sha };
   }
 
-  function githubDraftMessage(value) { message('admin-github-news-message', value); }
+  function githubDraftMessage(value, kind) {
+    var node = element('admin-github-news-message');
+    if (!node) return;
+    node.classList.remove('astra-admin-message-success', 'astra-admin-message-status');
+    if (kind === 'success') node.classList.add('astra-admin-message-success');
+    if (kind === 'status') node.classList.add('astra-admin-message-status');
+    node.textContent = value || '';
+  }
+
+  function setDraftSaveState(state) {
+    var button = document.querySelector('#admin-github-news-form button[type="submit"]');
+    if (button) button.disabled = state === 'saving';
+    if (draftSaveMessageTimer) { window.clearTimeout(draftSaveMessageTimer); draftSaveMessageTimer = null; }
+    if (state === 'unsaved') githubDraftMessage('● Unsaved changes', 'status');
+    else if (state === 'saving') githubDraftMessage('Saving…', 'status');
+    else if (state === 'saved') {
+      var now = new Date().toLocaleTimeString();
+      githubDraftMessage('✓ Saved · ' + now, 'success');
+      draftSaveMessageTimer = window.setTimeout(function () { githubDraftMessage('✓ Saved', 'success'); }, 4500);
+    }
+  }
 
   function currentDraftId() {
     var id = new URLSearchParams(window.location.search).get('id');
@@ -272,7 +294,7 @@
   function schedulePublicationStatusPolling(session, record, knownLifecycle) { stopPublicationStatusPolling(); publicationStatusTimer = window.setTimeout(function () { loadPublicationStatus(session, record, knownLifecycle); }, 15000); }
   function validationDetail(validation, unpublish) { if (validation === 'passed') return unpublish ? 'Validation passed. Ready to merge.' : 'Validation passed. Ready to publish.'; return validation === 'failed' ? 'Validation failed.' : 'Validation in progress…'; }
   async function publicationValidationState(session, pull, unpublish) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName; try { var checks = await githubResponse(base + '/commits/' + pull.head.sha + '/check-runs?filter=latest', session); var validation = (checks.check_runs || []).filter(function (check) { return unpublish || check.name === 'CMS publication validation'; }); if (!validation.length || validation.some(function (check) { return check.status !== 'completed'; })) return 'pending'; return validation.every(function (check) { return ['success', 'neutral', 'skipped'].indexOf(check.conclusion) !== -1; }) ? 'passed' : 'failed'; } catch (_) { return 'unknown'; } }
-  async function loadPublicationStatus(session, record, knownLifecycle) { var epoch = ++publicationStatusEpoch, github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(record.id), removal = unpublishBranch(record.id); stopPublicationStatusPolling(); try { var published = await publishedNewsByContentId(session, record.id), media = await draftMedia(session, record), pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session), removals = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + removal), session); if (epoch !== publicationStatusEpoch) return; if (removals.length) { var removal = removals[0], removalValidation = await publicationValidationState(session, removal, true); if (epoch !== publicationStatusEpoch) return; renderPublicationState('Unpublish submitted', validationDetail(removalValidation, true), removal.html_url); if (removalValidation === 'pending' || removalValidation === 'unknown') schedulePublicationStatusPolling(session, record, { state: 'Unpublish submitted', pull: removal, unpublish: true }); return; } if (pulls.length) { var pull = pulls[0], validation = await publicationValidationState(session, pull); if (epoch !== publicationStatusEpoch) return; var detail = validationDetail(validation, false); if (!await publicationBranchMatchesDraft(session, record, branch, published, media)) detail = 'Draft changed after submission. The existing request remains unchanged. ' + detail; if (epoch !== publicationStatusEpoch) return; var state = published ? 'Update submitted' : 'Submitted'; renderPublicationState(state, detail, pull.html_url, publicNewsUrl(published)); if (validation === 'pending' || validation === 'unknown') schedulePublicationStatusPolling(session, record, { state: state, pull: pull, unpublish: false }); return; } if (published) { if (serializePublicNews(record, media, published) === published.markdown) renderPublicationState('Published', '', null, publicNewsUrl(published)); else renderPublicationState('Update available', '', null, publicNewsUrl(published)); return; } } catch (error) { if (epoch !== publicationStatusEpoch) return; if (knownLifecycle) { renderPublicationState(knownLifecycle.state, 'Validation in progress…', knownLifecycle.pull.html_url); schedulePublicationStatusPolling(session, record, knownLifecycle); return; } renderPublicationState('Error/Conflict', friendlyError(error, 'Unable to determine publication status.')); return; } if (epoch === publicationStatusEpoch) renderPublicationState('Draft', ''); }
+  async function loadPublicationStatus(session, record, knownLifecycle, statusSink) { function applyState(value, detail, pullLink, publicLink) { if (statusSink) statusSink(value); else renderPublicationState(value, detail, pullLink, publicLink); } var epoch = ++publicationStatusEpoch, github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(record.id), removal = unpublishBranch(record.id); stopPublicationStatusPolling(); try { var published = await publishedNewsByContentId(session, record.id), media = await draftMedia(session, record), pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session), removals = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + removal), session); if (epoch !== publicationStatusEpoch) return; if (removals.length) { var removal = removals[0], removalValidation = await publicationValidationState(session, removal, true); if (epoch !== publicationStatusEpoch) return; applyState('Unpublish submitted', validationDetail(removalValidation, true), removal.html_url); if (!statusSink && (removalValidation === 'pending' || removalValidation === 'unknown')) schedulePublicationStatusPolling(session, record, { state: 'Unpublish submitted', pull: removal, unpublish: true }); return; } if (pulls.length) { var pull = pulls[0], validation = await publicationValidationState(session, pull); if (epoch !== publicationStatusEpoch) return; var detail = validationDetail(validation, false); if (!await publicationBranchMatchesDraft(session, record, branch, published, media)) detail = 'Draft changed after submission. The existing request remains unchanged. ' + detail; if (epoch !== publicationStatusEpoch) return; var state = published ? 'Update submitted' : 'Submitted'; applyState(state, detail, pull.html_url, publicNewsUrl(published)); if (!statusSink && (validation === 'pending' || validation === 'unknown')) schedulePublicationStatusPolling(session, record, { state: state, pull: pull, unpublish: false }); return; } if (published) { if (serializePublicNews(record, media, published) === published.markdown) applyState('Published', '', null, publicNewsUrl(published)); else applyState('Update available', '', null, publicNewsUrl(published)); return; } } catch (error) { if (epoch !== publicationStatusEpoch) return; if (knownLifecycle) { applyState(knownLifecycle.state, 'Validation in progress…', knownLifecycle.pull.html_url); schedulePublicationStatusPolling(session, record, knownLifecycle); return; } applyState('Error/Conflict', friendlyError(error, 'Unable to determine publication status.')); return; } if (epoch === publicationStatusEpoch) applyState('Draft', ''); }
   function setPublicationBusy(busy) { publicationSubmitting = busy; ['admin-news-publish', 'admin-news-update'].forEach(function (id) { var button = element(id); if (button) button.disabled = busy || button.hidden; }); }
   function preserveNewsFormForReauthentication() { var form = element('admin-github-news-form'); if (!form) return; try { sessionStorage.setItem('astra-cms-reauth-draft', JSON.stringify({ route: window.location.pathname + window.location.search, fields: collectNewsPayload() })); } catch (_) {} }
   function restoreNewsFormAfterReauthentication() { try { var saved = JSON.parse(sessionStorage.getItem('astra-cms-reauth-draft') || 'null'); if (!saved || saved.route !== window.location.pathname + window.location.search || !saved.fields) return; Object.keys(saved.fields).forEach(function (key) { var field = newsField(key.replace(/_/g, '-')); if (!field) return; if (field.type === 'checkbox') field.checked = Boolean(saved.fields[key]); else field.value = saved.fields[key] || ''; }); sessionStorage.removeItem('astra-cms-reauth-draft'); toggleEventFields(); } catch (_) {} }
@@ -328,6 +350,7 @@
 
   async function saveGithubDraft(event) {
     event.preventDefault();
+    if (draftSaveSubmitting) return;
     var payload = collectNewsPayload();
     var validationError = validateNewsPayload(payload);
     if (validationError) { githubDraftMessage(validationError); return; }
@@ -341,6 +364,8 @@
       githubDraftMessage('Your GitHub session has expired. Sign in again before saving this draft.');
       return;
     }
+    draftSaveSubmitting = true;
+    setDraftSaveState('saving');
     try {
       await verifyGithubRepositoryAccess(session);
       if (payload.cover_media_id) {
@@ -353,12 +378,25 @@
       var response = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + draftPath(id), session, { method: 'PUT', body: body });
       editingNews = payload;
       editingNews.githubSha = response.content.sha;
-      githubDraftMessage('Draft saved to GitHub.');
+      setDraftSaveState('saved');
       if (!currentDraftId()) window.location.assign(new URL('../edit/?id=' + encodeURIComponent(id), window.location.href).toString());
     } catch (error) {
       githubDraftMessage(error.status === 409 ? 'This draft changed in GitHub. Reload it before saving again.' : friendlyError(error, 'Unable to save this GitHub draft.'));
+    } finally {
+      draftSaveSubmitting = false;
+      var button = document.querySelector('#admin-github-news-form button[type="submit"]');
+      if (button) button.disabled = false;
     }
   }
+
+  function displayNewsType(value) { return value === 'open-source' ? 'Open-source' : value ? value.charAt(0).toUpperCase() + value.slice(1) : 'News'; }
+  function displayNewsDate(value) {
+    if (!value) return '';
+    var date = new Date(value + 'T00:00:00');
+    if (Number.isNaN(date.getTime())) return value;
+    return String(date.getDate()).padStart(2, '0') + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()] + ' ' + date.getFullYear();
+  }
+  function newsBadge(value, className) { var badge = document.createElement('span'); badge.className = 'astra-admin-news-badge' + (className ? ' ' + className : ''); badge.textContent = value; return badge; }
 
   async function loadGithubNewsRoute(identity) {
     var route = document.body.dataset.adminRoute;
@@ -374,9 +412,12 @@
         container.replaceChildren();
         for (var index = 0; index < entries.length; index += 1) {
           var draft = await readGithubDraft(session, entries[index].name.replace(/\.md$/, ''));
+          var lifecycleState = 'Draft';
+          await loadPublicationStatus(session, draft.record, null, function (state) { lifecycleState = state; });
           var link = document.createElement('a');
           link.className = 'astra-admin-news-item'; link.href = new URL('edit/?id=' + encodeURIComponent(draft.record.id), window.location.href).toString();
-          link.textContent = draft.record.title + ' · ' + draft.record.type + ' · ' + draft.record.content_date;
+          var title = document.createElement('strong'); title.className = 'astra-admin-news-title'; title.textContent = draft.record.title; link.appendChild(title);
+          var metadata = document.createElement('span'); metadata.className = 'astra-admin-news-meta'; metadata.appendChild(newsBadge(displayNewsType(draft.record.type))); if (displayNewsDate(draft.record.content_date)) metadata.appendChild(newsBadge(displayNewsDate(draft.record.content_date))); metadata.appendChild(newsBadge(lifecycleState)); if (draft.record.featured) metadata.appendChild(newsBadge('Featured')); if (draft.record.homepage) metadata.appendChild(newsBadge('Homepage')); link.appendChild(metadata);
           container.appendChild(link);
         }
         if (!entries.length) container.textContent = 'No GitHub drafts yet.';
@@ -534,7 +575,11 @@
   function bindGithubEvents() {
     document.querySelectorAll('#admin-github-login-button').forEach(function (button) { button.addEventListener('click', beginGithubLogin); });
     document.querySelectorAll('#admin-github-logout').forEach(function (button) { button.addEventListener('click', logoutGithub); });
-    if (element('admin-github-news-form')) element('admin-github-news-form').addEventListener('submit', saveGithubDraft);
+    if (element('admin-github-news-form')) {
+      element('admin-github-news-form').addEventListener('submit', saveGithubDraft);
+      element('admin-github-news-form').addEventListener('input', function () { if (!draftSaveSubmitting) setDraftSaveState('unsaved'); });
+      element('admin-github-news-form').addEventListener('change', function () { if (!draftSaveSubmitting) setDraftSaveState('unsaved'); });
+    }
     if (element('admin-news-publish')) element('admin-news-publish').addEventListener('click', submitGithubPublication);
     if (element('admin-news-update')) element('admin-news-update').addEventListener('click', submitGithubPublication);
     if (element('admin-news-unpublish')) element('admin-news-unpublish').addEventListener('click', submitGithubUnpublish);
@@ -614,6 +659,8 @@
     newsField('homepage').checked = Boolean(record && record.homepage);
     if (newsField('cover-media-id')) newsField('cover-media-id').value = record && record.cover_media_id ? record.cover_media_id : '';
     setNewsMessage('');
+    githubDraftMessage('');
+    setDraftSaveState('');
     toggleEventFields();
     restoreNewsFormAfterReauthentication();
   }

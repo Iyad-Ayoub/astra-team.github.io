@@ -52,4 +52,23 @@ class PhaseG3GitHubDraftsTest < Minitest::Test
     refute_includes flow, "from('profiles')"
     assert_includes flow, 'verifyGithubRepositoryAccess(session)'
   end
+
+  def test_news_list_has_separate_hierarchy_and_save_feedback_states
+    assert_includes @app, "className = 'astra-admin-news-title'"
+    assert_includes @app, "className = 'astra-admin-news-meta'"
+    assert_includes @app, 'displayNewsDate(draft.record.content_date)'
+    assert_includes @app, 'loadPublicationStatus(session, draft.record, null, function (state) { lifecycleState = state; })'
+    refute_includes @app, "draft.record.status === 'published' ? 'Published' : 'Draft'"
+    %w[Draft Submitted Published].each { |state| assert_includes @app, "'#{state}'" }
+    assert_includes @app, "'Update available'"
+    assert_includes @app, "'Update submitted'"
+    assert_includes @app, "'Unpublish submitted'"
+    assert_includes @app, "setDraftSaveState('unsaved')"
+    assert_includes @app, "setDraftSaveState('saving')"
+    assert_includes @app, "setDraftSaveState('saved')"
+    assert_includes @app, 'draftSaveSubmitting'
+    assert_includes @app, "button.disabled = state === 'saving'"
+    assert_includes File.read(CSS), '.astra-admin-message-success'
+    assert_includes File.read(CSS), '.astra-admin-news-badge'
+  end
 end
