@@ -67,7 +67,7 @@ class PhaseG3GitHubDraftsTest < Minitest::Test
     assert_includes @app, "setDraftSaveState('saving')"
     assert_includes @app, "setDraftSaveState('saved')"
     assert_includes @app, 'draftSaveSubmitting'
-    assert_includes @app, "button.disabled = state === 'saving'"
+    assert_includes @app, "button.disabled = state === 'saving' || state === 'pristine' || state === 'saved'"
     assert_includes File.read(CSS), '.astra-admin-message-success'
     assert_includes File.read(CSS), '.astra-admin-news-badge'
   end
