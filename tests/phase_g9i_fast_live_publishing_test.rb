@@ -69,4 +69,19 @@ class PhaseG9iFastLivePublishingTest < Minitest::Test
   def test_no_direct_main_content_write_is_added
     refute_match(/contents\/.*branch:s*['"]main['"]/, APP)
   end
+
+  def test_lifecycle_branch_reuse_is_controlled_and_safe
+    assert_includes APP, "var match = /^(cms-publish|cms-unpublish)\\/news\\/(news-[a-z0-9]+)$/.exec(branch);"
+    assert_includes APP, "publicationBranch(match[2])"
+    assert_includes APP, "unpublishBranch(match[2])"
+    assert_includes APP, "pulls?state=open&head="
+    assert_includes APP, "pull.merged_at && pull.base && pull.base.ref === 'main'"
+    assert_includes APP, "body: { sha: main.object.sha, force: true }"
+    assert_includes APP, "An open publication pull request still uses this branch."
+    assert_includes APP, "no verified merged pull request"
+  end
+
+  def test_existing_save_refreshes_lifecycle_without_navigation
+    assert_includes APP, "if (existingSha && currentDraftId()) await loadPublicationStatus(session, payload);"
+  end
 end

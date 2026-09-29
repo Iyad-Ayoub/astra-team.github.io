@@ -32,7 +32,15 @@ class PhaseG7NewsLifecycleTest < Minitest::Test
     assert_includes @app, "/pulls?state=open&head="
     assert_includes @app, 'async function ensureLifecycleBranch(session, branch)'
     assert_includes @app, "force: false"
+    assert_includes @app, "force: true"
+    assert_includes @app, "An open publication pull request still uses this branch."
+    assert_includes @app, "no verified merged pull request"
     assert_includes @app, 'pull.merged_at'
+  end
+
+  def test_existing_draft_save_recomputes_publication_state
+    assert_includes @app, "if (existingSha && currentDraftId()) await loadPublicationStatus(session, payload);"
+    assert_includes @app, "renderPublicationState('Update available'"
   end
 
   def test_unpublish_uses_a_deterministic_pr_branch_and_never_deletes_drafts

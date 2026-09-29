@@ -299,7 +299,28 @@
     await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: commit.sha, force: false } });
     return commit.sha;
   }
-  async function ensureLifecycleBranch(session, branch) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, main = await githubResponse(base + '/git/ref/heads/main', session); try { await githubResponse(base + '/git/refs', session, { method: 'POST', body: { ref: 'refs/heads/' + branch, sha: main.object.sha } }); return; } catch (error) { if (error.status !== 422) throw error; } var closed = await githubResponse(base + '/pulls?state=closed&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session); if (!closed.some(function (pull) { return pull.merged_at; })) throw new Error('An existing publication branch needs review before it can be reused.'); try { await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: main.object.sha, force: false } }); } catch (error) { throw new Error('The previous publication branch cannot be safely updated from main.'); } }
+  async function ensureLifecycleBranch(session, branch) {
+    var match = /^(cms-publish|cms-unpublish)\/news\/(news-[a-z0-9]+)$/.exec(branch);
+    var expectedBranch = match && (match[1] === 'cms-publish' ? publicationBranch(match[2]) : unpublishBranch(match[2]));
+    if (!match || expectedBranch !== branch) throw new Error('The lifecycle branch is not a controlled News branch.');
+    var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, main = await githubResponse(base + '/git/ref/heads/main', session);
+    try {
+      await githubResponse(base + '/git/refs', session, { method: 'POST', body: { ref: 'refs/heads/' + branch, sha: main.object.sha } });
+      return;
+    } catch (error) {
+      if (error.status !== 422) throw error;
+    }
+    var open = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session);
+    if (open.length) throw new Error('An open publication pull request still uses this branch.');
+    var closed = await githubResponse(base + '/pulls?state=closed&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session);
+    var merged = closed.some(function (pull) { return pull.merged_at && pull.base && pull.base.ref === 'main' && pull.head && pull.head.ref === branch; });
+    if (!merged) throw new Error('An existing publication branch has no verified merged pull request.');
+    try {
+      await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: main.object.sha, force: true } });
+    } catch (error) {
+      throw new Error('The previous publication branch cannot be safely reset from main.');
+    }
+  }
   async function publicationBranchMatchesDraft(session, record, branch, published, media) { try { var github = githubSettings(), path = publicNewsPath(record, published), data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + path + '?ref=' + encodeURIComponent(branch), session); return fromBase64(data.content) === serializePublicNews(record, media, published); } catch (error) { return false; } }
   function stopPublicationStatusPolling() { if (publicationStatusTimer) { window.clearTimeout(publicationStatusTimer); publicationStatusTimer = null; } if (deploymentStatusTimer) { window.clearTimeout(deploymentStatusTimer); deploymentStatusTimer = null; } }
   function schedulePublicationStatusPolling(session, record, knownLifecycle) { stopPublicationStatusPolling(); publicationStatusTimer = window.setTimeout(function () { loadPublicationStatus(session, record, knownLifecycle); }, 15000); }
@@ -530,6 +551,7 @@
       editingNews = payload;
       editingNews.githubSha = response.content.sha;
       setDraftSaveState('saved');
+      if (existingSha && currentDraftId()) await loadPublicationStatus(session, payload);
       if (!currentDraftId()) window.location.assign(new URL('../edit/?id=' + encodeURIComponent(id), window.location.href).toString());
     } catch (error) {
       githubDraftMessage(error.status === 409 ? 'This draft changed in GitHub. Reload it before saving again.' : friendlyError(error, 'Unable to save this GitHub draft.'));
