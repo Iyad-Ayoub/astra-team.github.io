@@ -8,7 +8,7 @@ event_date: "2026-09-15"
 end_date: "2026-09-18"
 location: "UAB Casa Convalescència in Barcelona"
 external_url: "https://pages.cvc.uab.es/ssadriving"
-featured: false
+featured: true
 homepage: false
 cover_media_id: "media-mufgnd58"
 status: "draft"
