@@ -45,7 +45,7 @@ class PhaseG9dUnpublishUiTest < Minitest::Test
   end
 
   def test_completed_unpublish_returns_to_the_existing_editable_draft_state
-    assert_includes APP, "if (epoch === publicationStatusEpoch) applyState('Draft', '');"
+    assert_includes APP, "if (epoch === publicationStatusEpoch) applyState(knownLifecycle && knownLifecycle.state === 'Published' ? 'Published' : 'Draft', '');"
     assert_includes APP, 'async function readGithubDraft(session, id)'
     assert_includes APP, "branch: githubDraftBranch"
   end
