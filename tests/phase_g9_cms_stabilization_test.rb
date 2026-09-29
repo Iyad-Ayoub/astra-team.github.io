@@ -26,7 +26,7 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
   end
 
   def test_submission_resolves_status_after_creating_the_pull_request
-    assert_includes @app, "await loadPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pr, unpublish: false });"
+    assert_includes @app, "await loadPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pr, unpublish: false, expectedSha: publicationSha });"
     assert_includes @app, 'View pull request'
     assert_includes @app, "renderPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url"
     refute_includes @app, "pull request #' + pr.number + ' created."
@@ -36,7 +36,7 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
     assert_includes @app, 'publicationStatusEpoch += 1;'
     assert_includes @app, 'if (epoch !== publicationStatusEpoch) return;'
     assert_includes @app, 'async function loadPublicationStatus(session, record, knownLifecycle, statusSink)'
-    assert_includes @app, "if (knownLifecycle) { applyState(knownLifecycle.state, 'Validation in progress…', knownLifecycle.pull.html_url);"
+    assert_includes @app, "if (knownLifecycle) { applyState(publicationDisplayState(knownLifecycle.state, 'pending'), 'Validation in progress…', knownLifecycle.pull.html_url);"
     assert_includes @app, 'schedulePublicationStatusPolling(session, record, knownLifecycle);'
   end
 

@@ -9,6 +9,10 @@ class PhaseG9hPublicationUxTest < Minitest::Test
     assert_includes APP, 'async function refreshGithubPublication()'
     assert_includes APP, 'findOpenPublicationPull(session, id)'
     assert_includes APP, 'await createPublicationCommit(session, publicationBranch(id), record, media, published)'
+    assert_includes APP, 'return commit.sha;'
+    assert_includes APP, 'expectedPublicationSha = pull.head && pull.head.sha'
+    assert_includes APP, 'expectedSha: expectedPublicationSha'
+    assert_includes APP, 'Waiting for GitHub to register the refreshed publication…'
     assert_includes APP, "base: 'main'"
     refute_includes APP.split('async function refreshGithubPublication', 2).last.split('async function publishGithubPublication', 2).first, "method: 'POST'"
   end
@@ -34,6 +38,17 @@ class PhaseG9hPublicationUxTest < Minitest::Test
     assert_includes APP, "renderPublicationState('Update available', '', null, publicNewsUrl(published), 'update')"
     assert_includes APP, "value === 'Update available' && action === 'update'"
     assert_includes APP, "value === 'Update available' && action === 'refresh'"
+  end
+
+  def test_validation_is_bound_to_the_current_publication_head
+    assert_includes APP, "pull.head.sha !== knownLifecycle.expectedSha"
+    assert_includes APP, "publicationValidationState(session, pull)"
+    assert_includes APP, "publicationDisplayState(internalState, validation)"
+    assert_includes APP, "'Ready to publish'"
+    assert_includes APP, "'Update ready to publish'"
+    assert_includes APP, "['Submitted', 'Update submitted', 'Ready to publish', 'Update ready to publish'].indexOf(value)"
+    assert_includes APP, "detail.className = 'astra-admin-message-success'"
+    assert_includes APP, "detail.className = 'astra-admin-message-status'"
   end
 
   def test_stale_source_and_merge_failures_never_report_published
