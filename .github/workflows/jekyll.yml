@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: Classify verified CMS publication merge
         id: classify
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ff981a4f7c1c9f # v7.0.1
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           github-token: ${{ github.token }}
           script: |
@@ -103,7 +103,7 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v8, Node 24
         with:
           persist-credentials: false
       - name: Set up Node for minification and browser checks

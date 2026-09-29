@@ -7,7 +7,7 @@ class PhaseG9iFastLivePublishingTest < Minitest::Test
 
   def test_fast_classification_is_associated_pr_and_fail_closed
     assert_includes WORKFLOW, 'classify-cms-merge:'
-    assert_includes WORKFLOW, 'actions/github-script@60a0d83039c74a4aee543508d2ff981a4f7c1c9f # v7.0.1'
+    assert_includes WORKFLOW, 'actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8'
     refute_includes WORKFLOW, 'actions/github-script@v7'
     assert_includes WORKFLOW, 'listPullRequestsAssociatedWithCommit'
     assert_includes WORKFLOW, 'compareCommits'
