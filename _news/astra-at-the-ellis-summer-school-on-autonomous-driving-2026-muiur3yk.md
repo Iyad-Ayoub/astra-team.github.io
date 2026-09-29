@@ -14,7 +14,7 @@ location: "UAB Casa Convalescència in Barcelona"
 external_url: "https://pages.cvc.uab.es/ssadriving"
 date_precision: "day"
 image: "/assets/img/news/news-muiur3yk/media-mufgnd58.jpg"
-image_alt: "Summer School Bacelona 2026"
+image_alt: "Summer School Barcelona 2026"
 ---
 
 ASTRA participated in the ELLIS Summer School on Autonomous Driving 2026, held from 15 to 18 September at UAB Casa Convalescència in Barcelona.
