@@ -5,7 +5,7 @@ class PhaseG9dUnpublishUiTest < Minitest::Test
   APP = File.read(File.join(ROOT, 'assets/js/admin/app.js'))
 
   def test_unpublish_is_only_available_from_the_resolved_published_state
-    assert_includes APP, "if (unpublish) { unpublish.hidden = value !== 'Published';"
+    assert_includes APP, "if (unpublish) { unpublish.hidden = value !== 'Published' && value !== 'Live';"
     %w[Draft Submitted Update\ submitted Unpublish\ submitted Error/Conflict Checking].each do |state|
       refute_match(/unpublish\.hidden = value !== '#{Regexp.escape(state)}'/, APP)
     end

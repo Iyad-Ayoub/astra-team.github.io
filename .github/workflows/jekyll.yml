@@ -28,8 +28,71 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/cms-publish/') }}
 
 jobs:
+  classify-cms-merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      fast: ${{ steps.classify.outputs.fast }}
+    steps:
+      - name: Classify verified CMS publication merge
+        id: classify
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ff981a4f7c1c9f # v7.0.1
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const sha = context.sha;
+            let fast = false;
+            if (context.ref !== 'refs/heads/main' || context.eventName !== 'push') {
+              core.setOutput('fast', 'false');
+              return;
+            }
+            const before = context.payload.before;
+            if (!before || /^0+$/.test(before)) {
+              core.setOutput('fast', 'false');
+              return;
+            }
+            try {
+              const compare = await github.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: before,
+                head: sha
+              });
+              const actualFiles = (compare.data.files || []).map(file => file.filename);
+              if (!actualFiles.length || actualFiles.length >= 300 || actualFiles.some(name => !name.startsWith('_news/') && !name.startsWith('assets/img/news/')) || !actualFiles.some(name => name.startsWith('_news/'))) {
+                core.setOutput('fast', 'false');
+                return;
+              }
+              const response = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: sha,
+                per_page: 20
+              });
+              for (const pull of response.data) {
+                if (!pull.merged_at || pull.base.ref !== 'main' || !/^cms-publish\/news\/news-[a-z0-9]+$/.test(pull.head.ref)) continue;
+                const files = await github.paginate(github.rest.pulls.listFiles, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pull.number,
+                  per_page: 100
+                });
+                const names = files.map(file => file.filename);
+                if (names.some(name => !name.startsWith('_news/') && !name.startsWith('assets/img/news/'))) continue;
+                if (!names.some(name => name.startsWith('_news/'))) continue;
+                fast = true;
+                break;
+              }
+            } catch (error) {
+              core.warning(`CMS fast-path classification unavailable; using full pipeline: ${error.message}`);
+            }
+            core.setOutput('fast', fast ? 'true' : 'false');
+
   # Build job
   build:
+    needs: classify-cms-merge
     if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/cms-publish/')
     runs-on: ubuntu-22.04
     permissions:
@@ -61,6 +124,7 @@ jobs:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
       - name: Validate source and regression tests
+        if: needs.classify-cms-merge.outputs.fast != 'true'
         run: |
           bundle exec ruby scripts/validate_site.rb --source-only
           bundle exec ruby tests/validation_test.rb
@@ -68,6 +132,7 @@ jobs:
       # Corpus snapshots run before the optional live HAL refresh. A legitimate
       # new HAL record must not fail tests pinned to the versioned 259 entries.
       - name: Build and test versioned root and project-subpath baselines
+        if: needs.classify-cms-merge.outputs.fast != 'true'
         env:
           JEKYLL_ENV: production
         run: |
@@ -87,18 +152,26 @@ jobs:
           done
           bundle exec jekyll doctor
       - name: Install pinned browser test dependency
+        if: needs.classify-cms-merge.outputs.fast != 'true'
         run: |
           npm install --prefix "$RUNNER_TEMP/astra-browser" --no-save --no-package-lock playwright@1.63.0
           node "$RUNNER_TEMP/astra-browser/node_modules/playwright/cli.js" install --with-deps chromium
       - name: Check containment, metadata and analytics in browser
+        if: needs.classify-cms-merge.outputs.fast != 'true'
         env:
           PLAYWRIGHT_MODULE: ${{ runner.temp }}/astra-browser/node_modules/playwright
         run: |
           PHASE10_SITE="$RUNNER_TEMP/astra-root" node tests/phase10_browser_test.cjs
           PHASE10_SITE="$RUNNER_TEMP/astra-subpath" PHASE10_BASEURL="/astra-team.github.io" node tests/phase10_browser_test.cjs
       - name: Retrieve all HAL publications
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && needs.classify-cms-merge.outputs.fast != 'true'
         run: bash scripts/publication-update.sh
+      - name: Validate fast CMS publication source
+        if: github.ref == 'refs/heads/main' && needs.classify-cms-merge.outputs.fast == 'true'
+        run: |
+          set -euo pipefail
+          git diff --check "${{ github.event.before }}" "${{ github.sha }}"
+          bundle exec ruby scripts/validate_site.rb --source-only
       - name: Setup Pages
         if: github.ref == 'refs/heads/main'
         id: pages
@@ -124,6 +197,20 @@ jobs:
           CMS_REQUIRE_CONFIG: 'true'
           # Only the authoritative repository is indexable, even for a root-hosted fork.
           ASTRA_BUILD_CONTEXT: ${{ github.repository == 'astra-team/astra-team.github.io' && 'production' || 'staging' }}
+      - name: Validate focused CMS publication invariants
+        if: github.ref == 'refs/heads/main' && needs.classify-cms-merge.outputs.fast == 'true'
+        env:
+          PHASE7_SITE: ${{ github.workspace }}/_site
+          PHASE7_BASEURL: ${{ steps.pages.outputs.base_path }}
+          PHASE9_SITE: ${{ github.workspace }}/_site
+          PHASE9_BASEURL: ${{ steps.pages.outputs.base_path }}
+          PHASE10_SITE: ${{ github.workspace }}/_site
+          PHASE10_BASEURL: ${{ steps.pages.outputs.base_path }}
+        run: |
+          set -euo pipefail
+          bundle exec ruby tests/phase7_news_test.rb
+          bundle exec ruby tests/phase9_research_visuals_test.rb
+          bundle exec ruby tests/phase10_release_test.rb
       - name: Upload artifact
         if: github.ref == 'refs/heads/main'
         # Automatically uploads an artifact from the './_site' directory by default

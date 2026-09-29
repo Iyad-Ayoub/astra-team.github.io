@@ -9,6 +9,7 @@
   var unpublishSubmitting = false;
   var publicationStatusEpoch = 0;
   var publicationStatusTimer;
+  var deploymentStatusTimer;
   var githubSession;
   var draftSaveSubmitting = false;
   var draftSaveMessageTimer;
@@ -269,6 +270,7 @@
   }
 
   function publicationBranch(id) { if (!/^news-[a-z0-9]+$/.test(id)) throw new Error('Invalid draft identifier.'); return 'cms-publish/news/' + id; }
+  function deploymentKey(id) { return 'astra-cms-deployment-sha-' + id; }
   function unpublishBranch(id) { if (!/^news-[a-z0-9]+$/.test(id)) throw new Error('Invalid draft identifier.'); return 'cms-unpublish/news/' + id; }
   function publicSlug(record, published) { if (published) return published.path.replace(/^_news\//, '').replace(/\.md$/, ''); var words = record.title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 72); return (words || 'news') + '-' + record.id.replace(/^news-/, '').slice(-8); }
   function publicNewsPath(record, published) { return published ? published.path : '_news/' + publicSlug(record) + '.md'; }
@@ -280,10 +282,10 @@
     return '---\n' + Object.keys(fields).filter(function (key) { return fields[key] !== null && fields[key] !== ''; }).map(function (key) { return key + ': ' + JSON.stringify(fields[key]); }).join('\n') + '\n---\n\n' + record.body.trim() + '\n';
   }
   async function draftMedia(session, record) { if (!record.cover_media_id) return null; await readMediaIndex(session); var media = mediaIndex.find(function (item) { return item.id === record.cover_media_id; }); if (!media) throw new Error('Referenced cover media is missing.'); return media; }
-  function publicationDetails(value, pullLink, publicLink) { var box = element('admin-publication-message'); if (!box) return; box.replaceChildren(); if (value) { var detail = document.createElement('span'); detail.textContent = value; if (value.indexOf('Validation passed') === 0) detail.className = 'astra-admin-message-success'; else if (value.indexOf('Validation in progress') === 0 || value.indexOf('Waiting for GitHub') === 0) detail.className = 'astra-admin-message-status'; box.appendChild(detail); } [[pullLink, 'View pull request'], [publicLink, 'View public News page']].forEach(function (entry) { if (!entry[0]) return; var anchor = document.createElement('a'); anchor.href = entry[0]; anchor.textContent = entry[1]; anchor.className = 'astra-admin-text-link'; box.appendChild(anchor); }); }
+  function publicationDetails(value, pullLink, publicLink, deploymentLink) { var box = element('admin-publication-message'); if (!box) return; box.replaceChildren(); if (value) { var detail = document.createElement('span'); detail.textContent = value; if (value.indexOf('Validation passed') === 0 || value.indexOf('✓ Published successfully') === 0) detail.className = 'astra-admin-message-success'; else if (value.indexOf('Merged to main') === 0 || value.indexOf('Waiting') === 0 || value.indexOf('Deploying') === 0 || value.indexOf('Validation in progress') === 0) detail.className = 'astra-admin-message-status'; box.appendChild(detail); } [[pullLink, 'View pull request'], [publicLink, 'View public News page'], [deploymentLink, 'View deployment']].forEach(function (entry) { if (!entry[0]) return; var anchor = document.createElement('a'); anchor.href = entry[0]; anchor.textContent = entry[1]; anchor.className = 'astra-admin-text-link'; box.appendChild(anchor); }); }
   function publicNewsUrl(published) { if (!published) return null; var prefix = adminRootUrl().replace(/admin\/$/, ''); return new URL('news/' + publicSlug({}, published) + '/', prefix).toString(); }
-  function setPublicationStatus(value, detail, action) { text('admin-publication-status', value); var button = element('admin-news-publish'), update = element('admin-news-update'), refresh = element('admin-news-refresh'), publishNow = element('admin-news-publish-now'), unpublish = element('admin-news-unpublish'); action = action || ''; if (button) { button.hidden = value !== 'Draft'; button.disabled = value !== 'Draft'; } if (update) { update.hidden = !(value === 'Update available' && action === 'update'); update.disabled = update.hidden; } if (refresh) { refresh.hidden = !(value === 'Update available' && action === 'refresh'); refresh.disabled = refresh.hidden; } if (publishNow) { publishNow.hidden = !(detail && detail.indexOf('Validation passed') === 0 && ['Submitted', 'Update submitted', 'Ready to publish', 'Update ready to publish'].indexOf(value) !== -1); publishNow.disabled = publishNow.hidden; } if (unpublish) { unpublish.hidden = value !== 'Published'; unpublish.disabled = value !== 'Published'; } }
-  function renderPublicationState(value, detail, pullLink, publicLink, action) { setPublicationStatus(value, detail, action); publicationDetails(detail, pullLink, publicLink); }
+  function setPublicationStatus(value, detail, action) { text('admin-publication-status', value); var button = element('admin-news-publish'), update = element('admin-news-update'), refresh = element('admin-news-refresh'), publishNow = element('admin-news-publish-now'), unpublish = element('admin-news-unpublish'); action = action || ''; if (button) { button.hidden = value !== 'Draft'; button.disabled = value !== 'Draft'; } if (update) { update.hidden = !(value === 'Update available' && action === 'update'); update.disabled = update.hidden; } if (refresh) { refresh.hidden = !(value === 'Update available' && action === 'refresh'); refresh.disabled = refresh.hidden; } if (publishNow) { publishNow.hidden = !(detail && detail.indexOf('Validation passed') === 0 && ['Submitted', 'Update submitted', 'Ready to publish', 'Update ready to publish'].indexOf(value) !== -1); publishNow.disabled = publishNow.hidden; } if (unpublish) { unpublish.hidden = value !== 'Published' && value !== 'Live'; unpublish.disabled = value !== 'Published' && value !== 'Live'; } }
+  function renderPublicationState(value, detail, pullLink, publicLink, action, deploymentLink) { setPublicationStatus(value, detail, action); publicationDetails(detail, pullLink, publicLink, deploymentLink); }
   function setPublicationLoading() { publicationStatusEpoch += 1; stopPublicationStatusPolling(); renderPublicationState('Checking publication status…', ''); }
   async function createPublicationCommit(session, branch, record, media, published) {
     var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName;
@@ -299,7 +301,7 @@
   }
   async function ensureLifecycleBranch(session, branch) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, main = await githubResponse(base + '/git/ref/heads/main', session); try { await githubResponse(base + '/git/refs', session, { method: 'POST', body: { ref: 'refs/heads/' + branch, sha: main.object.sha } }); return; } catch (error) { if (error.status !== 422) throw error; } var closed = await githubResponse(base + '/pulls?state=closed&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session); if (!closed.some(function (pull) { return pull.merged_at; })) throw new Error('An existing publication branch needs review before it can be reused.'); try { await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: main.object.sha, force: false } }); } catch (error) { throw new Error('The previous publication branch cannot be safely updated from main.'); } }
   async function publicationBranchMatchesDraft(session, record, branch, published, media) { try { var github = githubSettings(), path = publicNewsPath(record, published), data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + path + '?ref=' + encodeURIComponent(branch), session); return fromBase64(data.content) === serializePublicNews(record, media, published); } catch (error) { return false; } }
-  function stopPublicationStatusPolling() { if (publicationStatusTimer) { window.clearTimeout(publicationStatusTimer); publicationStatusTimer = null; } }
+  function stopPublicationStatusPolling() { if (publicationStatusTimer) { window.clearTimeout(publicationStatusTimer); publicationStatusTimer = null; } if (deploymentStatusTimer) { window.clearTimeout(deploymentStatusTimer); deploymentStatusTimer = null; } }
   function schedulePublicationStatusPolling(session, record, knownLifecycle) { stopPublicationStatusPolling(); publicationStatusTimer = window.setTimeout(function () { loadPublicationStatus(session, record, knownLifecycle); }, 15000); }
   function validationDetail(validation, unpublish) { if (validation === 'passed') return unpublish ? 'Validation passed. Ready to merge.' : 'Validation passed. Ready to publish.'; return validation === 'failed' ? 'Validation failed.' : 'Validation in progress…'; }
   function publicationDisplayState(state, validation) { if (validation === 'passed') return state === 'Submitted' ? 'Ready to publish' : state === 'Update submitted' ? 'Update ready to publish' : state; return state; }
@@ -418,11 +420,56 @@
       if (!pull || !pull.number || pull.base.ref !== 'main' || pull.head.ref !== publicationBranch(id)) throw new Error('The publication pull request is missing or targets an unexpected branch.');
       if (!await publicationBranchMatchesDraft(session, record, publicationBranch(id), published, media)) throw new Error('Publication source changed. Refresh publication first.');
       var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, freshPull = await githubResponse(base + '/pulls/' + pull.number, session); if (freshPull.state !== 'open' || !freshPull.base || freshPull.base.ref !== 'main' || !freshPull.head || freshPull.head.ref !== publicationBranch(id)) throw new Error('The publication pull request is no longer open or targets an unexpected branch.'); if (freshPull.mergeable === null) throw new Error('GitHub is still checking whether this pull request can be merged. Try again shortly.'); if (freshPull.mergeable !== true || ['dirty', 'blocked', 'unknown'].indexOf(freshPull.mergeable_state) !== -1) throw new Error('The pull request is not mergeable.'); if (await publicationValidationState(session, freshPull) !== 'passed') throw new Error('Validation is not passing. Review the pull request checks first.'); var merge = await githubResponse(base + '/pulls/' + freshPull.number + '/merge', session, { method: 'PUT', body: { sha: freshPull.head.sha, merge_method: 'squash' } });
-      if (!merge.merged) throw new Error(merge.message || 'GitHub did not merge the publication pull request.');
-      await loadPublicationStatus(session, record, { state: 'Published', pull: freshPull, unpublish: false });
-      renderPublicationState('Published', '', freshPull.html_url, publicNewsUrl({ path: publicNewsPath(record, published) })); publicationMessage('✓ Published successfully', 'success');
+      if (!merge.merged || !merge.sha) throw new Error(merge.message || 'GitHub did not return a merged commit SHA.');
+      try { sessionStorage.setItem(deploymentKey(record.id), merge.sha); } catch (_) {}
+      renderPublicationState('Merged to main', 'Waiting for website deployment…', freshPull.html_url, null);
+      await monitorPublicationDeployment(session, record, published, merge.sha, freshPull.html_url, publicationStatusEpoch);
     } catch (error) { renderPublicationState('Error/Conflict', friendlyError(error, 'Unable to publish this News item.')); }
     finally { setPublicationBusy(false); }
+  }
+
+  async function publicationDeploymentState(session, mergeSha) {
+    var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, path = base + '/actions/runs?branch=main&head_sha=' + encodeURIComponent(mergeSha) + '&per_page=20';
+    try {
+      var data = await githubResponse(path, session), run = (data.workflow_runs || []).find(function (candidate) { return candidate.name === 'Deploy astra-team with jekyll'; });
+      if (!run) return { state: 'waiting', run: null };
+      if (run.status !== 'completed') return { state: 'deploying', run: run };
+      return { state: run.conclusion === 'success' ? 'live' : 'failed', run: run };
+    } catch (error) {
+      if (error.status !== 401 && error.status !== 403) return { state: 'waiting', run: null };
+      try {
+        var response = await fetch('https://api.github.com' + path, { method: 'GET', headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, cache: 'no-store' });
+        if (!response.ok) return { state: 'waiting', run: null };
+        var publicData = await response.json(), publicRun = (publicData.workflow_runs || []).find(function (candidate) { return candidate.name === 'Deploy astra-team with jekyll'; });
+        if (!publicRun) return { state: 'waiting', run: null };
+        if (publicRun.status !== 'completed') return { state: 'deploying', run: publicRun };
+        return { state: publicRun.conclusion === 'success' ? 'live' : 'failed', run: publicRun };
+      } catch (_) { return { state: 'waiting', run: null }; }
+    }
+  }
+
+  async function monitorPublicationDeployment(session, record, published, mergeSha, pullLink, epoch, attempt) {
+    if (epoch !== publicationStatusEpoch) return;
+    attempt = attempt || 0;
+    var deployment = await publicationDeploymentState(session, mergeSha);
+    if (epoch !== publicationStatusEpoch) return;
+    var runLink = deployment.run && deployment.run.html_url, publicLink = publicNewsUrl(published || { path: publicNewsPath(record, published) });
+    if (deployment.state === 'live') {
+      try { sessionStorage.removeItem(deploymentKey(record.id)); } catch (_) {}
+      renderPublicationState('Live', '✓ Published successfully', pullLink, publicLink, '', runLink);
+      return;
+    }
+    if (deployment.state === 'failed') {
+      renderPublicationState('Published to repository', 'Website deployment failed.', pullLink, null, '', runLink);
+      return;
+    }
+    if (deployment.state === 'waiting' && attempt >= 20) {
+      var github = githubSettings();
+      renderPublicationState('Merged to main', 'Website deployment has not started yet.', pullLink, null, '', 'https://github.com/' + github.repoOwner + '/' + github.repoName + '/actions');
+      return;
+    }
+    renderPublicationState(deployment.state === 'deploying' ? 'Deploying website' : 'Merged to main', deployment.state === 'deploying' ? 'Deploying website…' : 'Waiting for website deployment…', pullLink, null, '', runLink);
+    deploymentStatusTimer = window.setTimeout(function () { monitorPublicationDeployment(session, record, published, mergeSha, pullLink, epoch, attempt + 1); }, 15000);
   }
 
   async function submitGithubUnpublish() {
@@ -532,7 +579,7 @@
         await readMediaIndex(session);
         var id = route === 'news-edit' ? currentDraftId() : null;
         if (route === 'news-edit' && !id) throw new Error('A valid draft identifier is required.');
-        if (id) { setPublicationLoading(); var loaded = await readGithubDraft(session, id); loaded.record.githubSha = loaded.sha; resetNewsForm(loaded.record); populateCoverMedia(loaded.record, session); await loadPublicationStatus(session, loaded.record); } else { resetNewsForm(null); populateCoverMedia(null, session); }
+        if (id) { setPublicationLoading(); var loaded = await readGithubDraft(session, id); loaded.record.githubSha = loaded.sha; resetNewsForm(loaded.record); populateCoverMedia(loaded.record, session); var deploymentSha = null; try { deploymentSha = sessionStorage.getItem(deploymentKey(id)); } catch (_) {} if (deploymentSha) { renderPublicationState('Merged to main', 'Waiting for website deployment…', null, null); try { await monitorPublicationDeployment(session, loaded.record, await publishedNewsByContentId(session, id), deploymentSha, null, publicationStatusEpoch); } catch (_) {} } else await loadPublicationStatus(session, loaded.record); } else { resetNewsForm(null); populateCoverMedia(null, session); }
       }
     } catch (error) { githubDraftMessage(friendlyError(error, 'Unable to load GitHub drafts.')); }
   }
