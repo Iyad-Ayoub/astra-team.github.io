@@ -5,6 +5,7 @@
   var mode = document.body.dataset.adminMode;
   var validNewsTypes = ['event', 'award', 'project', 'open-source', 'team', 'collaboration', 'demo'];
   var editingNews;
+  var pristineDraftSignature;
   var publicationSubmitting = false;
   var unpublishSubmitting = false;
   var publicationStatusEpoch = 0;
@@ -253,7 +254,7 @@
 
   function setDraftSaveState(state) {
     var button = document.querySelector('#admin-github-news-form button[type="submit"]');
-    if (button) button.disabled = state === 'saving';
+    if (button) button.disabled = state === 'saving' || state === 'pristine' || state === 'saved';
     if (draftSaveMessageTimer) { window.clearTimeout(draftSaveMessageTimer); draftSaveMessageTimer = null; }
     if (state === 'unsaved') githubDraftMessage('● Unsaved changes', 'status');
     else if (state === 'saving') githubDraftMessage('Saving…', 'status');
@@ -262,6 +263,28 @@
       githubDraftMessage('✓ Saved · ' + now, 'success');
       draftSaveMessageTimer = window.setTimeout(function () { githubDraftMessage('✓ Saved', 'success'); }, 4500);
     }
+  }
+
+  function editableDraftSignature(record) {
+    if (!record || !record.id) return null;
+    return serializeGithubDraft({
+      id: record.id, title: record.title, type: record.type, summary: record.summary, body: record.body,
+      content_date: record.content_date, event_date: record.event_date, end_date: record.end_date,
+      location: record.location, external_url: record.external_url, featured: Boolean(record.featured),
+      homepage: Boolean(record.homepage), cover_media_id: record.cover_media_id || null
+    });
+  }
+
+  function currentEditableDraft() {
+    var payload = collectNewsPayload();
+    payload.id = editingNews && editingNews.id ? editingNews.id : currentDraftId();
+    return payload;
+  }
+
+  function updateDraftDirtyState() {
+    var existing = Boolean(editingNews && editingNews.githubSha);
+    if (existing && pristineDraftSignature === editableDraftSignature(currentEditableDraft())) setDraftSaveState('pristine');
+    else setDraftSaveState('unsaved');
   }
 
   function currentDraftId() {
@@ -530,6 +553,7 @@
     var existingSha = editingNews && editingNews.githubSha;
     payload.id = id;
     payload.status = 'draft';
+    if (existingSha && pristineDraftSignature && editableDraftSignature(payload) === pristineDraftSignature) { setDraftSaveState('pristine'); return; }
     var github = githubSettings();
     var session = storedGithubSession() || await restoreGithubSession();
     if (!session) {
@@ -550,6 +574,7 @@
       var response = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + draftPath(id), session, { method: 'PUT', body: body });
       editingNews = payload;
       editingNews.githubSha = response.content.sha;
+      pristineDraftSignature = editableDraftSignature(payload);
       setDraftSaveState('saved');
       if (existingSha && currentDraftId()) await loadPublicationStatus(session, payload);
       if (!currentDraftId()) window.location.assign(new URL('../edit/?id=' + encodeURIComponent(id), window.location.href).toString());
@@ -856,8 +881,8 @@
     document.querySelectorAll('#admin-github-logout').forEach(function (button) { button.addEventListener('click', logoutGithub); });
     if (element('admin-github-news-form')) {
       element('admin-github-news-form').addEventListener('submit', saveGithubDraft);
-      element('admin-github-news-form').addEventListener('input', function () { if (!draftSaveSubmitting) setDraftSaveState('unsaved'); });
-      element('admin-github-news-form').addEventListener('change', function () { if (!draftSaveSubmitting) setDraftSaveState('unsaved'); });
+      element('admin-github-news-form').addEventListener('input', function () { if (!draftSaveSubmitting) updateDraftDirtyState(); });
+      element('admin-github-news-form').addEventListener('change', function () { if (!draftSaveSubmitting) updateDraftDirtyState(); });
     }
     if (element('admin-news-publish')) element('admin-news-publish').addEventListener('click', submitGithubPublication);
     if (element('admin-news-update')) element('admin-news-update').addEventListener('click', submitGithubPublication);
@@ -926,6 +951,7 @@
 
   function resetNewsForm(record) {
     editingNews = record || null;
+    pristineDraftSignature = record ? editableDraftSignature(record) : null;
     text('admin-news-form-title', record ? 'Edit News or Event' : 'New News or Event');
     newsField('title').value = record ? record.title : '';
     newsField('type').value = record && validNewsTypes.indexOf(record.type) !== -1 ? record.type : 'event';
@@ -941,9 +967,10 @@
     if (newsField('cover-media-id')) newsField('cover-media-id').value = record && record.cover_media_id ? record.cover_media_id : '';
     setNewsMessage('');
     githubDraftMessage('');
-    setDraftSaveState('');
+    setDraftSaveState(record ? 'pristine' : '');
     toggleEventFields();
     restoreNewsFormAfterReauthentication();
+    if (record) updateDraftDirtyState();
   }
 
   async function boot() {
