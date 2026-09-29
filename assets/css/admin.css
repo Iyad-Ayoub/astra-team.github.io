@@ -21,6 +21,8 @@
 .astra-admin-link-button { background: transparent !important; border: 0 !important; color: #006d77 !important; font-weight: 600 !important; margin-left: -14px; }
 .astra-admin-secondary { background: #fff !important; color: #006d77 !important; }
 .astra-admin-message { color: #a12828; line-height: 1.45; min-height: 1.4em; }
+.astra-admin-message-success { color: #176b4d; }
+.astra-admin-message-status { color: #52616d; }
 .astra-admin-dashboard-header { align-items: flex-start; display: flex; gap: 24px; justify-content: space-between; }
 .astra-admin-avatar { border-radius: 50%; flex: 0 0 64px; height: 64px; object-fit: cover; width: 64px; }
 .astra-admin-workspace { background: #fff; border: 1px solid #d8e0e3; border-radius: 10px; box-shadow: 0 8px 20px rgb(24 39 52 / 7%); overflow: hidden; }
@@ -60,8 +62,11 @@
 .astra-admin-form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .astra-admin-form-actions button { margin-top: 0; }
 .astra-admin-news-items { display: grid; gap: 10px; margin-top: 18px; }
-.astra-admin-news-item { background: #f7f9f9; border: 1px solid #d8e0e3; border-radius: 5px; color: #1d2630; margin: 0 !important; text-align: left; }
-.astra-admin-news-item small { display: block; font-weight: 400; margin-top: 4px; }
+.astra-admin-news-item { background: #f7f9f9; border: 1px solid #d8e0e3; border-radius: 7px; color: #1d2630; display: block; margin: 0 !important; padding: 14px 16px; text-align: left; text-decoration: none; }
+.astra-admin-news-item:hover, .astra-admin-news-item:focus { background: #fff; border-color: #006d77; box-shadow: 0 3px 10px rgb(24 39 52 / 8%); outline: none; }
+.astra-admin-news-title { display: block; font-size: 1rem; line-height: 1.35; }
+.astra-admin-news-meta { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.astra-admin-news-badge { background: #e5eeee; border-radius: 999px; color: #40525b; font-size: .78rem; font-weight: 700; line-height: 1.2; padding: 4px 8px; }
 .astra-admin-media-upload { border: 1px solid #d8e0e3; border-radius: 8px; display: grid; gap: 9px; margin: 20px 0; padding: 18px; }
 .astra-admin-media-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 .astra-admin-media-item { border: 1px solid #d8e0e3; border-radius: 8px; overflow: hidden; padding: 10px; }

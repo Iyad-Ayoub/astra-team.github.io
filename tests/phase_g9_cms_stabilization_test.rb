@@ -22,7 +22,7 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
   def test_initial_lookup_hides_submission_until_a_draft_is_confirmed
     assert_includes @app, "function setPublicationLoading() { publicationStatusEpoch += 1; stopPublicationStatusPolling(); renderPublicationState('Checking publication status…', ''); }"
     assert_includes @app, 'if (id) { setPublicationLoading();'
-    assert_includes @app, "if (epoch === publicationStatusEpoch) renderPublicationState('Draft', '');"
+    assert_includes @app, "if (epoch === publicationStatusEpoch) applyState('Draft', '');"
   end
 
   def test_submission_resolves_status_after_creating_the_pull_request
@@ -35,8 +35,8 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
   def test_stale_requests_and_propagation_cannot_restore_draft_after_a_known_pr
     assert_includes @app, 'publicationStatusEpoch += 1;'
     assert_includes @app, 'if (epoch !== publicationStatusEpoch) return;'
-    assert_includes @app, 'async function loadPublicationStatus(session, record, knownLifecycle)'
-    assert_includes @app, "if (knownLifecycle) { renderPublicationState(knownLifecycle.state, 'Validation in progress…', knownLifecycle.pull.html_url);"
+    assert_includes @app, 'async function loadPublicationStatus(session, record, knownLifecycle, statusSink)'
+    assert_includes @app, "if (knownLifecycle) { applyState(knownLifecycle.state, 'Validation in progress…', knownLifecycle.pull.html_url);"
     assert_includes @app, 'schedulePublicationStatusPolling(session, record, knownLifecycle);'
   end
 
@@ -44,7 +44,7 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
     assert_includes @app, 'setTimeout(function () { loadPublicationStatus(session, record, knownLifecycle); }, 15000)'
     assert_includes @app, "if (validation === 'passed') return unpublish ? 'Validation passed. Ready to merge.' : 'Validation passed. Ready to publish.';"
     assert_includes @app, "validation === 'failed' ? 'Validation failed.' : 'Validation in progress…'"
-    assert_includes @app, "if (validation === 'pending' || validation === 'unknown')"
+    assert_includes @app, "!statusSink && (validation === 'pending' || validation === 'unknown')"
   end
 
   def test_expired_session_preserves_the_target_route_before_reauthentication
