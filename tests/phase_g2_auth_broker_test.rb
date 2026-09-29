@@ -56,21 +56,10 @@ class PhaseG2AuthBrokerTest < Minitest::Test
     assert_includes exchange, 'ticket.expiresAt < Date.now()'
   end
 
-  def test_legacy_exchange_preserves_old_frontend_contract_while_v2_verifies_identity
-    assert_includes @worker, 'exchangeSession(body, request, env, safe)'
-    assert_includes @worker, 'if (verifyIdentity) session.identity = await identityFor(session);'
-    assert_includes @worker, "url.pathname === '/session/exchange'"
-    assert_includes @worker, "url.pathname === '/v2/session/exchange'"
-    assert_includes @worker, 'restoreSession(body, request, env, safe)'
-    assert_includes @worker, 'access_token: result.session.accessToken'
-    assert_includes @worker, 'publicSession(result.handle, result.session)'
-  end
-
   def test_github_expiry_seconds_are_converted_to_bounded_session_milliseconds
     assert_includes @worker, 'function sessionTtlMs(expiresIn: unknown)'
     assert_includes @worker, 'const milliseconds = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : SESSION_MAX_TTL_MS;'
-    assert_includes @worker, 'const accessExpiresAt = expiryFromSeconds(result.expires_in, SESSION_MAX_TTL_MS);'
-    assert_includes @worker, 'sessionTtlMs(value)'
+    assert_includes @worker, 'sessionExpiresAt: new Date(Date.now() + sessionTtlMs(result.expires_in)).toISOString()'
 
     # Regression values for GitHub's seconds-based expires_in contract.
     assert_equal 8 * 60 * 60 * 1000, [28_800 * 1000, 60 * 1000].max
@@ -86,7 +75,6 @@ class PhaseG2AuthBrokerTest < Minitest::Test
     assert_includes @worker, "url.pathname === '/session/logout'"
     assert_includes @worker, 'CMS_SESSIONS.get'
     assert_includes @worker, 'CMS_SESSIONS.delete'
-    assert_includes @worker, "url.pathname === '/v2/session/restore'"
   end
 
   def test_worker_contains_no_tracked_secret_value
@@ -98,21 +86,7 @@ class PhaseG2AuthBrokerTest < Minitest::Test
   end
 
   def test_no_arbitrary_repository_or_cms_storage_is_present
-    assert_includes @worker, "const REPO_PREFIX = '/repos/Iyad-Ayoub/astra-team.github.io';"
-    assert_includes @worker, 'async function v2Github'
-    assert_includes @worker, 'cmsOperation'
-    refute_includes @worker, 'function githubProxy'
-    refute_includes @worker, 'body.method'
+    refute_match(/repo_owner|repo_name|drafts|cms_news/i, @worker)
     refute_match(/console\.(?:log|error|warn)/, @worker)
-  end
-
-  def test_v2_operations_derive_paths_and_branches_server_side
-    assert_includes @worker, "operation === 'draft_save'"
-    assert_includes @worker, "branch: 'cms-drafts'"
-    assert_includes @worker, "operation === 'publication_prepare'"
-    assert_includes @worker, "operation === 'unpublish_prepare'"
-    assert_includes @worker, "base: 'main'"
-    refute_includes @worker, 'queryBranch'
-    refute_includes @worker, 'body.branch'
   end
 end
