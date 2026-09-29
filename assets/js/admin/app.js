@@ -19,6 +19,7 @@
   var githubMediaIndexPath = githubMediaRoot + '/index.json';
   var maxMediaBytes = 5 * 1024 * 1024;
   var mediaIndex = [];
+  var mediaOperationSubmitting = false;
 
   function element(id) { return document.getElementById(id); }
   function setHidden(id, hidden) { var node = element(id); if (node) node.hidden = hidden; }
@@ -129,7 +130,14 @@
     return githubMediaRoot + '/' + id + '.' + extension;
   }
 
-  function mediaMessage(value) { message('admin-media-message', value); }
+  function mediaMessage(value, kind) {
+    var node = element('admin-media-message');
+    if (!node) return;
+    node.classList.remove('astra-admin-message-success', 'astra-admin-message-status');
+    if (kind === 'success') node.classList.add('astra-admin-message-success');
+    if (kind === 'status') node.classList.add('astra-admin-message-status');
+    node.textContent = value || '';
+  }
 
   function mediaType(bytes) {
     if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return { extension: 'jpg', mime: 'image/jpeg' };
@@ -423,7 +431,7 @@
         if (!entries.length) container.textContent = 'No GitHub drafts yet.';
       } else if (route === 'media') {
         await readMediaIndex(session);
-        renderMediaLibrary(session);
+        await renderMediaLibrary(session);
       } else {
         await readMediaIndex(session);
         var id = route === 'news-edit' ? currentDraftId() : null;
@@ -433,22 +441,126 @@
     } catch (error) { githubDraftMessage(friendlyError(error, 'Unable to load GitHub drafts.')); }
   }
 
-  function renderMediaLibrary(session) {
+  async function readMediaUsage(session) {
+    var github = githubSettings(), usages = {};
+    var entries;
+    try { entries = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + githubDraftRoot + '?ref=' + githubDraftBranch, session); }
+    catch (error) { if (error.status === 404) return usages; throw error; }
+    for (var index = 0; index < entries.length; index += 1) {
+      var draft = await readGithubDraft(session, entries[index].name.replace(/\.md$/, ''));
+      if (!draft.record.cover_media_id) continue;
+      if (!usages[draft.record.cover_media_id]) usages[draft.record.cover_media_id] = [];
+      usages[draft.record.cover_media_id].push(draft.record.title);
+    }
+    return usages;
+  }
+
+  async function renderMediaLibrary(session) {
     var container = element('admin-media-items');
     if (!container) return;
     container.replaceChildren();
     if (!mediaIndex.length) { container.textContent = 'No uploaded images yet.'; return; }
+    var usages = await readMediaUsage(session);
     mediaIndex.forEach(function (item) {
       var card = document.createElement('article'); card.className = 'astra-admin-media-item';
-      var label = document.createElement('p'); label.textContent = item.filename + ' · ' + item.id; card.appendChild(label);
-      if (item.alt_text) { var alt = document.createElement('small'); alt.textContent = item.alt_text; card.appendChild(alt); }
+      var label = document.createElement('p'); label.className = 'astra-admin-media-label'; label.textContent = item.filename; card.appendChild(label);
+      var id = document.createElement('small'); id.textContent = item.id; card.appendChild(id);
+      var alt = document.createElement('small'); alt.textContent = item.alt_text ? 'Alt text: ' + item.alt_text : 'No alt text'; card.appendChild(alt);
+      var usage = document.createElement('small'); usage.className = 'astra-admin-media-usage'; usage.textContent = usages[item.id] && usages[item.id].length ? 'Used by: ' + usages[item.id].join('; ') : 'Unused'; card.appendChild(usage);
       githubMediaBlob(session, item).then(function (blob) { var image = document.createElement('img'); image.src = URL.createObjectURL(blob); image.alt = item.alt_text || item.filename; card.prepend(image); }).catch(function () { card.appendChild(document.createTextNode('Preview unavailable.')); });
+      var actions = document.createElement('div'); actions.className = 'astra-admin-media-actions';
+      var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'astra-admin-secondary'; edit.textContent = 'Edit'; edit.addEventListener('click', function () { editMediaMetadata(session, item); }); actions.appendChild(edit);
+      var replace = document.createElement('button'); replace.type = 'button'; replace.className = 'astra-admin-secondary'; replace.textContent = 'Replace'; replace.addEventListener('click', function () { replaceMediaImage(session, item); }); actions.appendChild(replace);
+      var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'astra-admin-danger'; remove.textContent = 'Delete'; remove.addEventListener('click', function () { deleteMedia(session, item, usages[item.id] || []); }); actions.appendChild(remove);
+      card.appendChild(actions);
       container.appendChild(card);
     });
   }
 
+  async function updateMediaIndex(session, updater, messageText) {
+    var index = await readMediaIndex(session), updated = index.items.map(function (item) { return Object.assign({}, item); });
+    var result = updater(updated);
+    if (result === false) return false;
+    var body = { message: messageText, content: utf8Base64(serializeMediaIndex(updated)), branch: githubDraftBranch };
+    if (index.sha) body.sha = index.sha;
+    await githubResponse('/repos/' + githubSettings().repoOwner + '/' + githubSettings().repoName + '/contents/' + githubMediaIndexPath, session, { method: 'PUT', body: body });
+    mediaIndex = updated;
+    return true;
+  }
+
+  function setMediaBusy(busy) {
+    document.querySelectorAll('#admin-media-upload-button, .astra-admin-media-actions button').forEach(function (button) { button.disabled = busy; });
+  }
+
+  function validatedMediaPath(item) {
+    if (!item || typeof item.path !== 'string') throw new Error('Invalid media source path.');
+    var match = item.path.match(/^cms\/media\/news\/(media-[a-z0-9]+)\.(jpg|png|webp)$/);
+    if (!match || match[1] !== item.id) throw new Error('Invalid media source path.');
+    return item.path;
+  }
+
+  async function editMediaMetadata(session, item) {
+    if (mediaOperationSubmitting) return;
+    var altText = window.prompt('Alt text for ' + item.filename, item.alt_text || '');
+    if (altText === null) return;
+    altText = altText.trim();
+    if (altText.length > 300 || !safeNewsText(altText)) { mediaMessage('Enter safe alt text of 300 characters or fewer.'); return; }
+    mediaOperationSubmitting = true; setMediaBusy(true); mediaMessage('Saving…', 'status');
+    try {
+      await verifyGithubRepositoryAccess(session); await ensureGithubDraftBranch(session);
+      await updateMediaIndex(session, function (items) { var found = items.find(function (candidate) { return candidate.id === item.id; }); if (!found) throw new Error('This media item no longer exists.'); found.alt_text = altText || null; }, 'cms: update media ' + item.id);
+      mediaMessage('✓ Saved', 'success'); await readMediaIndex(session); await renderMediaLibrary(session);
+    } catch (error) { mediaMessage(error.status === 409 ? 'Media metadata changed in GitHub. Reload and try again.' : friendlyError(error, 'Unable to save media metadata.')); }
+    finally { mediaOperationSubmitting = false; setMediaBusy(false); }
+  }
+
+  async function replaceMediaImage(session, item) {
+    if (mediaOperationSubmitting) return;
+    var input = document.createElement('input'); input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp';
+    input.addEventListener('change', async function () {
+      var file = input.files[0]; if (!file) return;
+      if (file.size > maxMediaBytes) { mediaMessage('Images must be 5 MB or smaller.'); return; }
+      var bytes = new Uint8Array(await file.arrayBuffer()), type = mediaType(bytes);
+      if (!type) { mediaMessage('Only valid JPEG, PNG, and WebP image files are allowed.'); return; }
+      if (!window.confirm('Replace this image while keeping media ID ' + item.id + '?')) return;
+      mediaOperationSubmitting = true; setMediaBusy(true); mediaMessage('Saving…', 'status');
+      try {
+        await verifyGithubRepositoryAccess(session); await ensureGithubDraftBranch(session);
+        var github = githubSettings(), oldPath = validatedMediaPath(item), newPath = mediaPath(item.id, type.extension), oldFile = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + oldPath + '?ref=' + githubDraftBranch, session);
+        await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + newPath, session, { method: 'PUT', body: { message: 'cms: replace media ' + item.id, content: bytesBase64(bytes), branch: githubDraftBranch, sha: newPath === oldPath ? oldFile.sha : undefined } });
+        await updateMediaIndex(session, function (items) { var found = items.find(function (candidate) { return candidate.id === item.id; }); if (!found) throw new Error('This media item no longer exists.'); found.path = newPath; found.filename = file.name.replace(/[\r\n]/g, ' ').slice(0, 180); found.mime = type.mime; }, 'cms: index replaced media ' + item.id);
+        if (newPath !== oldPath) {
+          try { await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + oldPath, session, { method: 'DELETE', body: { message: 'cms: remove replaced media ' + item.id, sha: oldFile.sha, branch: githubDraftBranch } }); }
+          catch (cleanupError) { mediaMessage('Media metadata was updated, but old source cleanup failed. Retry cleanup later.'); await readMediaIndex(session); await renderMediaLibrary(session); return; }
+        }
+        mediaMessage('✓ Saved', 'success'); await readMediaIndex(session); await renderMediaLibrary(session);
+      } catch (error) { mediaMessage(error.status === 409 ? 'Media changed in GitHub. Reload and try again.' : friendlyError(error, 'Unable to replace this image.')); }
+      finally { mediaOperationSubmitting = false; setMediaBusy(false); }
+    });
+    input.click();
+  }
+
+  async function deleteMedia(session, item, knownUsages) {
+    if (mediaOperationSubmitting) return;
+    if (knownUsages.length) { mediaMessage('Cannot delete this image because it is used by: ' + knownUsages.join('; ')); return; }
+    if (!window.confirm('Delete this media permanently from the CMS library?')) return;
+    mediaOperationSubmitting = true; setMediaBusy(true); mediaMessage('Deleting…', 'status');
+    try {
+      await verifyGithubRepositoryAccess(session); await ensureGithubDraftBranch(session);
+      var freshUsages = await readMediaUsage(session);
+      if (freshUsages[item.id] && freshUsages[item.id].length) throw new Error('Cannot delete this image because it is used by: ' + freshUsages[item.id].join('; '));
+      var github = githubSettings(), sourcePath = validatedMediaPath(item), file = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + sourcePath + '?ref=' + githubDraftBranch, session);
+      await updateMediaIndex(session, function (items) { var position = items.findIndex(function (candidate) { return candidate.id === item.id; }); if (position === -1) throw new Error('This media item no longer exists.'); items.splice(position, 1); }, 'cms: remove media ' + item.id);
+      try { await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + sourcePath, session, { method: 'DELETE', body: { message: 'cms: delete media ' + item.id, sha: file.sha, branch: githubDraftBranch } }); }
+      catch (cleanupError) { mediaMessage('Media metadata was removed, but source cleanup failed. Retry cleanup later.'); await readMediaIndex(session); await renderMediaLibrary(session); return; }
+      mediaMessage('✓ Saved', 'success'); await readMediaIndex(session); await renderMediaLibrary(session);
+    } catch (error) { mediaMessage(error.status === 409 ? 'Media changed in GitHub. Reload and try again.' : friendlyError(error, 'Unable to delete this image.')); }
+    finally { mediaOperationSubmitting = false; setMediaBusy(false); }
+  }
+
   async function uploadMedia(event) {
     event.preventDefault();
+    if (mediaOperationSubmitting) return;
     var file = element('admin-media-file').files[0];
     var altText = element('admin-media-alt-text').value.trim();
     if (!file) { mediaMessage('Select a JPEG, PNG, or WebP image.'); return; }
@@ -461,6 +573,7 @@
     if (!session) { mediaMessage('Your GitHub session has expired. Sign in again before uploading.'); return; }
     var id = 'media-' + Date.now().toString(36);
     var item = { id: id, path: mediaPath(id, type.extension), filename: file.name.replace(/[\r\n]/g, ' ').slice(0, 180), mime: type.mime, uploaded_at: new Date().toISOString(), alt_text: altText || null };
+    mediaOperationSubmitting = true; setMediaBusy(true); mediaMessage('Saving…', 'status');
     try {
       await verifyGithubRepositoryAccess(session);
       await ensureGithubDraftBranch(session);
@@ -471,8 +584,9 @@
       var indexBody = { message: 'cms: index media ' + id, content: utf8Base64(serializeMediaIndex(updated)), branch: githubDraftBranch };
       if (index.sha) indexBody.sha = index.sha;
       await githubResponse('/repos/' + githubSettings().repoOwner + '/' + githubSettings().repoName + '/contents/' + githubMediaIndexPath, session, { method: 'PUT', body: indexBody });
-      mediaIndex = updated; element('admin-media-upload-form').reset(); mediaMessage('Image uploaded to the GitHub draft branch.'); renderMediaLibrary(session);
+      mediaIndex = updated; element('admin-media-upload-form').reset(); mediaMessage('✓ Saved', 'success'); await renderMediaLibrary(session);
     } catch (error) { mediaMessage(error.status === 409 ? 'Media changed in GitHub. Reload the library and try again.' : friendlyError(error, 'Unable to upload this image.')); }
+    finally { mediaOperationSubmitting = false; setMediaBusy(false); }
   }
 
   async function verifyGithubRepositoryAccess(session) {

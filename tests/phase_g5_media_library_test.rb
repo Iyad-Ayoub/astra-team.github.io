@@ -50,4 +50,30 @@ class PhaseG5MediaLibraryTest < Minitest::Test
     assert_includes File.read(FORM), 'admin-news-cover-media-id'
     assert_includes File.read(MEDIA), 'admin-media-upload-form'
   end
+
+  def test_media_crud_preserves_ids_and_uses_draft_usage_safety
+    assert_includes @app, 'async function readMediaUsage(session)'
+    assert_includes @app, 'var freshUsages = await readMediaUsage(session);'
+    assert_includes @app, 'cover_media_id'
+    assert_includes @app, 'Cannot delete this image because it is used by:'
+    assert_includes @app, 'Delete this media permanently from the CMS library?'
+    assert_includes @app, 'async function updateMediaIndex(session, updater, messageText)'
+    assert_includes @app, "'cms: update media ' + item.id"
+    assert_includes @app, "'cms: replace media ' + item.id"
+    assert_includes @app, "'cms: delete media ' + item.id"
+    assert_includes @app, 'found.path = newPath'
+    assert_includes @app, 'candidate.id === item.id'
+    assert_includes @app, 'function validatedMediaPath(item)'
+    assert_includes @app, 'media-[a-z0-9]+)\\.(jpg|png|webp)'
+    assert_includes @app, 'oldPath = validatedMediaPath(item)'
+    assert_includes @app, 'sourcePath = validatedMediaPath(item)'
+    replace = @app.split('async function replaceMediaImage', 2).last.split('async function deleteMedia', 2).first
+    assert_operator replace.index('updateMediaIndex'), :<, replace.index("method: 'DELETE'")
+    delete = @app.split('async function deleteMedia', 2).last.split('async function uploadMedia', 2).first
+    assert_operator delete.index('updateMediaIndex'), :<, delete.index("method: 'DELETE'")
+    refute_includes @app.split('async function deleteMedia', 2).last.split('async function uploadMedia', 2).first, 'assets/img/news/'
+    assert_includes @app, 'mediaOperationSubmitting'
+    assert_includes @app, 'setMediaBusy(true)'
+    assert_includes @app, "method: 'DELETE'"
+  end
 end
