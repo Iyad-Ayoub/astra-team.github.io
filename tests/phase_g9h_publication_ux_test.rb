@@ -53,9 +53,9 @@ class PhaseG9hPublicationUxTest < Minitest::Test
 
   def test_stale_source_and_merge_failures_never_report_published
     assert_includes APP, 'Publication source changed. Refresh publication first.'
-    assert_includes APP, 'GitHub did not merge the publication pull request.'
-    assert_includes APP, "renderPublicationState('Published'"
-    assert_includes APP, "publicationMessage('✓ Published successfully', 'success')"
+    assert_includes APP, 'GitHub did not return a merged commit SHA.'
+    assert_includes APP, "renderPublicationState('Merged to main'"
+    assert_includes APP, "renderPublicationState('Live', '✓ Published successfully'"
     assert_includes APP, "if (publicationSubmitting) return;"
   end
 
