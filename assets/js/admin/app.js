@@ -416,12 +416,15 @@
     setPublicationBusy(true); renderPublicationState('Submitting publication request…', '');
     try {
       await verifyGithubRepositoryAccess(session);
-      var draft = await readGithubDraft(session, id), record = draft.record, github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(id), published = await publishedNewsByContentId(session, id);
+      var draft = await readGithubDraft(session, id), record = draft.record, github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(id), published = await publishedNewsByContentId(session, id), media = await draftMedia(session, record);
       if (validNewsTypes.indexOf(record.type) === -1) throw new Error('This draft uses a legacy unsupported type. Select a canonical public type before publication.');
       var pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session);
+      if (published && serializePublicNews(record, media, published) === published.markdown) {
+        renderPublicationState('Published', 'No public changes to publish.', pulls.length ? pulls[0].html_url : null, publicNewsUrl(published));
+        return;
+      }
       if (pulls.length) { var existingState = published ? 'Update submitted' : 'Submitted'; renderPublicationState(existingState, 'Validation in progress…', pulls[0].html_url, publicNewsUrl(published)); await loadPublicationStatus(session, record, { state: existingState, pull: pulls[0], unpublish: false }); return; }
       await ensureLifecycleBranch(session, branch);
-      var media = await draftMedia(session, record);
       var publicationSha = await createPublicationCommit(session, branch, record, media, published);
       var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Publish News: ' + record.title, head: branch, base: 'main', body: 'CMS publication\n\nContent ID: ' + id + '\nType: ' + record.type + '\nCover media: ' + (media ? 'included' : 'none') + '\nSource: ' + githubDraftBranch + '/' + draftPath(id) } });
       renderPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url, publicNewsUrl(published));
@@ -444,10 +447,15 @@
     setPublicationBusy(true); renderPublicationState('Refreshing publication…', '');
     try {
       await verifyGithubRepositoryAccess(session);
-      var draft = await readGithubDraft(session, id), record = draft.record, published = await publishedNewsByContentId(session, id), pull = await findOpenPublicationPull(session, id);
-      if (!pull) throw new Error('No open publication pull request was found for this draft.');
+      var draft = await readGithubDraft(session, id), record = draft.record, published = await publishedNewsByContentId(session, id), media = await draftMedia(session, record);
       if (validNewsTypes.indexOf(record.type) === -1) throw new Error('This draft uses a legacy unsupported type. Select a canonical public type before publication.');
-      var media = await draftMedia(session, record), expectedPublicationSha = pull.head && pull.head.sha;
+      var pull = await findOpenPublicationPull(session, id);
+      if (published && serializePublicNews(record, media, published) === published.markdown) {
+        renderPublicationState('Published', 'No public changes to publish.', pull ? pull.html_url : null, publicNewsUrl(published));
+        return;
+      }
+      if (!pull) throw new Error('No open publication pull request was found for this draft.');
+      var expectedPublicationSha = pull.head && pull.head.sha;
       if (!await publicationBranchMatchesDraft(session, record, publicationBranch(id), published, media)) expectedPublicationSha = await createPublicationCommit(session, publicationBranch(id), record, media, published);
       renderPublicationState(published ? 'Update submitted' : 'Submitted', 'Waiting for GitHub to register the refreshed publication…', pull.html_url, publicNewsUrl(published));
       await loadPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pull, unpublish: false, expectedSha: expectedPublicationSha });
@@ -475,24 +483,77 @@
     finally { setPublicationBusy(false); }
   }
 
-  async function publicationDeploymentState(session, mergeSha) {
-    var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, path = base + '/actions/runs?branch=main&head_sha=' + encodeURIComponent(mergeSha) + '&per_page=20';
+  function newestDeploymentRun(runs) {
+    return (runs || []).filter(function (candidate) { return candidate.name === 'Deploy astra-team with jekyll'; }).sort(function (left, right) {
+      var leftNumber = Number(left.run_number) || 0, rightNumber = Number(right.run_number) || 0, leftTime = Date.parse(left.created_at || left.updated_at || '') || 0, rightTime = Date.parse(right.created_at || right.updated_at || '') || 0;
+      return rightNumber - leftNumber || rightTime - leftTime || (Number(right.id) || 0) - (Number(left.id) || 0);
+    })[0] || null;
+  }
+  async function deploymentRuns(session, base, mergeSha) {
+    var runs = [];
+    for (var page = 1; page <= 10; page += 1) {
+      var data = await githubResponse(base + '/actions/runs?branch=main&head_sha=' + encodeURIComponent(mergeSha) + '&per_page=100&page=' + page, session), pageRuns = data.workflow_runs || [];
+      runs = runs.concat(pageRuns);
+      if (pageRuns.length < 100) break;
+    }
+    return runs;
+  }
+  async function publicDeploymentRuns(base, mergeSha) {
+    var runs = [], query = '&page=';
+    for (var page = 1; page <= 10; page += 1) {
+      var response = await fetch('https://api.github.com' + base + '/actions/runs?branch=main' + (mergeSha ? '&head_sha=' + encodeURIComponent(mergeSha) : '') + '&per_page=100' + query + page, { method: 'GET', headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, cache: 'no-store' });
+      if (!response.ok) return null;
+      var data = await response.json(), pageRuns = data.workflow_runs || [];
+      runs = runs.concat(pageRuns);
+      if (pageRuns.length < 100) break;
+    }
+    return runs;
+  }
+  async function deploymentAncestry(session, base, ancestor, descendant) {
+    if (ancestor === descendant) return true;
+    var path = base + '/compare/' + encodeURIComponent(ancestor) + '...' + encodeURIComponent(descendant);
     try {
-      var data = await githubResponse(path, session), run = (data.workflow_runs || []).find(function (candidate) { return candidate.name === 'Deploy astra-team with jekyll'; });
-      if (!run) return { state: 'waiting', run: null };
-      if (run.status !== 'completed') return { state: 'deploying', run: run };
-      return { state: run.conclusion === 'success' ? 'live' : 'failed', run: run };
+      var data = await githubResponse(path, session);
+      return data.status === 'ahead' && data.base_commit && data.base_commit.sha === ancestor && data.merge_base_commit && data.merge_base_commit.sha === ancestor;
     } catch (error) {
-      if (error.status !== 401 && error.status !== 403) return { state: 'waiting', run: null };
+      if (error.status !== 401 && error.status !== 403) return false;
       try {
         var response = await fetch('https://api.github.com' + path, { method: 'GET', headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, cache: 'no-store' });
-        if (!response.ok) return { state: 'waiting', run: null };
-        var publicData = await response.json(), publicRun = (publicData.workflow_runs || []).find(function (candidate) { return candidate.name === 'Deploy astra-team with jekyll'; });
-        if (!publicRun) return { state: 'waiting', run: null };
-        if (publicRun.status !== 'completed') return { state: 'deploying', run: publicRun };
-        return { state: publicRun.conclusion === 'success' ? 'live' : 'failed', run: publicRun };
-      } catch (_) { return { state: 'waiting', run: null }; }
+        if (!response.ok) return false;
+        var publicData = await response.json();
+        return publicData.status === 'ahead' && publicData.base_commit && publicData.base_commit.sha === ancestor && publicData.merge_base_commit && publicData.merge_base_commit.sha === ancestor;
+      } catch (_) { return false; }
     }
+  }
+  async function publicationDeploymentState(session, mergeSha) {
+    var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName;
+    var exactRuns, exactRun;
+    try {
+      exactRuns = await deploymentRuns(session, base, mergeSha);
+    } catch (error) {
+      if (error.status !== 401 && error.status !== 403) return { state: 'waiting', run: null };
+      exactRuns = await publicDeploymentRuns(base, mergeSha);
+      if (!exactRuns) return { state: 'waiting', run: null };
+    }
+    exactRun = newestDeploymentRun(exactRuns);
+    if (exactRun && exactRun.status !== 'completed') return { state: 'deploying', run: exactRun };
+    if (exactRun && exactRun.conclusion === 'success') return { state: 'live', run: exactRun };
+
+    var mainRuns;
+    try {
+      mainRuns = (await deploymentRuns(session, base, null));
+    } catch (error) {
+      if (error.status !== 401 && error.status !== 403) mainRuns = null;
+      else mainRuns = await publicDeploymentRuns(base, null);
+    }
+    if (mainRuns) {
+      var successfulRuns = mainRuns.filter(function (candidate) { return candidate.name === 'Deploy astra-team with jekyll' && candidate.status === 'completed' && candidate.conclusion === 'success' && candidate.head_sha; });
+      successfulRuns.sort(function (left, right) { return (Number(right.run_number) || 0) - (Number(left.run_number) || 0) || (Number(right.id) || 0) - (Number(left.id) || 0); });
+      for (var index = 0; index < successfulRuns.length; index += 1) {
+        if (await deploymentAncestry(session, base, mergeSha, successfulRuns[index].head_sha)) return { state: 'live', run: successfulRuns[index] };
+      }
+    }
+    return exactRun && exactRun.conclusion ? { state: 'failed', run: exactRun } : { state: 'waiting', run: null };
   }
 
   async function monitorPublicationDeployment(session, record, published, mergeSha, pullLink, epoch, attempt) {
@@ -629,7 +690,25 @@
         await readMediaIndex(session);
         var id = route === 'news-edit' ? currentDraftId() : null;
         if (route === 'news-edit' && !id) throw new Error('A valid draft identifier is required.');
-        if (id) { setPublicationLoading(); var loaded = await readGithubDraft(session, id); loaded.record.githubSha = loaded.sha; resetNewsForm(loaded.record); await finishNewsFormHydration(loaded.record, session); var deploymentSha = null; try { deploymentSha = sessionStorage.getItem(deploymentKey(id)); } catch (_) {} if (deploymentSha) { renderPublicationState('Merged to main', 'Waiting for website deployment…', null, null); try { await monitorPublicationDeployment(session, loaded.record, await publishedNewsByContentId(session, id), deploymentSha, null, publicationStatusEpoch); } catch (_) {} } else await loadPublicationStatus(session, loaded.record); } else { resetNewsForm(null); await finishNewsFormHydration(null, session); }
+        if (id) {
+          setPublicationLoading();
+          var loaded = await readGithubDraft(session, id);
+          loaded.record.githubSha = loaded.sha;
+          resetNewsForm(loaded.record);
+          await finishNewsFormHydration(loaded.record, session);
+          var deploymentSha = null;
+          try { deploymentSha = sessionStorage.getItem(deploymentKey(id)); } catch (_) {}
+          if (deploymentSha) {
+            var trackedPublished = await publishedNewsByContentId(session, id), trackedMedia = await draftMedia(session, loaded.record), trackedProjectionMatches = trackedPublished && serializePublicNews(loaded.record, trackedMedia, trackedPublished) === trackedPublished.markdown;
+            if (!trackedProjectionMatches) {
+              try { sessionStorage.removeItem(deploymentKey(id)); } catch (_) {}
+              await loadPublicationStatus(session, loaded.record);
+            } else {
+              renderPublicationState('Merged to main', 'Waiting for website deployment…', null, null);
+              try { await monitorPublicationDeployment(session, loaded.record, trackedPublished, deploymentSha, null, publicationStatusEpoch); } catch (_) {}
+            }
+          } else await loadPublicationStatus(session, loaded.record);
+        } else { resetNewsForm(null); await finishNewsFormHydration(null, session); }
       }
     } catch (error) { githubDraftMessage(friendlyError(error, 'Unable to load GitHub drafts.')); }
   }
