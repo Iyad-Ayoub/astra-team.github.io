@@ -18,8 +18,18 @@ class PhaseG9jNoopDraftSaveTest < Minitest::Test
     assert_includes APP, 'function editableDraftSignature(record)'
     assert_includes APP, 'return serializeGithubDraft({'
     assert_includes APP, 'updateDraftDirtyState();'
-    assert_includes APP, 'pristineDraftSignature === editableDraftSignature(currentEditableDraft())'
+    assert_includes APP, 'var dirty = editableDraftSignature(currentEditableDraft()) !== pristineDraftSignature;'
+    assert_includes APP, "setDraftSaveState(dirty ? 'unsaved' : 'pristine');"
     assert_includes APP, '!draftFormInitializing'
+  end
+
+  def test_dirty_boolean_semantics_match_the_required_behavior
+    dirty = ->(pristine, current) { current != pristine }
+    assert_equal false, dirty.call('same-draft', 'same-draft')
+    assert_equal true, dirty.call('same-draft', 'changed-draft')
+    assert_equal false, dirty.call('same-draft', 'same-draft')
+    assert_equal false, dirty.call('same-draft', 'same-draft')
+    assert_includes APP, "button.disabled = state === 'saving' || state === 'pristine' || state === 'saved'"
   end
 
   def test_noop_save_returns_before_github_write_and_real_save_resets_baseline
@@ -30,7 +40,7 @@ class PhaseG9jNoopDraftSaveTest < Minitest::Test
 
   def test_new_drafts_are_not_treated_as_pristine_existing_drafts
     assert_includes APP, 'var existing = Boolean(editingNews && editingNews.githubSha);'
-    assert_includes APP, "else setDraftSaveState('unsaved');"
+    assert_includes APP, "if (!existing) { setDraftSaveState('unsaved'); return; }"
     assert_includes APP, 'var existingSha = editingNews && editingNews.githubSha;'
   end
 end

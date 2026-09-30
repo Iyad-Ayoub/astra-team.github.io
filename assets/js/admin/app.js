@@ -271,8 +271,8 @@
     if (!record || !record.id) return null;
     return serializeGithubDraft({
       id: record.id, title: record.title, type: record.type, summary: record.summary, body: record.body,
-      content_date: record.content_date, event_date: record.event_date, end_date: record.end_date,
-      location: record.location, external_url: record.external_url, featured: Boolean(record.featured),
+      content_date: record.content_date, event_date: record.event_date || null, end_date: record.end_date || null,
+      location: record.location || null, external_url: record.external_url || null, featured: Boolean(record.featured),
       homepage: Boolean(record.homepage), cover_media_id: record.cover_media_id || null
     });
   }
@@ -285,8 +285,9 @@
 
   function updateDraftDirtyState() {
     var existing = Boolean(editingNews && editingNews.githubSha);
-    if (existing && pristineDraftSignature === editableDraftSignature(currentEditableDraft())) setDraftSaveState('pristine');
-    else setDraftSaveState('unsaved');
+    if (!existing) { setDraftSaveState('unsaved'); return; }
+    var dirty = editableDraftSignature(currentEditableDraft()) !== pristineDraftSignature;
+    setDraftSaveState(dirty ? 'unsaved' : 'pristine');
   }
 
   function currentDraftId() {
