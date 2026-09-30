@@ -8,7 +8,10 @@ class PhaseG9jNoopDraftSaveTest < Minitest::Test
     assert_includes APP, 'var draftFormInitializing = false;'
     assert_includes APP, 'draftFormInitializing = true;'
     assert_includes APP, 'draftFormInitializing = false;'
-    assert_includes APP, 'pristineDraftSignature = record ? editableDraftSignature(record) : null;'
+    assert_includes APP, 'pristineDraftSignature = null;'
+    assert_includes APP, 'async function finishNewsFormHydration(record, session)'
+    assert_includes APP, 'previewItem = populateCoverMedia(record);'
+    assert_includes APP, 'pristineDraftSignature = editableDraftSignature(currentEditableDraft());'
     assert_includes APP, "setDraftSaveState(record ? 'pristine' : '')"
     assert_includes APP, "else if (state === 'pristine') githubDraftMessage('');"
     assert_includes APP, "state === 'saving' || state === 'pristine' || state === 'saved'"
@@ -30,6 +33,37 @@ class PhaseG9jNoopDraftSaveTest < Minitest::Test
     assert_equal false, dirty.call('same-draft', 'same-draft')
     assert_equal false, dirty.call('same-draft', 'same-draft')
     assert_includes APP, "button.disabled = state === 'saving' || state === 'pristine' || state === 'saved'"
+  end
+
+  def test_pristine_baseline_is_finalized_only_after_async_cover_hydration
+    reset = APP.index('function resetNewsForm(record)')
+    hydration = APP.index('async function finishNewsFormHydration(record, session)')
+    baseline = APP.index('pristineDraftSignature = editableDraftSignature(currentEditableDraft());')
+    assert_operator reset, :>=, 0
+    assert_operator hydration, :>, reset
+    assert_operator baseline, :>, hydration
+    assert_operator APP.index('draftFormInitializing = false;', baseline), :<, APP.index('renderCoverPreview(previewItem, session);', baseline)
+    assert_includes APP, 'finally {'
+    assert_includes APP, 'draftFormInitializing = false;'
+  end
+
+  def test_async_hydration_behavioral_model_is_clean_then_dirty_then_clean
+    fields = { title: 'Barcelona', cover_media_id: nil }
+    initializing = true
+    pristine = nil
+    hydrate = lambda do
+      fields[:cover_media_id] = 'media-mufgnd58'
+      pristine = fields.dup
+      initializing = false
+    end
+    refute_equal fields, pristine, 'baseline must not be finalized before hydration'
+    hydrate.call
+    refute initializing
+    assert_equal false, fields != pristine
+    fields[:title] = 'Barcelona updated'
+    assert_equal true, fields != pristine
+    fields[:title] = 'Barcelona'
+    assert_equal false, fields != pristine
   end
 
   def test_noop_save_returns_before_github_write_and_real_save_resets_baseline

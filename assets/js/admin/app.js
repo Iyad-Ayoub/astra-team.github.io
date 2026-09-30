@@ -177,21 +177,21 @@
     return response.blob();
   }
 
-  function renderCoverPreview(item, session) {
+  async function renderCoverPreview(item, session) {
     var box = element('admin-news-cover-preview');
     if (!box) return;
     box.replaceChildren(); box.hidden = !item;
     if (!item) return;
-    githubMediaBlob(session, item).then(function (blob) { var image = document.createElement('img'); image.src = URL.createObjectURL(blob); image.alt = item.alt_text || item.filename; box.appendChild(image); }).catch(function () { box.hidden = true; });
+    try { var blob = await githubMediaBlob(session, item); var image = document.createElement('img'); image.src = URL.createObjectURL(blob); image.alt = item.alt_text || item.filename; box.appendChild(image); } catch (_) { box.hidden = true; }
   }
 
-  function populateCoverMedia(record, session) {
+  function populateCoverMedia(record) {
     var select = element('admin-news-cover-media-id');
-    if (!select) return;
+    if (!select) return null;
     select.replaceChildren(new Option('No cover image', ''));
     mediaIndex.forEach(function (item) { select.add(new Option(item.filename + ' (' + item.id + ')', item.id)); });
     select.value = record && record.cover_media_id ? record.cover_media_id : '';
-    renderCoverPreview(mediaIndex.find(function (item) { return item.id === select.value; }), session);
+    return mediaIndex.find(function (item) { return item.id === select.value; }) || null;
   }
 
   async function ensureGithubDraftBranch(session) {
@@ -629,7 +629,7 @@
         await readMediaIndex(session);
         var id = route === 'news-edit' ? currentDraftId() : null;
         if (route === 'news-edit' && !id) throw new Error('A valid draft identifier is required.');
-        if (id) { setPublicationLoading(); var loaded = await readGithubDraft(session, id); loaded.record.githubSha = loaded.sha; resetNewsForm(loaded.record); populateCoverMedia(loaded.record, session); var deploymentSha = null; try { deploymentSha = sessionStorage.getItem(deploymentKey(id)); } catch (_) {} if (deploymentSha) { renderPublicationState('Merged to main', 'Waiting for website deployment…', null, null); try { await monitorPublicationDeployment(session, loaded.record, await publishedNewsByContentId(session, id), deploymentSha, null, publicationStatusEpoch); } catch (_) {} } else await loadPublicationStatus(session, loaded.record); } else { resetNewsForm(null); populateCoverMedia(null, session); }
+        if (id) { setPublicationLoading(); var loaded = await readGithubDraft(session, id); loaded.record.githubSha = loaded.sha; resetNewsForm(loaded.record); await finishNewsFormHydration(loaded.record, session); var deploymentSha = null; try { deploymentSha = sessionStorage.getItem(deploymentKey(id)); } catch (_) {} if (deploymentSha) { renderPublicationState('Merged to main', 'Waiting for website deployment…', null, null); try { await monitorPublicationDeployment(session, loaded.record, await publishedNewsByContentId(session, id), deploymentSha, null, publicationStatusEpoch); } catch (_) {} } else await loadPublicationStatus(session, loaded.record); } else { resetNewsForm(null); await finishNewsFormHydration(null, session); }
       }
     } catch (error) { githubDraftMessage(friendlyError(error, 'Unable to load GitHub drafts.')); }
   }
@@ -955,7 +955,7 @@
   function resetNewsForm(record) {
     draftFormInitializing = true;
     editingNews = record || null;
-    pristineDraftSignature = record ? editableDraftSignature(record) : null;
+    pristineDraftSignature = null;
     text('admin-news-form-title', record ? 'Edit News or Event' : 'New News or Event');
     newsField('title').value = record ? record.title : '';
     newsField('type').value = record && validNewsTypes.indexOf(record.type) !== -1 ? record.type : 'event';
@@ -974,8 +974,18 @@
     setDraftSaveState(record ? 'pristine' : '');
     toggleEventFields();
     restoreNewsFormAfterReauthentication();
-    draftFormInitializing = false;
-    if (record) updateDraftDirtyState();
+  }
+
+  async function finishNewsFormHydration(record, session) {
+    var previewItem = null;
+    try {
+      previewItem = populateCoverMedia(record);
+      if (record) pristineDraftSignature = editableDraftSignature(currentEditableDraft());
+    } finally {
+      draftFormInitializing = false;
+      if (record) updateDraftDirtyState();
+    }
+    renderCoverPreview(previewItem, session);
   }
 
   async function boot() {
