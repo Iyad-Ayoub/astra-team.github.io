@@ -21,7 +21,7 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
 
   def test_initial_lookup_hides_submission_until_a_draft_is_confirmed
     assert_includes @app, "function setPublicationLoading() { publicationStatusEpoch += 1; stopPublicationStatusPolling(); renderPublicationState('Checking publication status…', ''); }"
-    assert_includes @app, 'if (id) { setPublicationLoading();'
+    assert_match(/if \(id\) \{\s+setPublicationLoading\(\);/, @app)
     assert_includes @app, "if (epoch === publicationStatusEpoch) applyState(knownLifecycle && knownLifecycle.state === 'Published' ? 'Published' : 'Draft', '');"
   end
 
