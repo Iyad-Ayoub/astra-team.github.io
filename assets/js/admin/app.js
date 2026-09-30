@@ -6,6 +6,7 @@
   var validNewsTypes = ['event', 'award', 'project', 'open-source', 'team', 'collaboration', 'demo'];
   var editingNews;
   var pristineDraftSignature;
+  var draftFormInitializing = false;
   var publicationSubmitting = false;
   var unpublishSubmitting = false;
   var publicationStatusEpoch = 0;
@@ -258,6 +259,7 @@
     if (draftSaveMessageTimer) { window.clearTimeout(draftSaveMessageTimer); draftSaveMessageTimer = null; }
     if (state === 'unsaved') githubDraftMessage('● Unsaved changes', 'status');
     else if (state === 'saving') githubDraftMessage('Saving…', 'status');
+    else if (state === 'pristine') githubDraftMessage('');
     else if (state === 'saved') {
       var now = new Date().toLocaleTimeString();
       githubDraftMessage('✓ Saved · ' + now, 'success');
@@ -881,8 +883,8 @@
     document.querySelectorAll('#admin-github-logout').forEach(function (button) { button.addEventListener('click', logoutGithub); });
     if (element('admin-github-news-form')) {
       element('admin-github-news-form').addEventListener('submit', saveGithubDraft);
-      element('admin-github-news-form').addEventListener('input', function () { if (!draftSaveSubmitting) updateDraftDirtyState(); });
-      element('admin-github-news-form').addEventListener('change', function () { if (!draftSaveSubmitting) updateDraftDirtyState(); });
+      element('admin-github-news-form').addEventListener('input', function () { if (!draftSaveSubmitting && !draftFormInitializing) updateDraftDirtyState(); });
+      element('admin-github-news-form').addEventListener('change', function () { if (!draftSaveSubmitting && !draftFormInitializing) updateDraftDirtyState(); });
     }
     if (element('admin-news-publish')) element('admin-news-publish').addEventListener('click', submitGithubPublication);
     if (element('admin-news-update')) element('admin-news-update').addEventListener('click', submitGithubPublication);
@@ -950,6 +952,7 @@
   }
 
   function resetNewsForm(record) {
+    draftFormInitializing = true;
     editingNews = record || null;
     pristineDraftSignature = record ? editableDraftSignature(record) : null;
     text('admin-news-form-title', record ? 'Edit News or Event' : 'New News or Event');
@@ -970,6 +973,7 @@
     setDraftSaveState(record ? 'pristine' : '');
     toggleEventFields();
     restoreNewsFormAfterReauthentication();
+    draftFormInitializing = false;
     if (record) updateDraftDirtyState();
   }
 

@@ -5,8 +5,12 @@ class PhaseG9jNoopDraftSaveTest < Minitest::Test
   APP = File.read(File.join(ROOT, 'assets/js/admin/app.js'))
 
   def test_existing_draft_loads_pristine_and_disables_save
+    assert_includes APP, 'var draftFormInitializing = false;'
+    assert_includes APP, 'draftFormInitializing = true;'
+    assert_includes APP, 'draftFormInitializing = false;'
     assert_includes APP, 'pristineDraftSignature = record ? editableDraftSignature(record) : null;'
     assert_includes APP, "setDraftSaveState(record ? 'pristine' : '')"
+    assert_includes APP, "else if (state === 'pristine') githubDraftMessage('');"
     assert_includes APP, "state === 'saving' || state === 'pristine' || state === 'saved'"
   end
 
@@ -15,6 +19,7 @@ class PhaseG9jNoopDraftSaveTest < Minitest::Test
     assert_includes APP, 'return serializeGithubDraft({'
     assert_includes APP, 'updateDraftDirtyState();'
     assert_includes APP, 'pristineDraftSignature === editableDraftSignature(currentEditableDraft())'
+    assert_includes APP, '!draftFormInitializing'
   end
 
   def test_noop_save_returns_before_github_write_and_real_save_resets_baseline
