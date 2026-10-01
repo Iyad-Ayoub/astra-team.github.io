@@ -45,6 +45,7 @@
   title: SceneRF
   kind: Software / research code
   summary: Open-source research code for 3D scene reconstruction using neural radiance field representations.
+  repository: https://github.com/astra-vision/SceneRF
   group: additional
 
 - id: materialpalette
@@ -91,28 +92,33 @@
   title: BrainHub
   kind: Dataset / benchmark
   summary: Multimodal dataset and benchmark for neural visual decoding and brain-signal-based scene understanding.
+  repository: https://github.com/weihaox/BrainHub
   group: datasets
 
 - id: weather-kitti
   title: Weather KITTI
   kind: Dataset
   summary: Weather-augmented KITTI data for studying perception robustness under adverse visual conditions.
+  repository: https://github.com/astra-vision/rain-rendering
   group: datasets
 
 - id: weather-cityscapes
   title: Weather Cityscapes
   kind: Dataset
   summary: Weather-augmented Cityscapes data for studying perception robustness under adverse visual conditions.
+  repository: https://github.com/astra-vision/rain-rendering
   group: datasets
 
 - id: weather-nuscenes
   title: Weather nuScenes
   kind: Dataset
   summary: Weather-augmented nuScenes data for studying perception robustness under adverse visual conditions.
+  repository: https://github.com/astra-vision/rain-rendering
   group: datasets
 
 - id: weather-simulator
   title: Weather Simulator
   kind: Framework / experimental tool
   summary: Open-source software for physics-based weather simulation used to study visual robustness under adverse conditions.
+  repository: https://github.com/astra-vision/rain-rendering
   group: frameworks
