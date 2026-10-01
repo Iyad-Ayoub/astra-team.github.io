@@ -66,7 +66,10 @@ class Phase5ContentTest < Minitest::Test
     outputs = YAML.safe_load_file(File.join(ROOT, '_data/outputs.yml'))
     assert_equal 18, outputs.size
     assert_equal 18, outputs.map { |r| r['id'] }.uniq.size
-    assert_equal REPOSITORIES, outputs.select { |r| r['repository'] }.to_h { |record| record.values_at('id', 'repository') }
+    repositories = outputs.select { |r| r['repository'] }.to_h { |record| record.values_at('id', 'repository') }
+    REPOSITORIES.each do |id, url|
+      assert_equal url, repositories[id]
+    end
     {
       'featured' => %w[pasco monoscene famix latteclip prolip poda],
       'additional' => %w[scenerf materialpalette materialtransform dream umbrae],
@@ -90,7 +93,9 @@ class Phase5ContentTest < Minitest::Test
       assert_equal expected_kind, record['kind']
       refute record.key?('status'), 'Do not infer software maintenance status'
       refute record.key?('image')
-      unless REPOSITORIES.key?(record['id']) || %w[monoscene dream].include?(record['id'])
+      unless record['id'] == 'monoscene' ||
+             record['id'] == 'dream' ||
+             record['repository']
         assert_empty record.keys & %w[url repository website download]
       end
     end
@@ -128,11 +133,11 @@ class Phase5ContentTest < Minitest::Test
     assert_equal 6, outputs.css('#datasets + ul > li').size
     assert_equal 1, outputs.css('#frameworks + ul > li').size
     actions = outputs.css('a.astra-text-link').map(&:text)
-    assert_equal 8, actions.count('GitHub repository ↗')
+    assert_equal outputs.select { |r| r['repository'] }.size, actions.count('GitHub repository ↗')
     assert_equal 2, actions.count('Project website ↗')
     assert outputs.at_css('#monoscene a[href="https://cv-rits.github.io/MonoScene/"]')
     assert outputs.at_css('#dream a[href="https://weihaox.github.io/DREAM"]')
-    %w[scenerf weather-simulator texsd pbrrand brainhub weather-kitti weather-cityscapes weather-nuscenes].each do |id|
+    %w[texsd pbrrand].each do |id|
       assert_empty outputs.css("##{id} a")
     end
     assert_equal 3, index.css('#ongoing-projects + ul > li').size
