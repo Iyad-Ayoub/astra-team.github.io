@@ -68,7 +68,8 @@ class Phase10CReadinessTest < Minitest::Test
     assert_includes privacy.text, 'ASTRA does not directly control GitHub’s logs'
     assert privacy.at_css('a[href="mailto:dpo@inria.fr"]')
     legal = Nokogiri::HTML(File.read(File.join(dest, 'legal/index.html'))).at_css('article').text
-    assert_includes legal, 'publication director for this ASTRA website remains subject to institutional confirmation'
+    assert_includes legal, 'For website and editorial enquiries, contact the team assistant, Christelle Leclerc.'
+    refute_includes legal, 'subject to institutional confirmation'
     assert_includes legal, 'GitHub Pages'
     refute_match(/WordPress|Automattic|hosted by Inria/, legal)
     accessibility = Nokogiri::HTML(File.read(File.join(dest, 'accessibility/index.html'))).at_css('article').text
