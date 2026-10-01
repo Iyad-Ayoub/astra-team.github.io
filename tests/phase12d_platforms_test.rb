@@ -38,6 +38,24 @@ class Phase12DPlatformsTest < Minitest::Test
     refute_match(/case\s+record\.id|record\.id\s*==|record\.id\s*!=/, renderer)
     assert_includes renderer, '{{ record.platform_type | escape }}'
     assert_includes renderer, '{{ record.summary | escape }}'
+    assert_includes renderer, 'primary_media.path'
+    assert_includes renderer, 'primary_media.alt'
+  end
+
+  def test_platform_media_is_provenance_aware_and_resolves
+    platforms.each do |record|
+      media = record.fetch('media')
+      refute_empty media, "#{record.fetch('id')} should have platform media"
+      primary = media.find { |item| item.fetch('role') == 'primary' }
+      refute_nil primary
+      refute_empty primary.fetch('alt')
+      assert_match(%r{\A/assets/img/platforms/[a-z0-9-]+\.(?:jpg|png|webp)\z}, primary.fetch('path'))
+      assert_match(%r{\Ahttps://}, primary.fetch('source_url'))
+      assert_equal 'CC BY 4.0', primary.fetch('license') if record.fetch('id') == 'citroen-c1'
+      assert File.file?(File.join(ROOT, primary.fetch('path').delete_prefix('/')))
+    end
+    zoe_roles = platforms.find { |record| record.fetch('id') == 'zoe' }.fetch('media').map { |item| item.fetch('role') }
+    assert_includes zoe_roles, 'provenance'
   end
 
   def test_rendered_platforms_when_artifact_supplied
@@ -63,9 +81,9 @@ class Phase12DPlatformsTest < Minitest::Test
     containers.each do |container|
       assert_empty container.css('ol')
       assert_empty container.element_children.select { |child| child.name == 'li' }
-      refute_empty container.element_children.select do |child|
+      refute_empty(container.element_children.select do |child|
         child.name == 'article' && child['class'].to_s.split.include?('astra-research-card')
-      end
+      end.to_a)
     end
 
     # Zoé renders as current
@@ -102,6 +120,11 @@ class Phase12DPlatformsTest < Minitest::Test
     IDS.each do |id|
       card = platforms_page.at_css("##{id}")
       refute_empty card.css('.astra-platform-sources a.astra-text-link')
+      primary = platforms.find { |platform| platform.fetch('id') == id }.fetch('media').find { |item| item.fetch('role') == 'primary' }
+      image = card.at_css('.astra-platform-media img')
+      refute_nil image
+      assert_equal primary.fetch('alt'), image['alt']
+      assert File.file?(File.join(destination, image['src'].sub(%r{\A#{Regexp.escape(base)}}, '').delete_prefix('/')))
     end
     assert zoe_card.at_css("a[href='https://radar.inria.fr/report/2025/astra/index.html']")
 
