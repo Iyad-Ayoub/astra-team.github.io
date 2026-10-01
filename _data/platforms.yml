@@ -16,7 +16,19 @@
       year: 2025
       source_type: activity_report
       supports: ASTRA possession in December 2025, robotisation context, and initial Rocquencourt tests.
-  media: []
+  media:
+    - role: primary
+      path: /assets/img/platforms/astra-zoe-platform.jpg
+      alt: ASTRA Renault Zoé autonomous research vehicle with roof-mounted sensor frame
+      credit: ASTRA team
+      source_url: https://radar.inria.fr/report/2025/astra/index.html
+      source_title: ASTRA 2025 activity report
+    - role: provenance
+      path: /assets/img/platforms/astra-zoe-onboard-system.jpg
+      alt: ASTRA Renault Zoé rear cargo-area research installation
+      credit: ASTRA team
+      source_url: https://radar.inria.fr/report/2025/astra/index.html
+      source_title: ASTRA 2025 activity report
 
 - id: citroen-c1
   name: Citroën C1
@@ -34,7 +46,14 @@
       year: 2023
       source_type: activity_report
       supports: Inria C1 listed in the ASTRA road-vehicle inventory.
-  media: []
+  media:
+    - role: primary
+      path: /assets/img/platforms/inria-citroen-c1-evie.jpg
+      alt: Inria electrified Citroën C1 Ev’ie research vehicle equipped for automated driving
+      credit: ERCIM News
+      license: CC BY 4.0
+      source_url: https://ercim-news.ercim.eu/en94/special/abv-a-low-speed-automation-project-to-study-the-technical-feasibility-of-fully-automated-driving
+      source_title: "ABV: A Low-Speed Automation Project"
 
 - id: cybus
   name: Cybus shuttles
@@ -53,7 +72,13 @@
       year: 2012
       source_type: activity_report
       supports: Cybus operation in La Rochelle as a free transport service for three months.
-  media: []
+  media:
+    - role: primary
+      path: /assets/img/platforms/cybus-la-rochelle.jpg
+      alt: Inria Cybus autonomous shuttle operating in La Rochelle
+      credit: Inria
+      source_url: https://radar.inria.fr/report/2012/imara/uid76.html
+      source_title: IMARA 2012 activity report
 
 - id: cybercars
   name: Cybercars
@@ -72,7 +97,13 @@
       year: 2011
       source_type: activity_report
       supports: Cybercars service context and Cybus automated-electric-vehicle use in La Rochelle.
-  media: []
+  media:
+    - role: primary
+      path: /assets/img/platforms/cybercars-cycab-sophia.png
+      alt: Inria Cycab experimental urban electric vehicle in Sophia Antipolis
+      credit: Inria
+      source_url: https://radar.inria.fr/report/2012/lagadic/uid24.html
+      source_title: LAGADIC 2012 activity report
 
 - id: cruise4u
   name: Cruise4U
@@ -96,7 +127,13 @@
       year: 2024
       source_type: corporate_technology_page
       supports: Cruise4U field demonstrations from 2015 to 2018.
-  media: []
+  media:
+    - role: primary
+      path: /assets/img/platforms/valeo-cruise4u-field-testing.png
+      alt: Valeo Cruise4U automated-driving demonstrator during international field tests
+      credit: Inria
+      source_url: https://radar.inria.fr/report/2025/astra/index.html
+      source_title: ASTRA 2025 activity report
 
 - id: drive4u
   name: Drive4U
@@ -120,7 +157,13 @@
       year: 2024
       source_type: corporate_technology_page
       supports: Drive4U automated-driving demonstration in central Paris in 2018.
-  media: []
+  media:
+    - role: primary
+      path: /assets/img/platforms/valeo-drive4u.png
+      alt: Valeo Drive4U automated-driving research demonstrator
+      credit: Inria
+      source_url: https://radar.inria.fr/report/2023/astra/index.html
+      source_title: ASTRA 2023 activity report
 
 - id: navya
   name: NAVYA shuttle
@@ -138,4 +181,10 @@
       year: 2023
       source_type: activity_report
       supports: Valeo NAVYA shuttle listed in the ASTRA inventory.
-  media: []
+  media:
+    - role: primary
+      path: /assets/img/platforms/navya-valeo-ces-2017.jpg
+      alt: NAVYA autonomous shuttle used in Valeo research demonstrations
+      credit: Valeo
+      source_url: https://www.valeo.com/en/valeo-at-ces-2017-in-las-vegas/
+      source_title: Valeo at CES 2017 in Las Vegas

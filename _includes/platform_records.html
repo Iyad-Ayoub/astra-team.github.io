@@ -3,6 +3,12 @@
   {% for record in include.records %}
   <article id="{{ record.id | escape }}" class="mb-4 p-3 astra-research-card">
     {% for anchor in record.legacy_anchors %}<span id="{{ anchor | escape }}" aria-hidden="true"></span>{% endfor %}
+    {% assign primary_media = record.media | first %}
+    {% if primary_media.path and primary_media.alt %}
+    <figure class="astra-platform-media">
+      <img src="{{ primary_media.path | relative_url | escape }}" alt="{{ primary_media.alt | escape }}" loading="lazy" decoding="async">
+    </figure>
+    {% endif %}
     <h3 class="h5 mb-2">{{ record.name | escape }}</h3>
     <p class="astra-meta mb-2"><span class="astra-record-status">{% if record.temporal_status == 'current' %}Current platform · {% endif %}{{ record.platform_type | escape }}</span></p>
     <p class="mb-2">{{ record.summary | escape }}</p>
