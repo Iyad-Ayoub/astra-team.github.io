@@ -352,3 +352,18 @@ footer.sticky-bottom {
   gap: .25rem 1rem;
   margin-top: .5rem;
 }
+
+@media (max-width: 420px) {
+  .astra-catalog .astra-project-metadata {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .25rem;
+  }
+
+  .astra-catalog .astra-project-metadata dd {
+    margin-bottom: .5rem;
+  }
+
+  .astra-catalog .astra-project-metadata dd:last-child {
+    margin-bottom: 0;
+  }
+}
