@@ -123,26 +123,31 @@ class Phase5ContentTest < Minitest::Test
                    detail.css('article a[href^="http"]').map { |a| a['href'] }.sort
     end
     assert_includes document.call('platforms').text, 'Zoé Autonomous Research Vehicle'
-    outputs = document.call('outputs')
-    REPOSITORIES.each do |id, url|
-      assert_equal 1, outputs.css("##{id}").size
-      assert outputs.at_css("##{id} a[href='#{url}']")
+    output_records = YAML.safe_load_file(File.join(ROOT, '_data/outputs.yml'))
+    outputs_page = document.call('outputs')
+    output_records.select { |record| record['repository'] }.each do |record|
+      id = record.fetch('id')
+      url = record.fetch('repository')
+      assert_equal 1, outputs_page.css("##{id}").size
+      assert outputs_page.at_css("##{id} a[href='#{url}']")
     end
-    assert_equal outputs.select { |r| r['group'] == 'featured' }.size,
-                 outputs.css('#featured-software + ul > li').size
-    assert_equal outputs.select { |r| r['group'] == 'additional' }.size,
-                 outputs.css('#additional-software + ul > li').size
-    assert_equal outputs.select { |r| r['group'] == 'datasets' }.size,
-                 outputs.css('#datasets + ul > li').size
-    assert_equal outputs.select { |r| r['group'] == 'frameworks' }.size,
-                 outputs.css('#frameworks + ul > li').size
-    actions = outputs.css('a.astra-text-link').map(&:text)
+    %w[featured additional datasets frameworks].each do |group|
+      heading = {
+        'featured' => '#featured-software',
+        'additional' => '#additional-software',
+        'datasets' => '#datasets',
+        'frameworks' => '#frameworks'
+      }.fetch(group)
+      assert_equal output_records.count { |record| record['group'] == group },
+                   outputs_page.css("#{heading} + ul > li").size
+    end
+    actions = outputs_page.css('a.astra-text-link').map(&:text)
     assert_operator actions.count('GitHub repository ↗'), :>, 0
-    assert_equal 2, actions.count('Project website ↗')
-    assert outputs.at_css('#monoscene a[href="https://cv-rits.github.io/MonoScene/"]')
-    assert outputs.at_css('#dream a[href="https://weihaox.github.io/DREAM"]')
+    assert_equal output_records.count { |record| record['url'] && record['repository'].nil? }, actions.count('Project website ↗')
+    assert outputs_page.at_css('#monoscene a[href="https://cv-rits.github.io/MonoScene/"]')
+    assert outputs_page.at_css('#dream a[href="https://weihaox.github.io/DREAM"]')
     %w[texsd pbrrand].each do |id|
-      assert_empty outputs.css("##{id} a")
+      assert_empty outputs_page.css("##{id} a")
     end
     assert_equal 3, index.css('#ongoing-projects + ul > li').size
     assert_equal 2, index.css('#completed-projects + ul > li').size
@@ -159,8 +164,8 @@ class Phase5ContentTest < Minitest::Test
     assert_equal 2, historical.css('.astra-platform-records > article').size
 
     assert_empty current.css('#cruise4u, #drive4u')
-    assert_equal 'Featured Software & Models', outputs.at_css('#featured-software').text
-    assert_equal 'Open-Source Research Software', outputs.at_css('#additional-software').text
+    assert_equal 'Featured Software & Models', outputs_page.at_css('#featured-software').text
+    assert_equal 'Open-Source Research Software', outputs_page.at_css('#additional-software').text
     {
       'sight' => { '2021-01' => 'January 2021', '2025-06' => 'June 2025' },
       'tirrex' => { '2021-12-18' => '18 December 2021', '2022-01-14' => '14 January 2022' },
