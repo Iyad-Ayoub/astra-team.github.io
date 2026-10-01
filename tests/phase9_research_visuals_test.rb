@@ -99,7 +99,7 @@ class Phase9ResearchVisualsTest < Minitest::Test
 
   def assert_non_axis_page_visuals(relative, doc, base)
     assert_empty doc.css('figure.astra-axis-illustration'), relative
-    if relative.match?(%r{\A(?:research|projects|platforms|outputs)/})
+    if relative.match?(%r{\A(?:research|projects|outputs)/})
       assert_empty doc.css('article img'), relative
     elsif relative.start_with?('news/')
       doc.css('article img').each do |image|
@@ -125,7 +125,8 @@ class Phase9ResearchVisualsTest < Minitest::Test
       relative = path.delete_prefix(destination + '/')
       expected = IMAGES.keys.find { |id| relative == "research/#{id}/index.html" }
       unless expected
-        # Research and catalog pages remain image-free. CMS News pages may have
+        # Research, projects, and outputs remain image-free. Platforms may now
+        # render validated Phase 12D media. CMS News pages may have
         # an optional validated cover image under their content-owned public path.
         assert_non_axis_page_visuals(relative, doc, base)
         next
