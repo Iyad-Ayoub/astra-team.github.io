@@ -129,8 +129,8 @@ class Phase5ContentTest < Minitest::Test
       assert outputs.at_css("##{id} a[href='#{url}']")
     end
     assert_equal 6, outputs.css('#featured-software + ul > li').size
-    assert_equal 5, outputs.css('#additional-software + ul > li').size
-    assert_equal 6, outputs.css('#datasets + ul > li').size
+    assert_equal 6, outputs.css('#additional-software + ul > li').size
+    assert_equal 10, outputs.css('#datasets + ul > li').size
     assert_equal 1, outputs.css('#frameworks + ul > li').size
     actions = outputs.css('a.astra-text-link').map(&:text)
     assert_equal outputs.select { |r| r['repository'] }.size, actions.count('GitHub repository ↗')
