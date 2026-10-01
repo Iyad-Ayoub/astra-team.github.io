@@ -18,7 +18,7 @@ content_type: news_index
 {% if site.news_legacy.size > 0 %}
 <section aria-labelledby="news-legacy">
   <h2 id="news-legacy">Earlier team announcements</h2>
-  <p class="astra-meta">Preserved from the previous website; historical details await editorial review.</p>
+  <p class="astra-meta">Historical announcements preserved from the previous ASTRA website.</p>
   <ul class="astra-news-list">{% for item in site.news_legacy %}{% include news/row.html item=item %}{% endfor %}</ul>
 </section>
 {% endif %}
