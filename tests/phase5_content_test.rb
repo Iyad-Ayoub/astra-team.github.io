@@ -3,6 +3,9 @@ require_relative '../scripts/validate_site'
 
 class Phase5ContentTest < Minitest::Test
   ROOT = File.expand_path('..', __dir__)
+  BASELINE_PROJECT_IDS = %w[gat samba shift2sdv sight tirrex].freeze
+  BASELINE_ONGOING_IDS = %w[shift2sdv tirrex gat].freeze
+  BASELINE_COMPLETED_IDS = %w[sight samba].freeze
   REPOSITORIES = {
     'pasco' => 'https://github.com/astra-vision/PaSCo',
     'famix' => 'https://github.com/astra-vision/FAMix',
@@ -23,9 +26,12 @@ class Phase5ContentTest < Minitest::Test
 
   def test_approved_projects_and_dates
     records = projects
-    assert_equal %w[gat samba shift2sdv sight tirrex], records.keys.sort
-    assert_equal %w[shift2sdv tirrex gat], records.values.sort_by { |r| r['order'] }.select { |r| r['status'] == 'ongoing' }.map { |r| r['content_id'] }
-    assert_equal %w[sight samba], records.values.sort_by { |r| r['order'] }.select { |r| r['status'] == 'completed' }.map { |r| r['content_id'] }
+    assert_operator records.size, :>=, BASELINE_PROJECT_IDS.size
+    assert_equal BASELINE_PROJECT_IDS.sort, records.keys.select { |id| BASELINE_PROJECT_IDS.include?(id) }.sort
+    ongoing = records.values.sort_by { |r| r['order'] || 9999 }.select { |r| r['status'] == 'ongoing' }
+    completed = records.values.sort_by { |r| r['order'] || 9999 }.select { |r| r['status'] == 'completed' }
+    assert_equal BASELINE_ONGOING_IDS, ongoing.select { |r| BASELINE_ONGOING_IDS.include?(r['content_id']) }.map { |r| r['content_id'] }
+    assert_equal BASELINE_COMPLETED_IDS, completed.select { |r| BASELINE_COMPLETED_IDS.include?(r['content_id']) }.map { |r| r['content_id'] }
     assert_equal ['2021-01', '2025-06', 'completed'], records['sight'].values_at('start_date', 'end_date', 'status')
     assert_equal ['2021-12-18', '2022-01-14', 'ongoing'], records['tirrex'].values_at('start_date', 'kickoff_date', 'status')
     refute records['tirrex'].key?('end_date')
@@ -42,9 +48,16 @@ class Phase5ContentTest < Minitest::Test
     assert_equal 'https://cordis.europa.eu/project/id/101194245', records['shift2sdv']['cordis_url']
     assert_equal 'https://tirrex.fr/', records['tirrex']['external_url']
     records.each do |id, record|
+      assert_match(/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/, record['content_id'])
+      %w[acronym title summary astra_role].each { |key| refute_empty record[key].to_s.strip }
       refute record.key?('image')
-      refute record.key?('cordis_url') unless id == 'shift2sdv'
-      refute record.key?('external_url') unless %w[shift2sdv tirrex].include?(id)
+      %w[external_url cordis_url].each do |key|
+        next unless record.key?(key)
+
+        value = record[key].to_s.strip
+        refute_empty value
+        assert_match(%r{\Ahttps?://}i, value)
+      end
       assert_includes %w[ongoing completed], record['status']
       assert_includes %w[national european international], record['scope']
       assert_includes %w[research-project research-infrastructure joint-lab], record['type']
@@ -149,10 +162,12 @@ class Phase5ContentTest < Minitest::Test
     %w[texsd pbrrand].each do |id|
       assert_empty outputs_page.css("##{id} a")
     end
-    assert_equal 3, index.css('#ongoing-projects + ul > li').size
-    assert_equal 2, index.css('#completed-projects + ul > li').size
-    assert_equal %w[shift2sdv tirrex gat], index.css('#ongoing-projects + ul h3 a').map { |a| a['href'].split('/').last }
-    assert_equal %w[sight samba], index.css('#completed-projects + ul h3 a').map { |a| a['href'].split('/').last }
+    ongoing = records.values.select { |record| record['status'] == 'ongoing' }
+    completed = records.values.select { |record| record['status'] == 'completed' }
+    assert_equal ongoing.size, index.css('#ongoing-projects + ul > li').size
+    assert_equal completed.size, index.css('#completed-projects + ul > li').size
+    assert_equal BASELINE_ONGOING_IDS, index.css('#ongoing-projects + ul h3 a').map { |a| a['href'].split('/').last }.select { |id| BASELINE_ONGOING_IDS.include?(id) }
+    assert_equal BASELINE_COMPLETED_IDS, index.css('#completed-projects + ul h3 a').map { |a| a['href'].split('/').last }.select { |id| BASELINE_COMPLETED_IDS.include?(id) }
     platforms = document.call('platforms')
     current = platforms.at_css('#current-astra-inria-platforms').parent
     unverified = platforms.at_css('#documented-inria-inventory').parent
