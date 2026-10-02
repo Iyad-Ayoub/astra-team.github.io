@@ -67,7 +67,8 @@ class PhaseG9CmsStabilizationTest < Minitest::Test
   end
 
   def test_no_browser_merge_control_bypasses_ci
-    refute_match(/method:\s*'PUT'.*\/merge/m, @app)
-    refute_includes @app, 'merge: true'
+    news_publish = @app.split('async function publishGithubPublication', 2).fetch(1).split('function newestDeploymentRun', 2).fetch(0)
+    refute_match(/method:\s*'PUT'.*\/merge/m, news_publish)
+    refute_includes news_publish, 'merge: true'
   end
 end

@@ -18,6 +18,15 @@
   var githubSessionHandleKey = 'astra-cms-session-handle';
   var githubDraftBranch = 'cms-drafts';
   var githubDraftRoot = 'cms/drafts/news';
+  var projectDraftRoot = 'cms/drafts/projects';
+  var validProjectStatuses = ['ongoing', 'completed'];
+  var validProjectScopes = ['national', 'european', 'international'];
+  var validProjectTypes = ['research-project', 'research-infrastructure', 'joint-lab'];
+  var editingProject;
+  var pristineProjectSignature;
+  var projectFormInitializing = false;
+  var projectDraftSubmitting = false;
+  var projectPublicationSubmitting = false;
   var githubMediaRoot = 'cms/media/news';
   var githubMediaIndexPath = githubMediaRoot + '/index.json';
   var maxMediaBytes = 5 * 1024 * 1024;
@@ -114,6 +123,321 @@
   function draftPath(id) {
     if (!/^news-[a-z0-9]+$/.test(id)) throw new Error('Invalid draft identifier.');
     return githubDraftRoot + '/' + id + '.md';
+  }
+
+  function projectDraftPath(id) {
+    if (!/^project-[a-z0-9]+$/.test(id)) throw new Error('Invalid project identifier.');
+    return projectDraftRoot + '/' + id + '.md';
+  }
+
+  function projectField(name) { return element('admin-project-' + name); }
+
+  function collectProjectPayload() {
+    return {
+      id: projectField('content-id').value.trim(),
+      acronym: projectField('acronym').value.trim(),
+      title: projectField('title').value.trim(),
+      status: projectField('status').value,
+      scope: projectField('scope').value,
+      type: projectField('type').value,
+      cover_media_id: projectField('cover-media-id').value || null,
+      summary: projectField('summary').value.trim(),
+      astra_role: projectField('astra-role').value.trim(),
+      programme: projectField('programme').value.trim() || null,
+      start_date: projectField('start-date').value.trim() || null,
+      end_date: projectField('end-date').value.trim() || null,
+      kickoff_date: projectField('kickoff-date').value.trim() || null,
+      coordinator: projectField('coordinator').value.trim() || null,
+      partners: projectField('partners').value.split(/\r?\n/).map(function (value) { return value.trim(); }).filter(Boolean),
+      external_url: projectField('external-url').value.trim() || null,
+      cordis_url: projectField('cordis-url').value.trim() || null
+    };
+  }
+
+  function validateProjectPayload(payload) {
+    if (!/^project-[a-z0-9]+$/.test(payload.id)) return 'Project identifier is invalid.';
+    if (!payload.acronym || !payload.title || !payload.summary || !payload.astra_role) return 'Complete the required project fields.';
+    if (validProjectStatuses.indexOf(payload.status) === -1 || validProjectScopes.indexOf(payload.scope) === -1 || validProjectTypes.indexOf(payload.type) === -1) return 'Choose supported project classifications.';
+    if (payload.acronym.length > 80 || payload.title.length > 240 || payload.summary.length > 2000 || payload.astra_role.length > 1000) return 'One or more project fields are too long.';
+    if (payload.start_date && !/^\d{4}-\d{2}(?:-\d{2})?$/.test(payload.start_date)) return 'Enter a valid start date.';
+    if (payload.end_date && !/^\d{4}-\d{2}(?:-\d{2})?$/.test(payload.end_date)) return 'Enter a valid end date.';
+    if (payload.kickoff_date && !/^\d{4}-\d{2}-\d{2}$/.test(payload.kickoff_date)) return 'Enter a valid kick-off date.';
+    if (!Array.isArray(payload.partners) || payload.partners.some(function (partner) { return partner.length > 240 || !safeNewsText(partner); })) return 'Enter valid partner names.';
+    if (payload.cover_media_id && !/^media-[a-z0-9]+$/.test(payload.cover_media_id)) return 'Choose a cover image from the CMS media library.';
+    if ([payload.acronym, payload.title, payload.summary, payload.astra_role, payload.programme, payload.coordinator, payload.external_url, payload.cordis_url].some(function (value) { return value && !safeNewsText(value); })) return 'Liquid syntax, script tags, and inline event handlers are not allowed.';
+    for (var index = 0; index < ['external_url', 'cordis_url'].length; index += 1) {
+      var value = payload[['external_url', 'cordis_url'][index]];
+      if (!value) continue;
+      try {
+        var url = new URL(value);
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('unsupported protocol');
+      } catch (_) { return 'Enter valid http or https project URLs.'; }
+    }
+    return '';
+  }
+
+  function serializeProjectDraft(record) {
+    var fields = ['content_id', 'acronym', 'order', 'title', 'status', 'scope', 'type', 'programme', 'start_date', 'end_date', 'kickoff_date', 'coordinator', 'astra_role', 'partners', 'summary', 'external_url', 'cordis_url', 'cover_media_id'];
+    var values = {
+      content_id: record.id, acronym: record.acronym, order: Number.isFinite(record.order) ? record.order : 9999,
+      title: record.title, status: record.status, scope: record.scope, type: record.type,
+      programme: record.programme || null, start_date: record.start_date || null, end_date: record.end_date || null,
+      kickoff_date: record.kickoff_date || null, coordinator: record.coordinator || null,
+      astra_role: record.astra_role, partners: record.partners || [], summary: record.summary,
+      external_url: record.external_url || null, cordis_url: record.cordis_url || null,
+      cover_media_id: record.cover_media_id || null
+    };
+    return '---\n' + fields.map(function (field) { return field + ': ' + JSON.stringify(values[field]); }).join('\n') + '\n---\n\n{% include project_details.html %}\n';
+  }
+
+  function parseProjectDraft(markdown) {
+    var match = markdown.match(/^---\n([\s\S]*?)\n---\n\n?([\s\S]*)$/);
+    if (!match) throw new Error('Invalid project draft format.');
+    var allowed = ['content_id', 'acronym', 'order', 'title', 'status', 'scope', 'type', 'programme', 'start_date', 'end_date', 'kickoff_date', 'coordinator', 'astra_role', 'partners', 'summary', 'external_url', 'cordis_url', 'cover_media_id'];
+    var record = { body: match[2].replace(/\n$/, '') };
+    match[1].split('\n').forEach(function (line) {
+      var separator = line.indexOf(': ');
+      var key = line.slice(0, separator);
+      if (separator < 1 || allowed.indexOf(key) === -1 || Object.prototype.hasOwnProperty.call(record, key)) throw new Error('Invalid project draft fields.');
+      record[key] = JSON.parse(line.slice(separator + 2));
+    });
+    record.id = record.content_id;
+    if (!Array.isArray(record.partners)) record.partners = [];
+    ['programme', 'start_date', 'end_date', 'kickoff_date', 'coordinator', 'external_url', 'cordis_url', 'cover_media_id'].forEach(function (field) {
+      if (!Object.prototype.hasOwnProperty.call(record, field)) record[field] = null;
+    });
+    if (record.body.trim() !== '{% include project_details.html %}' || validateProjectPayload(record)) throw new Error('Invalid project draft content.');
+    return record;
+  }
+
+  function projectEditableSignature(record) {
+    if (!record || !record.id) return null;
+    return serializeProjectDraft({
+      id: record.id, acronym: record.acronym, title: record.title, status: record.status,
+      scope: record.scope, type: record.type, cover_media_id: record.cover_media_id || null,
+      summary: record.summary, astra_role: record.astra_role, programme: record.programme || null,
+      start_date: record.start_date || null, end_date: record.end_date || null,
+      kickoff_date: record.kickoff_date || null, coordinator: record.coordinator || null,
+      partners: record.partners || [], external_url: record.external_url || null,
+      cordis_url: record.cordis_url || null
+    });
+  }
+
+  function displayProjectValue(value) {
+    var labels = {
+      ongoing: 'Ongoing', completed: 'Completed', national: 'National', european: 'European', international: 'International',
+      'research-project': 'Research project', 'research-infrastructure': 'Research infrastructure', 'joint-lab': 'Joint lab'
+    };
+    return labels[value] || value;
+  }
+
+  function projectPublicationBranch(id) { if (!/^project-[a-z0-9]+$/.test(id)) throw new Error('Invalid project identifier.'); return 'cms-publish/projects/' + id; }
+  function projectUnpublishBranch(id) { if (!/^project-[a-z0-9]+$/.test(id)) throw new Error('Invalid project identifier.'); return 'cms-unpublish/projects/' + id; }
+  function projectDeploymentKey(id) { return 'astra-cms-project-deployment-sha-' + id; }
+  function projectPublicUrl(record) { var prefix = adminRootUrl().replace(/admin\/$/, ''); return new URL('projects/' + record.id + '/', prefix).toString(); }
+  function projectPublicPath(record) { return '_projects/' + record.id + '.md'; }
+  function projectPublicationMessage(value, kind) { var node = element('admin-project-publication-message'); if (!node) return; node.classList.remove('astra-admin-message-success', 'astra-admin-message-status'); if (kind === 'success') node.classList.add('astra-admin-message-success'); if (kind === 'status') node.classList.add('astra-admin-message-status'); node.textContent = value || ''; }
+  function projectPublicMarkdown(record) {
+    var fields = ['content_id', 'acronym', 'order', 'title', 'status', 'scope', 'type', 'programme', 'start_date', 'end_date', 'kickoff_date', 'coordinator', 'astra_role', 'partners', 'summary', 'external_url', 'cordis_url', 'cover_media_id'];
+    var values = { content_id: record.id, acronym: record.acronym, order: Number.isFinite(record.order) ? record.order : 9999, title: record.title, status: record.status, scope: record.scope, type: record.type, programme: record.programme || null, start_date: record.start_date || null, end_date: record.end_date || null, kickoff_date: record.kickoff_date || null, coordinator: record.coordinator || null, astra_role: record.astra_role, partners: record.partners || [], summary: record.summary, external_url: record.external_url || null, cordis_url: record.cordis_url || null, cover_media_id: record.cover_media_id || null };
+    return '---\n' + fields.map(function (field) { return field + ': ' + JSON.stringify(values[field]); }).join('\n') + '\n---\n\n{% include project_details.html %}\n';
+  }
+  async function publishedProjectByContentId(session, id) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, files = await githubResponse(base + '/contents/_projects?ref=main', session); for (var index = 0; index < files.length; index += 1) { var file = await githubResponse(base + '/contents/' + files[index].path + '?ref=main', session); var textContent = fromBase64(file.content); if (new RegExp('^content_id: ["\\\']?' + id + '["\\\']?$', 'm').test(textContent)) return { path: files[index].path, sha: file.sha, markdown: textContent }; } return null; }
+  function projectPublicationDetails(value, pullLink, publicLink) { var box = element('admin-project-publication-message'); if (!box) return; box.replaceChildren(); if (value) { var detail = document.createElement('span'); detail.textContent = value; if (value.indexOf('Validation passed') === 0 || value.indexOf('✓ Published') === 0) detail.className = 'astra-admin-message-success'; else if (value.indexOf('Validation in progress') === 0 || value.indexOf('Waiting') === 0) detail.className = 'astra-admin-message-status'; box.appendChild(detail); } [[pullLink, 'View pull request'], [publicLink, 'View public Project']].forEach(function (entry) { if (!entry[0]) return; var anchor = document.createElement('a'); anchor.href = entry[0]; anchor.textContent = entry[1]; anchor.className = 'astra-admin-text-link'; box.appendChild(anchor); }); }
+  function setProjectPublicationStatus(value, detail, action) { text('admin-project-publication-status', value); var submit = element('admin-project-publish'), update = element('admin-project-update'), refresh = element('admin-project-refresh'), publishNow = element('admin-project-publish-now'), unpublish = element('admin-project-unpublish'), unavailable = action === 'unsaved'; if (submit) { submit.hidden = unavailable || value !== 'Draft'; submit.disabled = submit.hidden; } if (update) { update.hidden = unavailable || !(value === 'Update available' && action === 'update'); update.disabled = update.hidden; } if (refresh) { refresh.hidden = unavailable || !(value === 'Update available' && action === 'refresh'); refresh.disabled = refresh.hidden; } if (publishNow) { publishNow.hidden = unavailable || !(detail && detail.indexOf('Validation passed') === 0 && ['Submitted', 'Update submitted', 'Ready to publish', 'Update ready to publish'].indexOf(value) !== -1); publishNow.disabled = publishNow.hidden; } if (unpublish) { unpublish.hidden = unavailable || (value !== 'Published' && value !== 'Live'); unpublish.disabled = unpublish.hidden; } }
+  function renderProjectPublicationState(value, detail, pullLink, action) { setProjectPublicationStatus(value, detail, action); projectPublicationDetails(detail, pullLink); }
+  async function ensureProjectLifecycleBranch(session, branch) { var expected = branch.indexOf('cms-publish/') === 0 ? projectPublicationBranch(currentProjectId()) : projectUnpublishBranch(currentProjectId()); if (branch !== expected) throw new Error('The lifecycle branch is not a controlled Project branch.'); return ensureLifecycleBranch(session, branch); }
+  async function readProjectDraft(session, id) { var github = githubSettings(), data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + projectDraftPath(id) + '?ref=' + githubDraftBranch, session), record = parseProjectDraft(fromBase64(data.content)); record.githubSha = data.sha; return { record: record, sha: data.sha }; }
+  async function findProjectPublicationPull(session, id) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = projectPublicationBranch(id), pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session); return pulls.filter(function (pull) { return pull.base && pull.base.ref === 'main' && pull.head && pull.head.ref === branch; })[0] || null; }
+  async function projectListPublicationLabel(session, record) { try { var published = await publishedProjectByContentId(session, record.id), pull = await findProjectPublicationPull(session, record.id); if (pull) return published ? 'Update submitted' : 'Submitted'; if (published) return published.markdown === projectPublicMarkdown(record) ? 'Published' : 'Update available'; } catch (_) {} return 'Draft'; }
+  async function createProjectPublicationCommit(session, branch, record) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, ref = await githubResponse(base + '/git/ref/heads/' + branch, session), parent = await githubResponse(base + '/git/commits/' + ref.object.sha, session), blob = await githubResponse(base + '/git/blobs', session, { method: 'POST', body: { content: utf8Base64(projectPublicMarkdown(record)), encoding: 'base64' } }), tree = await githubResponse(base + '/git/trees', session, { method: 'POST', body: { base_tree: parent.tree.sha, tree: [{ path: projectPublicPath(record), mode: '100644', type: 'blob', sha: blob.sha }] } }), commit = await githubResponse(base + '/git/commits', session, { method: 'POST', body: { message: 'cms: prepare project publication ' + record.id, tree: tree.sha, parents: [ref.object.sha] } }); await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: commit.sha, force: false } }); return commit.sha; }
+  async function projectBranchMatchesDraft(session, record, branch) { try { var github = githubSettings(), data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + projectPublicPath(record) + '?ref=' + encodeURIComponent(branch), session); return fromBase64(data.content) === projectPublicMarkdown(record); } catch (_) { return false; } }
+  async function loadProjectPublicationStatus(session, record) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = projectPublicationBranch(record.id), published; try { published = await publishedProjectByContentId(session, record.id); var pulls = (await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session)).filter(function (pull) { return pull.base && pull.base.ref === 'main' && pull.head && pull.head.ref === branch; }); if (pulls.length) { var pull = await githubResponse(base + '/pulls/' + pulls[0].number, session), validation = await publicationValidationState(session, pull), detail = validationDetail(validation, false); if (!await projectBranchMatchesDraft(session, record, branch)) return renderProjectPublicationState('Update available', 'Draft changed after submission. Refresh publication first.', pull.html_url, 'refresh'); renderProjectPublicationState(published ? publicationDisplayState('Update submitted', validation) : publicationDisplayState('Submitted', validation), detail, pull.html_url); return; } if (published) { if (published.markdown === projectPublicMarkdown(record)) renderProjectPublicationState('Published', '', null); else renderProjectPublicationState('Update available', '', null, 'update'); return; } renderProjectPublicationState('Draft', ''); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to determine Project publication status.')); } }
+  async function monitorProjectDeployment(session, record, mergeSha, attempt) { attempt = attempt || 0; var deployment = await publicationDeploymentState(session, mergeSha); if (deployment.state === 'live') { try { sessionStorage.removeItem(projectDeploymentKey(record.id)); } catch (_) {} renderProjectPublicationState('Live', '✓ Published successfully', null); return; } if (deployment.state === 'failed') { renderProjectPublicationState('Published to repository', 'Website deployment failed.', null); return; } renderProjectPublicationState(deployment.state === 'deploying' ? 'Deploying website' : 'Merged to main', deployment.state === 'deploying' ? 'Deploying website…' : 'Waiting for website deployment…', null); if (attempt < 20) window.setTimeout(function () { monitorProjectDeployment(session, record, mergeSha, attempt + 1); }, 15000); }
+  async function submitProjectPublication() { if (projectPublicationSubmitting) return; var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) { projectPublicationMessage('Your GitHub session has expired.'); return; } projectPublicationSubmitting = true; var payload = collectProjectPayload(); if (editingProject && editingProject.githubSha && projectEditableSignature(payload) !== pristineProjectSignature) { projectPublicationSubmitting = false; projectPublicationMessage('Save the Project draft before submitting it for publication.'); return; } try { await verifyGithubRepositoryAccess(session); var draft = await githubResponse('/repos/' + githubSettings().repoOwner + '/' + githubSettings().repoName + '/contents/' + projectDraftPath(id) + '?ref=' + githubDraftBranch, session), record = parseProjectDraft(fromBase64(draft.content)), branch = projectPublicationBranch(id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, published = await publishedProjectByContentId(session, id), pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session); if (published && projectPublicMarkdown(record) === published.markdown) { renderProjectPublicationState('Published', 'No public changes to publish.', pulls.length ? pulls[0].html_url : null); return; } if (pulls.length) { renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pulls[0].html_url); return; } await ensureProjectLifecycleBranch(session, branch); await createProjectPublicationCommit(session, branch, record); var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Publish Project: ' + record.title, head: branch, base: 'main', body: 'CMS project publication\n\nContent ID: ' + id } }); renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url); await loadProjectPublicationStatus(session, record); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to submit Project publication.')); } finally { projectPublicationSubmitting = false; } }
+  async function refreshProjectPublication() { var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) return; try { var record = (await readProjectDraft(session, id)).record, branch = projectPublicationBranch(id), published = await publishedProjectByContentId(session, id), pull = await findProjectPublicationPull(session, id); if (!pull) throw new Error('No open Project publication pull request was found.'); if (!await projectBranchMatchesDraft(session, record, branch)) await createProjectPublicationCommit(session, branch, record); renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pull.html_url); await loadProjectPublicationStatus(session, record); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to refresh Project publication.')); } }
+  async function publishProjectPublication() { if (projectPublicationSubmitting) return; var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) return; projectPublicationSubmitting = true; try { var pull = await findProjectPublicationPull(session, id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, fresh = await githubResponse(base + '/pulls/' + pull.number, session); if (!fresh || fresh.state !== 'open' || fresh.base.ref !== 'main' || fresh.head.ref !== projectPublicationBranch(id) || fresh.mergeable !== true || await publicationValidationState(session, fresh) !== 'passed') throw new Error('Project publication is not ready to publish.'); var merged = await githubResponse(base + '/pulls/' + fresh.number + '/merge', session, { method: 'PUT', body: { sha: fresh.head.sha, merge_method: 'squash' } }); if (!merged.merged || !merged.sha) throw new Error('GitHub did not merge the Project publication.'); try { sessionStorage.setItem(projectDeploymentKey(id), merged.sha); } catch (_) {} renderProjectPublicationState('Merged to main', 'Waiting for website deployment…', fresh.html_url); await monitorProjectDeployment(session, editingProject || { id: id }, merged.sha); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to publish Project.')); } finally { projectPublicationSubmitting = false; } }
+  async function submitProjectUnpublish() { if (projectPublicationSubmitting) return; var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) return; projectPublicationSubmitting = true; try { var published = await publishedProjectByContentId(session, id); if (!published) throw new Error('No published Project was found.'); var branch = projectUnpublishBranch(id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName; await ensureProjectLifecycleBranch(session, branch); await githubResponse(base + '/contents/' + published.path, session, { method: 'DELETE', body: { message: 'cms: unpublish project ' + id, sha: published.sha, branch: branch } }); var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Unpublish Project: ' + id, head: branch, base: 'main', body: 'CMS project unpublish request\n\nContent ID: ' + id } }); renderProjectPublicationState('Unpublish submitted', 'Validation in progress…', pr.html_url); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to unpublish Project.')); } finally { projectPublicationSubmitting = false; } }
+
+  function populateProjectCoverMedia(record) {
+    var select = projectField('cover-media-id');
+    if (!select) return null;
+    select.replaceChildren(new Option('No cover image', ''));
+    mediaIndex.forEach(function (item) { select.add(new Option(item.filename + ' (' + item.id + ')', item.id)); });
+    select.value = record && record.cover_media_id ? record.cover_media_id : '';
+    return mediaIndex.find(function (item) { return item.id === select.value; }) || null;
+  }
+
+  async function renderProjectCoverPreview(item, session) {
+    var box = projectField('cover-preview');
+    if (!box) return;
+    box.replaceChildren(); box.hidden = !item;
+    if (!item) return;
+    try {
+      var blob = await githubMediaBlob(session, item);
+      var image = document.createElement('img');
+      image.src = URL.createObjectURL(blob);
+      image.alt = item.alt_text || item.filename;
+      box.appendChild(image);
+    } catch (_) { box.hidden = true; }
+  }
+
+  function projectMessage(value, kind) {
+    var node = element('admin-github-project-message');
+    if (!node) return;
+    node.classList.remove('astra-admin-message-success', 'astra-admin-message-status');
+    if (kind === 'success') node.classList.add('astra-admin-message-success');
+    if (kind === 'status') node.classList.add('astra-admin-message-status');
+    node.textContent = value || '';
+  }
+
+  function setProjectSaveState(state) {
+    var button = document.querySelector('#admin-github-project-form button[type="submit"]');
+    if (button) button.disabled = state === 'saving' || state === 'pristine' || state === 'saved';
+    if (state === 'unsaved') projectMessage('● Unsaved changes', 'status');
+    else if (state === 'saving') projectMessage('Saving…', 'status');
+    else if (state === 'pristine') projectMessage('');
+    else if (state === 'saved') projectMessage('✓ Saved', 'success');
+    else if (state === '') projectMessage('');
+  }
+
+  function currentProjectId() {
+    return new URLSearchParams(window.location.search).get('id');
+  }
+
+  function updateProjectDirtyState() {
+    var existing = Boolean(editingProject && editingProject.githubSha);
+    if (!existing) { setProjectSaveState('unsaved'); return; }
+    var dirty = projectEditableSignature(collectProjectPayload()) !== pristineProjectSignature;
+    setProjectSaveState(dirty ? 'unsaved' : 'pristine');
+  }
+
+  function resetProjectForm(record) {
+    projectFormInitializing = true;
+    editingProject = record || null;
+    pristineProjectSignature = null;
+    projectField('content-id').value = record ? record.id : '';
+    projectField('acronym').value = record && record.acronym || '';
+    projectField('title').value = record && record.title || '';
+    projectField('status').value = record && record.status || 'ongoing';
+    projectField('scope').value = record && record.scope || 'national';
+    projectField('type').value = record && record.type || 'research-project';
+    if (projectField('cover-media-id')) projectField('cover-media-id').value = record && record.cover_media_id || '';
+    projectField('summary').value = record && record.summary || '';
+    projectField('astra-role').value = record && record.astra_role || '';
+    projectField('programme').value = record && record.programme || '';
+    projectField('start-date').value = record && record.start_date || '';
+    projectField('end-date').value = record && record.end_date || '';
+    projectField('kickoff-date').value = record && record.kickoff_date || '';
+    projectField('coordinator').value = record && record.coordinator || '';
+    projectField('partners').value = record && Array.isArray(record.partners) ? record.partners.join('\n') : '';
+    projectField('external-url').value = record && record.external_url || '';
+    projectField('cordis-url').value = record && record.cordis_url || '';
+    setProjectSaveState(record ? 'pristine' : '');
+  }
+
+  function finishProjectFormHydration(record, session) {
+    var previewItem = populateProjectCoverMedia(record);
+    try {
+      if (record) pristineProjectSignature = projectEditableSignature(collectProjectPayload());
+    } finally {
+      projectFormInitializing = false;
+      if (record) updateProjectDirtyState();
+    }
+    renderProjectCoverPreview(previewItem, session);
+  }
+
+  async function saveGithubProjectDraft(event) {
+    event.preventDefault();
+    if (projectDraftSubmitting) return;
+    var payload = collectProjectPayload();
+    if (!payload.id) {
+      payload.id = 'project-' + Date.now().toString(36);
+      projectField('content-id').value = payload.id;
+    }
+    var validationError = validateProjectPayload(payload);
+    if (validationError) { projectMessage(validationError); return; }
+    var existingSha = editingProject && editingProject.githubSha;
+    if (existingSha && pristineProjectSignature && projectEditableSignature(payload) === pristineProjectSignature) { setProjectSaveState('pristine'); return; }
+    var github = githubSettings();
+    var session = storedGithubSession() || await restoreGithubSession();
+    if (!session) { projectMessage('Your GitHub session has expired. Sign in again before saving this draft.'); return; }
+    projectDraftSubmitting = true;
+    setProjectSaveState('saving');
+    var saved = false;
+    try {
+      await verifyGithubRepositoryAccess(session);
+      await ensureGithubDraftBranch(session);
+      var body = { message: 'cms: ' + (existingSha ? 'update' : 'create') + ' project draft ' + payload.id, content: utf8Base64(serializeProjectDraft(payload)), branch: githubDraftBranch };
+      if (existingSha) body.sha = existingSha;
+      var response = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + projectDraftPath(payload.id), session, { method: 'PUT', body: body });
+      editingProject = payload;
+      editingProject.githubSha = response.content.sha;
+      pristineProjectSignature = projectEditableSignature(payload);
+      setProjectSaveState('saved');
+      saved = true;
+      if (!currentProjectId()) window.location.assign(new URL('../edit/?id=' + encodeURIComponent(payload.id), window.location.href).toString());
+    } catch (error) {
+      projectMessage(error.status === 409 ? 'This project draft changed in GitHub. Reload it before saving again.' : friendlyError(error, 'Unable to save this GitHub project draft.'));
+    } finally {
+      projectDraftSubmitting = false;
+      var button = document.querySelector('#admin-github-project-form button[type="submit"]');
+      if (button && !saved) button.disabled = false;
+    }
+  }
+
+  async function loadGithubProjectsRoute(session) {
+    var route = document.body.dataset.adminRoute;
+    if (route === 'project-new' || route === 'project-edit') await readMediaIndex(session);
+    if (route === 'project-new') { resetProjectForm(null); finishProjectFormHydration(null, session); renderProjectPublicationState('Draft', 'Save the project draft before publication becomes available.', null, 'unsaved'); return; }
+    if (route === 'project-edit') {
+      var id = currentProjectId();
+      if (!id || !/^project-[a-z0-9]+$/.test(id)) throw new Error('A valid project identifier is required.');
+      var github = githubSettings();
+      var data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + projectDraftPath(id) + '?ref=' + githubDraftBranch, session);
+      var record = parseProjectDraft(fromBase64(data.content));
+      record.githubSha = data.sha;
+      resetProjectForm(record);
+      finishProjectFormHydration(record, session);
+      await loadProjectPublicationStatus(session, record);
+      var projectMergeSha = null; try { projectMergeSha = sessionStorage.getItem(projectDeploymentKey(record.id)); } catch (_) {}
+      if (projectMergeSha) await monitorProjectDeployment(session, record, projectMergeSha);
+      return;
+    }
+    if (route === 'projects') {
+      var settings = githubSettings();
+      var container = element('admin-github-project-items');
+      if (!container) return;
+      try {
+        var entries = await githubResponse('/repos/' + settings.repoOwner + '/' + settings.repoName + '/contents/' + projectDraftRoot + '?ref=' + githubDraftBranch, session);
+        container.replaceChildren();
+        var projectEntries = entries.filter(function (entry) { return entry && /^project-[a-z0-9]+\.md$/.test(entry.name); });
+        var records = [];
+        for (var index = 0; index < projectEntries.length; index += 1) {
+          try {
+            var draft = await githubResponse('/repos/' + settings.repoOwner + '/' + settings.repoName + '/contents/' + projectEntries[index].path + '?ref=' + githubDraftBranch, session);
+            records.push(parseProjectDraft(fromBase64(draft.content)));
+          } catch (_) {}
+        }
+        records.sort(function (left, right) { return (Number(left.order) || 9999) - (Number(right.order) || 9999) || String(left.title).localeCompare(String(right.title)); });
+        for (var recordIndex = 0; recordIndex < records.length; recordIndex += 1) {
+          var record = records[recordIndex];
+          var link = document.createElement('a');
+          link.className = 'astra-admin-news-item';
+          link.href = new URL('edit/?id=' + encodeURIComponent(record.id), window.location.href).toString();
+          var title = document.createElement('strong'); title.className = 'astra-admin-news-title'; title.textContent = (record.acronym ? record.acronym + ' — ' : '') + record.title; link.appendChild(title);
+          var metadata = document.createElement('span'); metadata.className = 'astra-admin-news-meta';
+          [record.status, record.scope, record.type, record.programme].filter(Boolean).forEach(function (value) { var badge = document.createElement('span'); badge.className = 'astra-admin-news-badge'; badge.textContent = displayProjectValue(value); metadata.appendChild(badge); });
+          var lifecycle = document.createElement('span'); lifecycle.className = 'astra-admin-news-badge'; lifecycle.textContent = await projectListPublicationLabel(session, record); metadata.appendChild(lifecycle);
+          link.appendChild(metadata);
+          container.appendChild(link);
+        }
+        if (!container.children.length) container.textContent = 'No GitHub project drafts yet.';
+      } catch (error) {
+        if (error.status === 404) container.textContent = 'No GitHub project drafts yet.';
+        else throw error;
+      }
+    }
   }
 
   function utf8Base64(value) {
@@ -326,9 +650,9 @@
     return commit.sha;
   }
   async function ensureLifecycleBranch(session, branch) {
-    var match = /^(cms-publish|cms-unpublish)\/news\/(news-[a-z0-9]+)$/.exec(branch);
-    var expectedBranch = match && (match[1] === 'cms-publish' ? publicationBranch(match[2]) : unpublishBranch(match[2]));
-    if (!match || expectedBranch !== branch) throw new Error('The lifecycle branch is not a controlled News branch.');
+    var match = /^(cms-publish|cms-unpublish)\/(news|projects)\/((?:news|project)-[a-z0-9]+)$/.exec(branch);
+    var expectedBranch = match && (match[1] === 'cms-publish' ? (match[2] === 'news' ? publicationBranch(match[3]) : projectPublicationBranch(match[3])) : (match[2] === 'news' ? unpublishBranch(match[3]) : projectUnpublishBranch(match[3])));
+    if (!match || expectedBranch !== branch) throw new Error('The lifecycle branch is not a controlled CMS branch.');
     var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, main = await githubResponse(base + '/git/ref/heads/main', session);
     try {
       await githubResponse(base + '/git/refs', session, { method: 'POST', body: { ref: 'refs/heads/' + branch, sha: main.object.sha } });
@@ -666,6 +990,10 @@
     var session = storedGithubSession();
     try {
       await ensureGithubDraftBranch(session);
+      if (route === 'projects' || route === 'project-new' || route === 'project-edit') {
+        await loadGithubProjectsRoute(session);
+        return;
+      }
       if (route === 'news') {
         var github = githubSettings();
         var entries;
@@ -966,11 +1294,24 @@
       element('admin-github-news-form').addEventListener('input', function () { if (!draftSaveSubmitting && !draftFormInitializing) updateDraftDirtyState(); });
       element('admin-github-news-form').addEventListener('change', function () { if (!draftSaveSubmitting && !draftFormInitializing) updateDraftDirtyState(); });
     }
+    if (element('admin-github-project-form')) {
+      element('admin-github-project-form').addEventListener('submit', saveGithubProjectDraft);
+      element('admin-github-project-form').addEventListener('input', function () { if (!projectDraftSubmitting && !projectFormInitializing) updateProjectDirtyState(); });
+      element('admin-github-project-form').addEventListener('change', function (event) {
+        if (!projectDraftSubmitting && !projectFormInitializing) updateProjectDirtyState();
+        if (projectField('cover-media-id') && event && event.target === projectField('cover-media-id')) renderProjectCoverPreview(mediaIndex.find(function (item) { return item.id === projectField('cover-media-id').value; }), storedGithubSession());
+      });
+    }
     if (element('admin-news-publish')) element('admin-news-publish').addEventListener('click', submitGithubPublication);
     if (element('admin-news-update')) element('admin-news-update').addEventListener('click', submitGithubPublication);
     if (element('admin-news-refresh')) element('admin-news-refresh').addEventListener('click', refreshGithubPublication);
     if (element('admin-news-publish-now')) element('admin-news-publish-now').addEventListener('click', publishGithubPublication);
     if (element('admin-news-unpublish')) element('admin-news-unpublish').addEventListener('click', submitGithubUnpublish);
+    if (element('admin-project-publish')) element('admin-project-publish').addEventListener('click', submitProjectPublication);
+    if (element('admin-project-update')) element('admin-project-update').addEventListener('click', submitProjectPublication);
+    if (element('admin-project-refresh')) element('admin-project-refresh').addEventListener('click', refreshProjectPublication);
+    if (element('admin-project-publish-now')) element('admin-project-publish-now').addEventListener('click', publishProjectPublication);
+    if (element('admin-project-unpublish')) element('admin-project-unpublish').addEventListener('click', submitProjectUnpublish);
     if (newsField('type')) newsField('type').addEventListener('change', toggleEventFields);
     if (element('admin-media-upload-form')) element('admin-media-upload-form').addEventListener('submit', uploadMedia);
     if (newsField('cover-media-id')) newsField('cover-media-id').addEventListener('change', function () { renderCoverPreview(mediaIndex.find(function (item) { return item.id === newsField('cover-media-id').value; }), storedGithubSession()); });

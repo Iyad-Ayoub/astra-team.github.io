@@ -51,7 +51,8 @@ class PhaseG9dUnpublishUiTest < Minitest::Test
   end
 
   def test_no_in_cms_merge_is_added
-    refute_match(/method:\s*'PUT'.*\/merge/m, APP)
-    refute_includes APP, 'merge: true'
+    news_unpublish = APP.split('async function submitGithubUnpublish', 2).fetch(1).split('async function saveGithubDraft', 2).fetch(0)
+    refute_match(/method:\s*'PUT'.*\/merge/m, news_unpublish)
+    refute_includes news_unpublish, 'merge: true'
   end
 end

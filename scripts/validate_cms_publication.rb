@@ -7,6 +7,9 @@ require_relative 'validate_site'
 base = ARGV.fetch(0, 'origin/main')
 branch = ENV.fetch('GITHUB_REF_NAME', `git branch --show-current`.strip)
 match = branch.match(%r{\Acms-publish/news/(news-[a-z0-9]+)\z})
+if branch.match?(%r{\Acms-publish/projects/project-[a-z0-9]+\z})
+  exec RbConfig.ruby, File.expand_path('validate_cms_project_publication.rb', __dir__), *ARGV
+end
 raise "invalid CMS publication branch: #{branch}" unless match
 
 content_id = match[1]

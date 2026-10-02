@@ -35,6 +35,7 @@ layout: none
         <nav class="astra-admin-sidebar" aria-label="Control panel sections">
           <a href="{{ '/admin/' | relative_url }}"{% if page.admin_active == 'dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
           <a href="{{ '/admin/news/' | relative_url }}"{% if page.admin_active == 'news' %} aria-current="page"{% endif %}>News &amp; Events</a>
+          <a href="{{ '/admin/projects/' | relative_url }}"{% if page.admin_active == 'projects' %} aria-current="page"{% endif %}>Projects</a>
           <a href="{{ '/admin/media/' | relative_url }}"{% if page.admin_active == 'media' %} aria-current="page"{% endif %}>Media</a>
         </nav>
         <section id="admin-github-route" class="astra-admin-content">{{ content }}</section>

@@ -1,0 +1,25 @@
+<form id="admin-github-project-form" novalidate>
+  <input id="admin-project-content-id" type="hidden">
+  <label for="admin-project-acronym">Acronym</label><input id="admin-project-acronym" maxlength="80" required>
+  <label for="admin-project-title">Title</label><input id="admin-project-title" maxlength="240" required>
+  <label for="admin-project-status">Status</label>
+  <select id="admin-project-status" required><option value="ongoing">Ongoing</option><option value="completed">Completed</option></select>
+  <label for="admin-project-scope">Scope</label>
+  <select id="admin-project-scope" required><option value="national">National</option><option value="european">European</option><option value="international">International</option></select>
+  <label for="admin-project-type">Type</label>
+  <select id="admin-project-type" required><option value="research-project">Research project</option><option value="research-infrastructure">Research infrastructure</option><option value="joint-lab">Joint lab</option></select>
+  <label for="admin-project-cover-media-id">Cover image <span class="astra-admin-optional">(optional)</span></label>
+  <select id="admin-project-cover-media-id"><option value="">No cover image</option></select>
+  <div id="admin-project-cover-preview" class="astra-admin-cover-preview" hidden></div>
+  <label for="admin-project-summary">Summary</label><textarea id="admin-project-summary" maxlength="2000" required></textarea>
+  <label for="admin-project-astra-role">ASTRA role</label><textarea id="admin-project-astra-role" maxlength="1000" required></textarea>
+  <label for="admin-project-programme">Programme <span class="astra-admin-optional">(optional)</span></label><input id="admin-project-programme" maxlength="240">
+  <label for="admin-project-start-date">Start date <span class="astra-admin-optional">(optional)</span></label><input id="admin-project-start-date" type="date">
+  <label for="admin-project-end-date">End date <span class="astra-admin-optional">(optional)</span></label><input id="admin-project-end-date" type="date">
+  <label for="admin-project-kickoff-date">Kick-off date <span class="astra-admin-optional">(optional)</span></label><input id="admin-project-kickoff-date" type="date">
+  <label for="admin-project-coordinator">Coordinator <span class="astra-admin-optional">(optional)</span></label><input id="admin-project-coordinator" maxlength="240">
+  <label for="admin-project-partners">Partners <span class="astra-admin-optional">(optional, one per line)</span></label><textarea id="admin-project-partners"></textarea>
+  <label for="admin-project-external-url">External URL <span class="astra-admin-optional">(optional)</span></label><input id="admin-project-external-url" type="url">
+  <label for="admin-project-cordis-url">CORDIS URL <span class="astra-admin-optional">(optional)</span></label><input id="admin-project-cordis-url" type="url">
+  <button type="submit">Save draft</button>
+</form>
