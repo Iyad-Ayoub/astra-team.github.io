@@ -1,6 +1,6 @@
 ---
 content_id: "project-mupo4rcj"
-acronym: "TEST-HDMap"
+acronym: "TEST-HDMapx"
 order: 9999
 title: "Cooperative HD Mapping for Autonomous Driving"
 status: "ongoing"
