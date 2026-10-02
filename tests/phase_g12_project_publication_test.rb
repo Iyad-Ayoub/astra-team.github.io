@@ -36,6 +36,18 @@ class PhaseG12ProjectPublicationTest < Minitest::Test
     assert_includes NEW, 'admin-project-publication-status'
   end
 
+  def test_project_publication_feedback_and_reconciliation
+    assert_includes APP, "setProjectPublicationActionBusy(button, button && button.id === 'admin-project-update' ? 'Submitting update…' : 'Submitting…')"
+    assert_includes APP, "setProjectPublicationActionBusy(button, 'Refreshing…')"
+    assert_includes APP, "setProjectPublicationActionBusy(button, 'Publishing…')"
+    assert_includes APP, "setProjectPublicationActionBusy(button, 'Unpublishing…')"
+    assert_includes APP, "projectPublicationSubmitting = true"
+    assert_includes APP, "function scheduleProjectPublicationPolling(session, record, knownLifecycle)"
+    assert_includes APP, "window.setTimeout(function () { loadProjectPublicationStatus(session, record, knownLifecycle); }, 15000)"
+    assert_includes APP, "validation === 'pending' || validation === 'unknown'"
+    assert_includes APP, "publicationDisplayState('Update submitted', validation)"
+  end
+
   def test_news_publication_branch_contract_remains_present
     assert_includes APP, "cms-publish/news/' + id"
     assert_includes APP, 'async function submitGithubPublication()'

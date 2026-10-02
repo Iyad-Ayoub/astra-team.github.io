@@ -27,6 +27,7 @@
   var projectFormInitializing = false;
   var projectDraftSubmitting = false;
   var projectPublicationSubmitting = false;
+  var projectPublicationStatusTimer;
   var githubMediaRoot = 'cms/media/news';
   var githubMediaIndexPath = githubMediaRoot + '/index.json';
   var maxMediaBytes = 5 * 1024 * 1024;
@@ -244,6 +245,10 @@
   }
   async function publishedProjectByContentId(session, id) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, files = await githubResponse(base + '/contents/_projects?ref=main', session); for (var index = 0; index < files.length; index += 1) { var file = await githubResponse(base + '/contents/' + files[index].path + '?ref=main', session); var textContent = fromBase64(file.content); if (new RegExp('^content_id: ["\\\']?' + id + '["\\\']?$', 'm').test(textContent)) return { path: files[index].path, sha: file.sha, markdown: textContent }; } return null; }
   function projectPublicationDetails(value, pullLink, publicLink) { var box = element('admin-project-publication-message'); if (!box) return; box.replaceChildren(); if (value) { var detail = document.createElement('span'); detail.textContent = value; if (value.indexOf('Validation passed') === 0 || value.indexOf('✓ Published') === 0) detail.className = 'astra-admin-message-success'; else if (value.indexOf('Validation in progress') === 0 || value.indexOf('Waiting') === 0) detail.className = 'astra-admin-message-status'; box.appendChild(detail); } [[pullLink, 'View pull request'], [publicLink, 'View public Project']].forEach(function (entry) { if (!entry[0]) return; var anchor = document.createElement('a'); anchor.href = entry[0]; anchor.textContent = entry[1]; anchor.className = 'astra-admin-text-link'; box.appendChild(anchor); }); }
+  function stopProjectPublicationPolling() { if (projectPublicationStatusTimer) { window.clearTimeout(projectPublicationStatusTimer); projectPublicationStatusTimer = null; } }
+  function scheduleProjectPublicationPolling(session, record, knownLifecycle) { stopProjectPublicationPolling(); projectPublicationStatusTimer = window.setTimeout(function () { loadProjectPublicationStatus(session, record, knownLifecycle); }, 15000); }
+  function setProjectPublicationActionBusy(button, label) { stopProjectPublicationPolling(); if (!button) return; if (!button.dataset.projectOriginalLabel) button.dataset.projectOriginalLabel = button.textContent; button.disabled = true; button.textContent = label; }
+  function clearProjectPublicationActionBusy(button) { if (!button) return; if (button.dataset.projectOriginalLabel) { button.textContent = button.dataset.projectOriginalLabel; delete button.dataset.projectOriginalLabel; } button.disabled = false; }
   function setProjectPublicationStatus(value, detail, action) { text('admin-project-publication-status', value); var submit = element('admin-project-publish'), update = element('admin-project-update'), refresh = element('admin-project-refresh'), publishNow = element('admin-project-publish-now'), unpublish = element('admin-project-unpublish'), unavailable = action === 'unsaved'; if (submit) { submit.hidden = unavailable || value !== 'Draft'; submit.disabled = submit.hidden; } if (update) { update.hidden = unavailable || !(value === 'Update available' && action === 'update'); update.disabled = update.hidden; } if (refresh) { refresh.hidden = unavailable || !(value === 'Update available' && action === 'refresh'); refresh.disabled = refresh.hidden; } if (publishNow) { publishNow.hidden = unavailable || !(detail && detail.indexOf('Validation passed') === 0 && ['Submitted', 'Update submitted', 'Ready to publish', 'Update ready to publish'].indexOf(value) !== -1); publishNow.disabled = publishNow.hidden; } if (unpublish) { unpublish.hidden = unavailable || (value !== 'Published' && value !== 'Live'); unpublish.disabled = unpublish.hidden; } }
   function renderProjectPublicationState(value, detail, pullLink, action) { setProjectPublicationStatus(value, detail, action); projectPublicationDetails(detail, pullLink); }
   async function ensureProjectLifecycleBranch(session, branch) { var expected = branch.indexOf('cms-publish/') === 0 ? projectPublicationBranch(currentProjectId()) : projectUnpublishBranch(currentProjectId()); if (branch !== expected) throw new Error('The lifecycle branch is not a controlled Project branch.'); return ensureLifecycleBranch(session, branch); }
@@ -252,12 +257,98 @@
   async function projectListPublicationLabel(session, record) { try { var published = await publishedProjectByContentId(session, record.id), pull = await findProjectPublicationPull(session, record.id); if (pull) return published ? 'Update submitted' : 'Submitted'; if (published) return published.markdown === projectPublicMarkdown(record) ? 'Published' : 'Update available'; } catch (_) {} return 'Draft'; }
   async function createProjectPublicationCommit(session, branch, record) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, ref = await githubResponse(base + '/git/ref/heads/' + branch, session), parent = await githubResponse(base + '/git/commits/' + ref.object.sha, session), blob = await githubResponse(base + '/git/blobs', session, { method: 'POST', body: { content: utf8Base64(projectPublicMarkdown(record)), encoding: 'base64' } }), tree = await githubResponse(base + '/git/trees', session, { method: 'POST', body: { base_tree: parent.tree.sha, tree: [{ path: projectPublicPath(record), mode: '100644', type: 'blob', sha: blob.sha }] } }), commit = await githubResponse(base + '/git/commits', session, { method: 'POST', body: { message: 'cms: prepare project publication ' + record.id, tree: tree.sha, parents: [ref.object.sha] } }); await githubResponse(base + '/git/refs/heads/' + branch, session, { method: 'PATCH', body: { sha: commit.sha, force: false } }); return commit.sha; }
   async function projectBranchMatchesDraft(session, record, branch) { try { var github = githubSettings(), data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + projectPublicPath(record) + '?ref=' + encodeURIComponent(branch), session); return fromBase64(data.content) === projectPublicMarkdown(record); } catch (_) { return false; } }
-  async function loadProjectPublicationStatus(session, record) { var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = projectPublicationBranch(record.id), published; try { published = await publishedProjectByContentId(session, record.id); var pulls = (await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session)).filter(function (pull) { return pull.base && pull.base.ref === 'main' && pull.head && pull.head.ref === branch; }); if (pulls.length) { var pull = await githubResponse(base + '/pulls/' + pulls[0].number, session), validation = await publicationValidationState(session, pull), detail = validationDetail(validation, false); if (!await projectBranchMatchesDraft(session, record, branch)) return renderProjectPublicationState('Update available', 'Draft changed after submission. Refresh publication first.', pull.html_url, 'refresh'); renderProjectPublicationState(published ? publicationDisplayState('Update submitted', validation) : publicationDisplayState('Submitted', validation), detail, pull.html_url); return; } if (published) { if (published.markdown === projectPublicMarkdown(record)) renderProjectPublicationState('Published', '', null); else renderProjectPublicationState('Update available', '', null, 'update'); return; } renderProjectPublicationState('Draft', ''); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to determine Project publication status.')); } }
+  async function loadProjectPublicationStatus(session, record, knownLifecycle) { stopProjectPublicationPolling(); var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = projectPublicationBranch(record.id), published; try { published = await publishedProjectByContentId(session, record.id); var pulls = (await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session)).filter(function (pull) { return pull.base && pull.base.ref === 'main' && pull.head && pull.head.ref === branch; }); if (pulls.length) { var pull = await githubResponse(base + '/pulls/' + pulls[0].number, session), validation = await publicationValidationState(session, pull), detail = validationDetail(validation, false); if (!await projectBranchMatchesDraft(session, record, branch)) return renderProjectPublicationState('Update available', 'Draft changed after submission. Refresh publication first.', pull.html_url, 'refresh'); renderProjectPublicationState(published ? publicationDisplayState('Update submitted', validation) : publicationDisplayState('Submitted', validation), detail, pull.html_url); if (validation === 'pending' || validation === 'unknown') scheduleProjectPublicationPolling(session, record, knownLifecycle || { state: published ? 'Update submitted' : 'Submitted', pull: pull }); return; } if (published) { if (published.markdown === projectPublicMarkdown(record)) renderProjectPublicationState('Published', '', null); else renderProjectPublicationState('Update available', '', null, 'update'); return; } renderProjectPublicationState('Draft', ''); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to determine Project publication status.')); } }
   async function monitorProjectDeployment(session, record, mergeSha, attempt) { attempt = attempt || 0; var deployment = await publicationDeploymentState(session, mergeSha); if (deployment.state === 'live') { try { sessionStorage.removeItem(projectDeploymentKey(record.id)); } catch (_) {} renderProjectPublicationState('Live', '✓ Published successfully', null); return; } if (deployment.state === 'failed') { renderProjectPublicationState('Published to repository', 'Website deployment failed.', null); return; } renderProjectPublicationState(deployment.state === 'deploying' ? 'Deploying website' : 'Merged to main', deployment.state === 'deploying' ? 'Deploying website…' : 'Waiting for website deployment…', null); if (attempt < 20) window.setTimeout(function () { monitorProjectDeployment(session, record, mergeSha, attempt + 1); }, 15000); }
-  async function submitProjectPublication() { if (projectPublicationSubmitting) return; var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) { projectPublicationMessage('Your GitHub session has expired.'); return; } projectPublicationSubmitting = true; var payload = collectProjectPayload(); if (editingProject && editingProject.githubSha && projectEditableSignature(payload) !== pristineProjectSignature) { projectPublicationSubmitting = false; projectPublicationMessage('Save the Project draft before submitting it for publication.'); return; } try { await verifyGithubRepositoryAccess(session); var draft = await githubResponse('/repos/' + githubSettings().repoOwner + '/' + githubSettings().repoName + '/contents/' + projectDraftPath(id) + '?ref=' + githubDraftBranch, session), record = parseProjectDraft(fromBase64(draft.content)), branch = projectPublicationBranch(id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, published = await publishedProjectByContentId(session, id), pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session); if (published && projectPublicMarkdown(record) === published.markdown) { renderProjectPublicationState('Published', 'No public changes to publish.', pulls.length ? pulls[0].html_url : null); return; } if (pulls.length) { renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pulls[0].html_url); return; } await ensureProjectLifecycleBranch(session, branch); await createProjectPublicationCommit(session, branch, record); var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Publish Project: ' + record.title, head: branch, base: 'main', body: 'CMS project publication\n\nContent ID: ' + id } }); renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url); await loadProjectPublicationStatus(session, record); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to submit Project publication.')); } finally { projectPublicationSubmitting = false; } }
-  async function refreshProjectPublication() { var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) return; try { var record = (await readProjectDraft(session, id)).record, branch = projectPublicationBranch(id), published = await publishedProjectByContentId(session, id), pull = await findProjectPublicationPull(session, id); if (!pull) throw new Error('No open Project publication pull request was found.'); if (!await projectBranchMatchesDraft(session, record, branch)) await createProjectPublicationCommit(session, branch, record); renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pull.html_url); await loadProjectPublicationStatus(session, record); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to refresh Project publication.')); } }
-  async function publishProjectPublication() { if (projectPublicationSubmitting) return; var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) return; projectPublicationSubmitting = true; try { var pull = await findProjectPublicationPull(session, id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, fresh = await githubResponse(base + '/pulls/' + pull.number, session); if (!fresh || fresh.state !== 'open' || fresh.base.ref !== 'main' || fresh.head.ref !== projectPublicationBranch(id) || fresh.mergeable !== true || await publicationValidationState(session, fresh) !== 'passed') throw new Error('Project publication is not ready to publish.'); var merged = await githubResponse(base + '/pulls/' + fresh.number + '/merge', session, { method: 'PUT', body: { sha: fresh.head.sha, merge_method: 'squash' } }); if (!merged.merged || !merged.sha) throw new Error('GitHub did not merge the Project publication.'); try { sessionStorage.setItem(projectDeploymentKey(id), merged.sha); } catch (_) {} renderProjectPublicationState('Merged to main', 'Waiting for website deployment…', fresh.html_url); await monitorProjectDeployment(session, editingProject || { id: id }, merged.sha); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to publish Project.')); } finally { projectPublicationSubmitting = false; } }
-  async function submitProjectUnpublish() { if (projectPublicationSubmitting) return; var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession(); if (!id || !session) return; projectPublicationSubmitting = true; try { var published = await publishedProjectByContentId(session, id); if (!published) throw new Error('No published Project was found.'); var branch = projectUnpublishBranch(id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName; await ensureProjectLifecycleBranch(session, branch); await githubResponse(base + '/contents/' + published.path, session, { method: 'DELETE', body: { message: 'cms: unpublish project ' + id, sha: published.sha, branch: branch } }); var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Unpublish Project: ' + id, head: branch, base: 'main', body: 'CMS project unpublish request\n\nContent ID: ' + id } }); renderProjectPublicationState('Unpublish submitted', 'Validation in progress…', pr.html_url); } catch (error) { renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to unpublish Project.')); } finally { projectPublicationSubmitting = false; } }
+  async function submitProjectPublication(event) {
+    if (projectPublicationSubmitting) return;
+    var button = event && event.currentTarget;
+    setProjectPublicationActionBusy(button, button && button.id === 'admin-project-update' ? 'Submitting update…' : 'Submitting…');
+    projectPublicationSubmitting = true;
+    try {
+      var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession();
+      if (!id || !session) { projectPublicationMessage('Your GitHub session has expired.'); return; }
+      var payload = collectProjectPayload();
+      if (editingProject && editingProject.githubSha && projectEditableSignature(payload) !== pristineProjectSignature) { projectPublicationMessage('Save the Project draft before submitting it for publication.'); return; }
+      await verifyGithubRepositoryAccess(session);
+      var draft = await githubResponse('/repos/' + githubSettings().repoOwner + '/' + githubSettings().repoName + '/contents/' + projectDraftPath(id) + '?ref=' + githubDraftBranch, session), record = parseProjectDraft(fromBase64(draft.content)), branch = projectPublicationBranch(id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, published = await publishedProjectByContentId(session, id), pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session);
+      if (published && projectPublicMarkdown(record) === published.markdown) { renderProjectPublicationState('Published', 'No public changes to publish.', pulls.length ? pulls[0].html_url : null); return; }
+      if (pulls.length) { renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pulls[0].html_url); await loadProjectPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pulls[0] }); return; }
+      await ensureProjectLifecycleBranch(session, branch);
+      await createProjectPublicationCommit(session, branch, record);
+      var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Publish Project: ' + record.title, head: branch, base: 'main', body: 'CMS project publication\n\nContent ID: ' + id } });
+      renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pr.html_url);
+      await loadProjectPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pr });
+    } catch (error) {
+      renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to submit Project publication.'));
+    } finally {
+      projectPublicationSubmitting = false;
+      clearProjectPublicationActionBusy(button);
+    }
+  }
+  async function refreshProjectPublication(event) {
+    if (projectPublicationSubmitting) return;
+    var button = event && event.currentTarget;
+    setProjectPublicationActionBusy(button, 'Refreshing…');
+    projectPublicationSubmitting = true;
+    try {
+      var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession();
+      if (!id || !session) return;
+      var record = (await readProjectDraft(session, id)).record, branch = projectPublicationBranch(id), published = await publishedProjectByContentId(session, id), pull = await findProjectPublicationPull(session, id);
+      if (!pull) throw new Error('No open Project publication pull request was found.');
+      if (!await projectBranchMatchesDraft(session, record, branch)) await createProjectPublicationCommit(session, branch, record);
+      renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pull.html_url);
+      await loadProjectPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pull });
+    } catch (error) {
+      renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to refresh Project publication.'));
+    } finally {
+      projectPublicationSubmitting = false;
+      clearProjectPublicationActionBusy(button);
+    }
+  }
+  async function publishProjectPublication(event) {
+    if (projectPublicationSubmitting) return;
+    var button = event && event.currentTarget;
+    setProjectPublicationActionBusy(button, 'Publishing…');
+    projectPublicationSubmitting = true;
+    try {
+      var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession();
+      if (!id || !session) return;
+      var pull = await findProjectPublicationPull(session, id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, fresh = await githubResponse(base + '/pulls/' + pull.number, session);
+      if (!fresh || fresh.state !== 'open' || fresh.base.ref !== 'main' || fresh.head.ref !== projectPublicationBranch(id) || fresh.mergeable !== true || await publicationValidationState(session, fresh) !== 'passed') throw new Error('Project publication is not ready to publish.');
+      var merged = await githubResponse(base + '/pulls/' + fresh.number + '/merge', session, { method: 'PUT', body: { sha: fresh.head.sha, merge_method: 'squash' } });
+      if (!merged.merged || !merged.sha) throw new Error('GitHub did not merge the Project publication.');
+      try { sessionStorage.setItem(projectDeploymentKey(id), merged.sha); } catch (_) {}
+      renderProjectPublicationState('Merged to main', 'Waiting for website deployment…', fresh.html_url);
+      await monitorProjectDeployment(session, editingProject || { id: id }, merged.sha);
+    } catch (error) {
+      renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to publish Project.'));
+    } finally {
+      projectPublicationSubmitting = false;
+      clearProjectPublicationActionBusy(button);
+    }
+  }
+  async function submitProjectUnpublish(event) {
+    if (projectPublicationSubmitting) return;
+    var button = event && event.currentTarget;
+    setProjectPublicationActionBusy(button, 'Unpublishing…');
+    projectPublicationSubmitting = true;
+    try {
+      var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession();
+      if (!id || !session) return;
+      var published = await publishedProjectByContentId(session, id);
+      if (!published) throw new Error('No published Project was found.');
+      var branch = projectUnpublishBranch(id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName;
+      await ensureProjectLifecycleBranch(session, branch);
+      await githubResponse(base + '/contents/' + published.path, session, { method: 'DELETE', body: { message: 'cms: unpublish project ' + id, sha: published.sha, branch: branch } });
+      var pr = await githubResponse(base + '/pulls', session, { method: 'POST', body: { title: 'Unpublish Project: ' + id, head: branch, base: 'main', body: 'CMS project unpublish request\n\nContent ID: ' + id } });
+      renderProjectPublicationState('Unpublish submitted', 'Validation in progress…', pr.html_url);
+    } catch (error) {
+      renderProjectPublicationState('Error/Conflict', friendlyError(error, 'Unable to submit Project unpublish.'));
+    } finally {
+      projectPublicationSubmitting = false;
+      clearProjectPublicationActionBusy(button);
+    }
+  }
 
   function populateProjectCoverMedia(record) {
     var select = projectField('cover-media-id');
