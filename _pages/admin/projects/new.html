@@ -1,0 +1,13 @@
+---
+layout: admin
+title: New Project
+permalink: /admin/projects/new/
+sitemap: false
+admin_active: projects
+admin_route: project-new
+---
+<p class="astra-admin-kicker">Projects</p>
+<h1>New Project</h1>
+{% include admin/project_form.html %}
+<p id="admin-github-project-message" class="astra-admin-message" role="alert"></p>
+<section class="astra-admin-publication"><h2>Publication</h2><p id="admin-project-publication-status">Checking publication status…</p><button id="admin-project-publish" type="button">Submit for publication</button><button id="admin-project-update" type="button" hidden>Submit update</button><button id="admin-project-refresh" type="button" hidden>Refresh publication</button><button id="admin-project-publish-now" type="button" hidden>Publish now</button><button id="admin-project-unpublish" type="button" hidden>Unpublish from website</button><p id="admin-project-publication-message" class="astra-admin-message" role="alert"></p></section>
