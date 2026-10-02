@@ -1,6 +1,6 @@
 ---
 content_id: "project-mupo4rcj"
-acronym: "TEST-HDMap"
+acronym: "TEST-HDMapx"
 order: 9999
 title: "Cooperative HD Mapping for Autonomous Driving"
 status: "ongoing"
@@ -16,6 +16,7 @@ partners: ["Inria","Valeo","Université Gustave Eiffel"]
 summary: "A research project exploring cooperative high-definition mapping for autonomous vehicles using multi-sensor perception, connected vehicles, and AI-based map generation."
 external_url: "https://www.inria.fr"
 cordis_url: "https://cordis.europa.eu"
+cover_media_id: null
 ---
 
 {% include project_details.html %}
