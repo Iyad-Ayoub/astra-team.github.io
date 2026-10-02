@@ -48,6 +48,16 @@ class PhaseG12ProjectPublicationTest < Minitest::Test
     assert_includes APP, "publicationDisplayState('Update submitted', validation)"
   end
 
+  def test_project_deployment_reconciles_later_main_success_and_requires_current_project
+    assert_includes APP, "mergeSha ? base + '/actions/runs?branch=main&head_sha='"
+    assert_includes APP, "base + '/actions/runs?branch=main&per_page=100&page='"
+    assert_includes APP, "deploymentAncestry(session, base, mergeSha, successfulRuns[index].head_sha)"
+    monitor = APP.split('async function monitorProjectDeployment', 2).fetch(1).split('async function submitProjectPublication', 2).fetch(0)
+    assert_includes monitor, "await publishedProjectByContentId(session, record.id)"
+    assert_includes monitor, "Published Project is no longer present on main."
+    assert_includes monitor, "renderProjectPublicationState('Live', '✓ Published successfully'"
+  end
+
   def test_news_publication_branch_contract_remains_present
     assert_includes APP, "cms-publish/news/' + id"
     assert_includes APP, 'async function submitGithubPublication()'
