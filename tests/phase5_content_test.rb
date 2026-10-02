@@ -118,6 +118,7 @@ class Phase5ContentTest < Minitest::Test
   end
 
   def test_rendered_content_when_artifact_supplied
+    records = projects
     destination = ENV['PHASE5_SITE']
     skip 'Set PHASE5_SITE to check a built artifact' unless destination
     base = ENV.fetch('PHASE5_BASEURL', '')
