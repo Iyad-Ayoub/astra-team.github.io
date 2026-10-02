@@ -73,14 +73,23 @@ class PhaseG9iFastLivePublishingTest < Minitest::Test
   end
 
   def test_lifecycle_branch_reuse_is_controlled_and_safe
-    assert_includes APP, "var match = /^(cms-publish|cms-unpublish)\\/news\\/(news-[a-z0-9]+)$/.exec(branch);"
-    assert_includes APP, "publicationBranch(match[2])"
-    assert_includes APP, "unpublishBranch(match[2])"
-    assert_includes APP, "pulls?state=open&head="
-    assert_includes APP, "pull.merged_at && pull.base && pull.base.ref === 'main'"
-    assert_includes APP, "body: { sha: main.object.sha, force: true }"
-    assert_includes APP, "An open publication pull request still uses this branch."
-    assert_includes APP, "no verified merged pull request"
+    lifecycle = APP.split('async function ensureLifecycleBranch', 2).fetch(1).split('async function publicationBranchMatchesDraft', 2).fetch(0)
+    assert_includes lifecycle, "var match = /^(cms-publish|cms-unpublish)\\/(news|projects)\\/((?:news|project)-[a-z0-9]+)$/.exec(branch);"
+    assert_includes lifecycle, "match[2] === 'news' ? publicationBranch(match[3]) : projectPublicationBranch(match[3])"
+    assert_includes lifecycle, "match[2] === 'news' ? unpublishBranch(match[3]) : projectUnpublishBranch(match[3])"
+    assert_includes APP, "function publicationBranch(id)"
+    assert_includes APP, "return 'cms-publish/news/' + id"
+    assert_includes APP, "function unpublishBranch(id)"
+    assert_includes APP, "return 'cms-unpublish/news/' + id"
+    assert_includes APP, "function projectPublicationBranch(id)"
+    assert_includes APP, "return 'cms-publish/projects/' + id"
+    assert_includes APP, "function projectUnpublishBranch(id)"
+    assert_includes APP, "return 'cms-unpublish/projects/' + id"
+    assert_includes lifecycle, "pulls?state=open&head="
+    assert_includes lifecycle, "pull.merged_at && pull.base && pull.base.ref === 'main'"
+    assert_includes lifecycle, "body: { sha: main.object.sha, force: true }"
+    assert_includes lifecycle, "An open publication pull request still uses this branch."
+    assert_includes lifecycle, "no verified merged pull request"
   end
 
   def test_existing_save_refreshes_lifecycle_without_navigation
