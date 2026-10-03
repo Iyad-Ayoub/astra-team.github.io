@@ -152,8 +152,9 @@ class Phase5ContentTest < Minitest::Test
         assert detail.at_css("article a[href='#{record[key]}']") if record[key]
       end
       if record['cover_image']
-        assert detail.at_css("img[src='#{record['cover_image']}']")
-        refute_empty detail.at_css("img[src='#{record['cover_image']}']")['alt'].to_s
+        cover_src = "#{base}#{record['cover_image']}"
+        assert detail.at_css("img[src='#{cover_src}']")
+        refute_empty detail.at_css("img[src='#{cover_src}']")['alt'].to_s
       else
         assert_empty detail.css('.astra-project-cover')
       end
