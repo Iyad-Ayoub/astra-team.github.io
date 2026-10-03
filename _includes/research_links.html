@@ -11,11 +11,21 @@
 </section>
 <section id="current-research" class="astra-section" aria-labelledby="core-research-axes">
 <h2 id="core-research-axes">Core Research Axes</h2>
-<ul>
+<ul class="astra-axis-grid">
 {% for section in research_sections %}
 {% if section.axis_group == 'core' %}
-{% assign legacy_axis = site.data.axes[forloop.index0] %}
-<li id="{{ legacy_axis.slurm }}"><a href="{{ section.url | relative_url }}">{{ section.title | escape }}</a></li>
+{% assign axis_label = section.axis_number | prepend: '0' %}
+<li class="astra-axis-card">
+  <a href="{{ section.url | relative_url }}">
+    <div class="astra-axis-visual">
+      <img src="{{ section.image | relative_url }}" alt="{{ section.image_alt | escape }}" width="{{ section.image_width }}" height="{{ section.image_height }}" loading="lazy" decoding="async">
+    </div>
+    <p class="astra-axis-eyebrow">Axis {{ axis_label }}</p>
+    <h3>{{ section.title | escape }}</h3>
+    <p>{{ section.summary | escape }}</p>
+    <span class="astra-text-link">Explore axis <span aria-hidden="true">&rarr;</span></span>
+  </a>
+</li>
 {% endif %}
 {% endfor %}
 </ul>

@@ -89,7 +89,26 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
   img { display: block; width: 100%; height: auto; border-radius: $astra-radius; }
 }
 .astra-section { margin-top: $astra-section-space; }
+.astra-research-overview { padding-top: $astra-space-3; }
+.astra-research-overview #current-research { margin-top: $astra-space-4; }
 .astra-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: $astra-space-3; margin-bottom: $astra-space-4; }
+.astra-axis-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: $astra-space-4; list-style: none; margin: 0; padding: 0; }
+.astra-axis-card {
+  min-width: 0;
+  border: 1px solid $astra-border;
+  border-radius: $astra-radius;
+  background: white;
+  overflow: hidden;
+  a { display: block; height: 100%; padding: $astra-space-2; color: $astra-ink; text-decoration: none; }
+  a:hover, a:focus-visible { text-decoration: none; h3 { text-decoration: underline; text-underline-offset: .15em; } }
+  h3 { margin: $astra-space-1 0; font-size: 1.2rem; font-weight: 600; line-height: 1.35; letter-spacing: normal; }
+  p { margin: 0; }
+  .astra-axis-eyebrow { color: $astra-muted; font-size: $astra-font-small; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+  .astra-text-link { display: inline-block; margin-top: $astra-space-2; color: $astra-accent; font-weight: 600; text-decoration: none; }
+  a:hover .astra-text-link, a:focus-visible .astra-text-link { text-decoration: underline; text-underline-offset: .2em; }
+}
+.astra-axis-visual { padding: $astra-space-1; border: 1px solid $astra-border; border-radius: $astra-radius; background: $astra-ink; overflow: hidden; img { display: block; width: 100%; height: auto; } }
+.astra-axis-card .astra-axis-eyebrow { margin-top: $astra-space-2; }
 .astra-intro {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -176,6 +195,7 @@ footer.sticky-bottom {
   .astra-intro { padding-bottom: $astra-space-5; }
   .astra-section-heading { align-items: flex-start; flex-direction: column; gap: $astra-space-2; }
   .astra-research-grid { grid-template-columns: 1fr; }
+  .astra-axis-grid { grid-template-columns: 1fr; gap: $astra-space-3; }
   .astra-news-list li { grid-template-columns: 1fr; gap: $astra-space-1; }
 }
 // Publication archive only: extend the existing static bibliography presentation.
@@ -311,10 +331,20 @@ footer.sticky-bottom {
 }
 // Informational research figures only; no crop, upscaling or pipeline filters.
 .astra-axis-illustration {
-  max-width: 38rem;
+  width: 100%;
+  max-width: 56rem;
   margin: $astra-space-4 0;
-  img { display: block; max-width: 100%; height: auto; }
+  img { max-width: 100%; height: auto; }
   figcaption { margin-top: $astra-space-2; font-size: $astra-font-small; line-height: 1.5; }
+}
+.research-axis-page article > h2,
+.research-axis-page article > ul + h2 {
+  margin-top: $astra-space-4;
+  margin-bottom: $astra-space-2;
+  text-align: left;
+  letter-spacing: normal;
+  font-size: 1.5rem;
+  line-height: 1.35;
 }
 .astra-axis-enrichment {
   margin-top: $astra-space-4;
