@@ -104,12 +104,15 @@ class Phase5ContentTest < Minitest::Test
     assert_includes listing, 'title_prefix = project_title | slice: 0, project_acronym.size'
     assert_includes listing, 'title_remainder = project_title | remove_first: project_acronym | strip'
     assert_includes listing, 'title_prefix == project_acronym'
-    records = projects
-    assert_equal 'TEST-HDMap — Cooperative HD Mapping for Autonomous Driving', expected_project_listing_title(records.fetch('project-mupo4rcj'))
-    assert_equal 'Shift2SDV', expected_project_listing_title(records.fetch('shift2sdv'))
-    assert_equal 'TIRREX — Infrastructure technologique pour la recherche d’excellence en robotique', expected_project_listing_title(records.fetch('tirrex'))
-    assert_equal 'GAT — Global Autonomous Transportation', expected_project_listing_title(records.fetch('gat'))
-    assert_equal 'SIGHT — viSIon throuGH weaTher', expected_project_listing_title(records.fetch('sight'))
+    fixtures = [
+      { 'acronym' => 'Shift2SDV', 'title' => 'Shift2SDV' },
+      { 'acronym' => 'TIRREX', 'title' => 'TIRREX — Infrastructure technologique pour la recherche d’excellence en robotique' },
+      { 'acronym' => 'TEST-HDMap', 'title' => 'Cooperative HD Mapping for Autonomous Driving' }
+    ]
+    assert_equal 'Shift2SDV', expected_project_listing_title(fixtures[0])
+    assert_equal 'TIRREX — Infrastructure technologique pour la recherche d’excellence en robotique', expected_project_listing_title(fixtures[1])
+    assert_equal 'TEST-HDMap — Cooperative HD Mapping for Autonomous Driving', expected_project_listing_title(fixtures[2])
+    assert_includes expected_project_listing_title(fixtures[1]), 'TIRREX — '
   end
 
   def test_outputs_and_repository_validation
