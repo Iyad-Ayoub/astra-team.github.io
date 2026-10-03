@@ -1,5 +1,6 @@
 <p class="astra-meta">{{ page.status | capitalize | escape }} · {% include project_classification.html project=page %}</p>
 <p>{{ page.summary | escape }}</p>
+{% if page.cover_image %}<div class="astra-project-cover">{% include figure.html path=page.cover_image alt=page.cover_image_alt %}</div>{% endif %}
 <dl class="astra-project-metadata">
 {% if page.programme %}<dt>Programme</dt><dd>{{ page.programme | escape }}</dd>{% endif %}
 {% if page.start_date %}<dt>Start</dt><dd>{% include project_date.html value=page.start_date %}</dd>{% endif %}

@@ -10,7 +10,10 @@ groups:
     title: Completed Projects
 ---
 
-{% assign all_projects = site.projects | sort: 'order' %}
+{% assign all_projects = site.projects %}
+{% assign auto_projects = all_projects | where_exp: 'project', 'project.order <= 0 or project.order == 9999' | sort: 'order' %}
+{% assign curated_projects = all_projects | where_exp: 'project', 'project.order > 0 and project.order != 9999' | sort: 'order' %}
+{% assign all_projects = auto_projects | concat: curated_projects %}
 {% for group in page.groups %}
 {% assign projects = all_projects | where: 'status', group.status %}
 <section aria-labelledby="{{ group.status }}-projects">

@@ -21,12 +21,9 @@ project_status, project_path = project_changes.first
 raise 'CMS project Markdown must be added or modified' unless %w[A M].include?(project_status)
 raise 'CMS project path is invalid' unless project_path.match?(%r{\A_projects/project-[a-z0-9]+\.md\z})
 
-unexpected = changes.reject { |_, path| path == project_path }
-raise "unexpected CMS project publication change: #{unexpected.first&.last}" unless unexpected.empty?
-
 content = File.read(project_path)
 record = SiteValidation.front_matter(project_path)
-allowed = %w[content_id acronym order title status scope type programme start_date end_date kickoff_date coordinator astra_role partners summary external_url cordis_url cover_media_id]
+allowed = %w[content_id acronym order title status scope type programme start_date end_date kickoff_date coordinator astra_role partners summary external_url cordis_url cover_media_id cover_image cover_image_alt]
 raise 'CMS project contains unsupported front matter' unless (record.keys - allowed).empty?
 raise 'CMS project content ID does not match its branch' unless record['content_id'] == content_id
 raise 'CMS project content ID is invalid' unless content_id.match?(/\Aproject-[a-z0-9]+\z/)
@@ -51,5 +48,20 @@ end
 if record['cover_media_id'] && !record['cover_media_id'].to_s.match?(/\Amedia-[a-z0-9]+\z/)
   raise 'CMS project cover media ID is invalid'
 end
+if record['cover_media_id']
+  expected_cover = %r{\A/assets/img/projects/#{Regexp.escape(content_id)}/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|webp)\z}
+  raise 'CMS project cover image path is invalid' unless record['cover_image'].to_s.match?(expected_cover)
+  raise 'CMS project cover asset is missing' unless File.file?(record['cover_image'].delete_prefix('/'))
+  raise 'CMS project cover image requires alt text' if record['cover_image_alt'].to_s.strip.empty?
+else
+  raise 'CMS project cover image is not allowed without cover media' if record['cover_image'] || record['cover_image_alt']
+end
+
+allowed_media = %r{\Aassets/img/projects/#{Regexp.escape(content_id)}/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|webp)\z}
+media_changes = changes.reject { |_, path| path == project_path }
+media_changes.each do |change_status, path|
+  raise "unexpected CMS project publication change: #{path}" unless %w[A M].include?(change_status) && path&.match?(allowed_media) && path == record['cover_image']&.delete_prefix('/')
+end
+raise 'CMS project publication may change only one owned cover image' if media_changes.size > 1
 
 puts "PASS: controlled CMS project publication for #{content_id}"
