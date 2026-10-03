@@ -13,6 +13,8 @@ class PhaseG12ProjectPublicationTest < Minitest::Test
     assert_includes APP, "cms-unpublish/projects/' + id"
     assert_includes APP, "return '_projects/' + record.id + '.md'"
     assert_includes APP, 'cover_media_id: record.cover_media_id || null'
+    assert_includes APP, "assets/img/projects/' + record.id + '/"
+    assert_includes APP, 'cover_image_alt'
     assert_includes APP, "base: 'main'"
     refute_match(/branch:\s*['"]main['"]/, APP)
   end
@@ -23,10 +25,25 @@ class PhaseG12ProjectPublicationTest < Minitest::Test
     assert_includes VALIDATOR, 'CMS project contains unsupported front matter'
     assert_includes VALIDATOR, 'CMS project body contract is invalid'
     assert_includes VALIDATOR, 'CMS project cover media ID is invalid'
+    assert_includes VALIDATOR, 'CMS project cover image path is invalid'
+    assert_includes VALIDATOR, 'CMS project cover asset is missing'
     assert_includes VALIDATOR, '"_projects/#{content_id}.md"'
     %w[ongoing completed].each { |value| assert_includes VALIDATOR, value }
     %w[national european international].each { |value| assert_includes VALIDATOR, value }
     %w[research-project research-infrastructure joint-lab].each { |value| assert_includes VALIDATOR, value }
+  end
+
+  def test_project_cover_media_is_exported_and_rendered_safely
+    assert_includes APP, "function projectPublicMediaPath(record, media)"
+    assert_includes APP, "githubMediaBlob(session, media)"
+    assert_includes APP, "assets/img/projects/' + record.id + '/"
+    assert_includes APP, "cover_image: media ? '/' + projectPublicMediaPath(record, media) : null"
+    assert_includes VALIDATOR, 'cover image path is invalid'
+    assert_includes VALIDATOR, 'cover asset is missing'
+    details = File.read(File.join(ROOT, '_includes/project_details.html'))
+    assert_includes details, 'page.cover_image'
+    assert_includes details, 'page.cover_image_alt'
+    assert_includes details, "{% include figure.html path=page.cover_image"
   end
 
   def test_unsaved_project_skips_publication_status_and_disables_actions

@@ -75,6 +75,24 @@ class Phase5ContentTest < Minitest::Test
     assert_equal 'Zoé Autonomous Research Vehicle', platforms.first.fetch('name')
   end
 
+  def test_project_listing_ordering_preserves_curated_history_and_prioritizes_cms_defaults
+    listing = File.read(File.join(ROOT, '_pages/projects.md'))
+    assert_includes listing, "where_exp: 'project', 'project.order <= 0 or project.order == 9999'"
+    assert_includes listing, "where_exp: 'project', 'project.order > 0 and project.order != 9999'"
+    assert_includes listing, "auto_projects = all_projects | where_exp: 'project', 'project.order <= 0 or project.order == 9999' | sort: 'order'"
+    records = [
+      { 'content_id' => 'historical', 'order' => 1, 'start_date' => '2020-01' },
+      { 'content_id' => 'newer', 'order' => -2_026_010_100, 'start_date' => '2026-01-01' },
+      { 'content_id' => 'same-date-a', 'order' => -2_025_010_100, 'start_date' => '2025-01-01' },
+      { 'content_id' => 'same-date-b', 'order' => -2_025_010_200, 'start_date' => '2025-01-01' },
+      { 'content_id' => 'legacy-cms', 'order' => 9999, 'start_date' => '2025-01-01' },
+      { 'content_id' => 'historical-2', 'order' => 2, 'start_date' => '2021-01' }
+    ]
+    auto = records.select { |record| record['order'] <= 0 || record['order'] == 9999 }.sort_by { |record| record['order'] }
+    curated = records.select { |record| record['order'] > 0 && record['order'] != 9999 }.sort_by { |record| record['order'] }
+    assert_equal %w[newer same-date-b same-date-a legacy-cms historical historical-2], (auto + curated).map { |record| record['content_id'] }
+  end
+
   def test_outputs_and_repository_validation
     outputs = YAML.safe_load_file(File.join(ROOT, '_data/outputs.yml'))
     assert_equal 18, outputs.size
@@ -132,6 +150,12 @@ class Phase5ContentTest < Minitest::Test
       assert detail.at_css("a[href='#{base}/projects/']")
       %w[external_url cordis_url].each do |key|
         assert detail.at_css("article a[href='#{record[key]}']") if record[key]
+      end
+      if record['cover_image']
+        assert detail.at_css("img[src='#{record['cover_image']}']")
+        refute_empty detail.at_css("img[src='#{record['cover_image']}']")['alt'].to_s
+      else
+        assert_empty detail.css('.astra-project-cover')
       end
       assert_equal record.values_at('external_url', 'cordis_url').compact.sort,
                    detail.css('article a[href^="http"]').map { |a| a['href'] }.sort

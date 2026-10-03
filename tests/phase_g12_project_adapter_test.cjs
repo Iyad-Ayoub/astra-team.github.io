@@ -47,6 +47,7 @@ assert.strictEqual(adapter.projectDraftPath(payload.id), 'cms/drafts/projects/pr
 assert.throws(() => adapter.projectDraftPath('project-AB12'), /Invalid project identifier/);
 
 const markdown = adapter.serializeProjectDraft(payload);
+assert.match(markdown, /^order: -\d+$/m, 'new CMS projects receive a deterministic date-based order');
 const expectedOrder = ['content_id', 'acronym', 'order', 'title', 'status', 'scope', 'type', 'programme', 'start_date', 'end_date', 'kickoff_date', 'coordinator', 'astra_role', 'partners', 'summary', 'external_url', 'cordis_url', 'cover_media_id'];
 assert.deepStrictEqual(markdown.match(/^[a-z_]+:/gm).map((line) => line.slice(0, -1)), expectedOrder);
 assert.strictEqual(adapter.parseProjectDraft(markdown).cover_media_id, 'media-cover123');
