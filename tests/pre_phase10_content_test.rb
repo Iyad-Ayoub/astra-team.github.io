@@ -6,7 +6,7 @@ require_relative '../scripts/validate_site'
 class PrePhase10ContentTest < Minitest::Test
   ROOT = File.expand_path('..', __dir__)
   TITLE = 'Large-Scale Mobility Systems'
-  SUMMARY = 'Modelling, analysing and coordinating transportation systems at vehicle, fleet and network scales, including traffic dynamics, infrastructure interaction and connected mobility.'
+  SUMMARY = 'Traffic dynamics, mobility modelling, fleet coordination and infrastructure interaction across urban and road networks, with cooperation used where it supports system-level mobility intelligence.'
 
   def test_source_and_alumni_boundary
     axis = SiteValidation.front_matter(File.join(ROOT, '_research_axes/cooperative.md'))
@@ -36,10 +36,12 @@ class PrePhase10ContentTest < Minitest::Test
       if file == 'index.html'
         assert_includes page.text, 'Modelling and coordinating transportation systems at vehicle, fleet and network scales.'
       else
-        refute_includes page.text, SUMMARY
-        assert_empty page.css('#current-research ul > li p')
+        assert_includes page.text, SUMMARY
+        assert_equal 4, page.css('#current-research ul.astra-axis-grid > li.astra-axis-card').size
+        summaries = page.css('#current-research ul.astra-axis-grid > li.astra-axis-card p').reject { |paragraph| paragraph['class'] == 'astra-axis-eyebrow' }
+        assert_equal 4, summaries.size
       end
-      labels = page.css("a[href='#{base}/research/cooperative/']").map { |a| a.css('[aria-hidden="true"]').remove; a.text.strip }
+      labels = page.css("a[href='#{base}/research/cooperative/'] h3").map { |heading| heading.text.strip }
       assert_includes labels, TITLE
     end
     %w[about info].each do |route|
@@ -53,7 +55,7 @@ class PrePhase10ContentTest < Minitest::Test
       page = Nokogiri::HTML(File.read(file))
       refute_includes page.text, 'Cooperative & Connected Autonomous Systems', file
       refute_includes File.read(file).downcase, 'martial.le-henaff@inria.fr', file
-      page.css('a[href*="/research/cooperative/"]').each { |a| a.css('[aria-hidden="true"]').remove; assert_equal TITLE, a.text.strip }
+      page.css('a[href*="/research/cooperative/"] h3').each { |heading| assert_equal TITLE, heading.text.strip }
     end
     team = Nokogiri::HTML(File.read(File.join(destination, 'team/index.html')))
     assert_includes team.at_css('.astra-team-alumni #martial-le-henaff').text, 'Former Team Assistant'

@@ -1,9 +1,16 @@
 ---
 title: Large-Scale Mobility Systems
-summary: Modelling, analysing and coordinating transportation systems at vehicle, fleet and network scales, including traffic dynamics, infrastructure interaction and connected mobility.
 content_id: cooperative
 order: 4
 axis_group: core
+axis_number: 4
+summary: Traffic dynamics, mobility modelling, fleet coordination and infrastructure interaction across urban and road networks, with cooperation used where it supports system-level mobility intelligence.
+layout: research_visual
+image: /assets/img/research/axis-large-scale-mobility.png
+image_alt: "Mobility-system representation illustrating traffic dynamics, fleet coordination and infrastructure interaction."
+image_caption: "Illustration accompanying large-scale mobility-systems research."
+image_width: 1672
+image_height: 941
 ---
 
 ASTRA studies mobility not only at the level of an individual autonomous vehicle, but also as part of a larger transportation system. This research addresses traffic dynamics, mobility modelling, fleet coordination, infrastructure interaction and the collective behaviour of vehicles across urban and road networks.

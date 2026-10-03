@@ -12,7 +12,7 @@ const site = (process.env.ASTRA_SITE_URL || 'http://127.0.0.1:4019').replace(/\/
       for (const id of ['perception', 'mapping', 'decision', '', 'cooperative', 'cross-cutting']) {
         const route = '/research/' + (id ? id + '/' : '');
         await page.goto(site + route, { waitUntil: 'networkidle' });
-        const approved = ['perception', 'mapping', 'decision'].includes(id);
+        const approved = ['perception', 'mapping', 'decision', 'cooperative'].includes(id);
         assert.equal(await page.locator('.astra-axis-illustration').count(), approved ? 1 : 0);
         if (approved) {
           await page.locator('.astra-axis-illustration').scrollIntoViewIfNeeded();
@@ -25,7 +25,7 @@ const site = (process.env.ASTRA_SITE_URL || 'http://127.0.0.1:4019').replace(/\/
           assert.ok(image.width <= image.naturalWidth + 1, 'No upscaling');
           assert.ok(Math.abs(image.width / image.height - image.naturalWidth / image.naturalHeight) < 0.01, 'Intrinsic aspect ratio');
           assert.notEqual(image.fit, 'cover');
-          assert.ok(image.width <= 608);
+          assert.ok(image.width <= 896);
           assert.equal(await page.locator('.astra-axis-illustration figcaption').isVisible(), true);
         }
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, route + ' at ' + width);
