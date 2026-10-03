@@ -43,7 +43,8 @@ class PhaseG12ProjectPublicationTest < Minitest::Test
     assert_includes APP, "setProjectPublicationActionBusy(button, 'Unpublishing…')"
     assert_includes APP, "projectPublicationSubmitting = true"
     assert_includes APP, "function scheduleProjectPublicationPolling(session, record, knownLifecycle)"
-    assert_includes APP, "window.setTimeout(function () { loadProjectPublicationStatus(session, record, knownLifecycle); }, 15000)"
+    assert_includes APP, "window.setTimeout(function () { reconcileProjectPublicationStatus(session, record, knownLifecycle); }, 15000)"
+    assert_includes APP, 'function reconcileProjectPublicationStatus(session, record, knownLifecycle)'
     assert_includes APP, "validation === 'pending' || validation === 'unknown'"
     assert_includes APP, "publicationDisplayState('Update submitted', validation)"
   end
@@ -56,6 +57,16 @@ class PhaseG12ProjectPublicationTest < Minitest::Test
     assert_includes monitor, "await publishedProjectByContentId(session, record.id)"
     assert_includes monitor, "Published Project is no longer present on main."
     assert_includes monitor, "renderProjectPublicationState('Live', '✓ Published successfully'"
+  end
+
+  def test_saved_existing_project_reconciles_publication_without_navigation
+    assert_includes APP, "if (existingSha && currentProjectId())"
+    assert_includes APP, 'await reconcileProjectPublicationStatus(session, payload, wasProjectLive ? { state: \'Live\' } : null);'
+    assert_includes APP, 'var wasProjectLive = projectPublicationWasLive ||'
+    assert_includes APP, "pristineProjectSignature = projectEditableSignature(payload);"
+    assert_includes APP, "setProjectSaveState('saved');"
+    assert_includes APP, 'if (projectPublicationReconciliation) return projectPublicationReconciliation;'
+    assert_includes APP, '} catch (_) {}'
   end
 
   def test_news_publication_branch_contract_remains_present
