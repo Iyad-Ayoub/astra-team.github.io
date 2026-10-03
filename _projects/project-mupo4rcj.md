@@ -16,7 +16,7 @@ partners: ["Inria","Valeo","Université Gustave Eiffel"]
 summary: "A research project exploring cooperative high-definition mapping for autonomous vehicles using multi-sensor perception, connected vehicles, and AI-based map generation."
 external_url: "https://www.inria.fr"
 cordis_url: "https://cordis.europa.eu"
-cover_media_id: null
+cover_media_id: "media-mufgnd58"
 ---
 
 {% include project_details.html %}
