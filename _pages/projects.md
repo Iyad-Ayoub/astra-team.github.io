@@ -26,7 +26,7 @@ groups:
     {% assign project_title = project.title | strip %}
     {% assign title_prefix = project_title | slice: 0, project_acronym.size %}
     {% assign title_remainder = project_title | remove_first: project_acronym | strip %}
-    <h3><a href="{{ project.url | relative_url }}"><strong>{{ project_acronym | escape }}</strong>{% if title_remainder != '' and title_prefix == project_acronym %}{{ title_remainder | escape }}{% elsif title_remainder != '' %} — {{ project_title | escape }}{% endif %}</a></h3>
+    <h3><a href="{{ project.url | relative_url }}"><strong>{{ project_acronym | escape }}</strong>{% if title_remainder != '' and title_prefix == project_acronym %} {{ title_remainder | escape }}{% elsif title_remainder != '' %} — {{ project_title | escape }}{% endif %}</a></h3>
     <p class="astra-meta">{{ project.status | capitalize | escape }}{% if project.start_date %} · {% include project_date.html value=project.start_date %}{% if project.end_date %} – {% include project_date.html value=project.end_date %}{% endif %}{% endif %}</p>
     <p class="astra-meta">{% include project_classification.html project=project %}</p>
     <p>{{ project.summary | escape }}</p>
