@@ -102,7 +102,16 @@ class Phase9ResearchVisualsTest < Minitest::Test
 
   def assert_non_axis_page_visuals(relative, doc, base)
     assert_empty doc.css('figure.astra-axis-illustration'), relative
-    if (project = relative.match(%r{\Aprojects/([^/]+)/index\.html\z}))
+    if relative == 'research/index.html'
+      cards = doc.css('ul.astra-axis-grid > li.astra-axis-card')
+      assert_equal IMAGES.size, cards.size, relative
+      IMAGES.keys.each_with_index do |id, index|
+        image = cards[index].at_css('img')
+        assert image, relative
+        assert_equal "#{base}/assets/img/research/#{IMAGES.fetch(id).first}", image['src'], relative
+        refute_empty image['alt'].to_s.strip, relative
+      end
+    elsif (project = relative.match(%r{\Aprojects/([^/]+)/index\.html\z}))
       images = doc.css('article img')
       assert_operator images.size, :<=, 1, relative
       images.each do |image|
@@ -170,7 +179,10 @@ class Phase9ResearchVisualsTest < Minitest::Test
       assert_equal data['image_caption'], figure.at_css('figcaption').text.strip
       assert_equal [width.to_s, height.to_s], [image['width'], image['height']]
       assert_equal 'p', figure.previous_element.name
-      assert_equal 'h2', figure.next_element.name
+      following = figure.xpath('following-sibling::*')
+      representative_index = following.index { |node| node.name == 'h2' && node['id'] == 'representative-topics' }
+      refute_nil representative_index, "#{relative} must place the illustration before Representative topics"
+      assert following.first(representative_index).all? { |node| node.name == 'p' }, relative
       assert_equal 1, doc.css('h1').size
       assert_empty figure.css('a, h1, h2, h3')
     end
