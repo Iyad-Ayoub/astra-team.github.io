@@ -262,6 +262,12 @@ footer.sticky-bottom {
     dt { font-weight: 600; }
     ul { margin: 0; padding-left: 1.25rem; }
   }
+  .astra-project-cover {
+    max-width: 900px;
+    margin: $astra-space-3 auto $astra-space-4;
+    figure { margin: 0; }
+    img { display: block; width: 100%; max-height: 460px; object-fit: cover; border-radius: $astra-radius; }
+  }
   .astra-meta { font-size: $astra-font-small; font-weight: 400; margin-bottom: $astra-space-1; }
   .astra-record-status {
     display: inline-block;

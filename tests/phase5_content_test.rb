@@ -24,6 +24,12 @@ class Phase5ContentTest < Minitest::Test
     end
   end
 
+  def expected_project_listing_title(record)
+    acronym = record.fetch('acronym')
+    title = record.fetch('title').to_s.strip
+    title.start_with?(acronym) ? title : "#{acronym} — #{title}"
+  end
+
   def test_approved_projects_and_dates
     records = projects
     assert_operator records.size, :>=, BASELINE_PROJECT_IDS.size
@@ -93,6 +99,19 @@ class Phase5ContentTest < Minitest::Test
     assert_equal %w[newer same-date-b same-date-a legacy-cms historical historical-2], (auto + curated).map { |record| record['content_id'] }
   end
 
+  def test_project_listing_title_rule_is_generic
+    listing = File.read(File.join(ROOT, '_pages/projects.md'))
+    assert_includes listing, 'title_prefix = project_title | slice: 0, project_acronym.size'
+    assert_includes listing, 'title_remainder = project_title | remove_first: project_acronym | strip'
+    assert_includes listing, 'title_prefix == project_acronym'
+    records = projects
+    assert_equal 'TEST-HDMap — Cooperative HD Mapping for Autonomous Driving', expected_project_listing_title(records.fetch('project-mupo4rcj'))
+    assert_equal 'Shift2SDV', expected_project_listing_title(records.fetch('shift2sdv'))
+    assert_equal 'TIRREX — Infrastructure technologique pour la recherche d’excellence en robotique', expected_project_listing_title(records.fetch('tirrex'))
+    assert_equal 'GAT — Global Autonomous Transportation', expected_project_listing_title(records.fetch('gat'))
+    assert_equal 'SIGHT — viSIon throuGH weaTher', expected_project_listing_title(records.fetch('sight'))
+  end
+
   def test_outputs_and_repository_validation
     outputs = YAML.safe_load_file(File.join(ROOT, '_data/outputs.yml'))
     assert_equal 18, outputs.size
@@ -144,6 +163,7 @@ class Phase5ContentTest < Minitest::Test
     index = document.call('projects')
     projects.each do |id, record|
       assert index.at_css("a[href='#{base}/projects/#{id}/']")
+      assert_equal expected_project_listing_title(record), index.at_css("a[href='#{base}/projects/#{id}/']").text.strip
       detail = document.call("projects/#{id}")
       assert_includes detail.text, record['summary']
       assert_includes detail.text, record['status'].capitalize
