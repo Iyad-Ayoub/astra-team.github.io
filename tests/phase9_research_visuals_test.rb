@@ -99,7 +99,18 @@ class Phase9ResearchVisualsTest < Minitest::Test
 
   def assert_non_axis_page_visuals(relative, doc, base)
     assert_empty doc.css('figure.astra-axis-illustration'), relative
-    if relative.match?(%r{\A(?:research|projects|outputs)/})
+    if (project = relative.match(%r{\Aprojects/([^/]+)/index\.html\z}))
+      images = doc.css('article img')
+      assert_operator images.size, :<=, 1, relative
+      images.each do |image|
+        assert_match(
+          %r{\A#{Regexp.escape(base)}/assets/img/projects/#{Regexp.escape(project[1])}/[a-zA-Z0-9_.-]+\.(?:png|jpe?g|webp)\z},
+          image['src'].to_s,
+          relative
+        )
+        refute_empty image['alt'].to_s.strip, relative
+      end
+    elsif relative.match?(%r{\A(?:research|outputs)/})
       assert_empty doc.css('article img'), relative
     elsif relative.start_with?('news/')
       doc.css('article img').each do |image|
@@ -112,6 +123,16 @@ class Phase9ResearchVisualsTest < Minitest::Test
   def test_additional_cms_news_detail_with_a_cover_is_not_an_excluded_visual_page
     doc = Nokogiri::HTML('<article><img src="/assets/img/news/news-fixturecover/cover.png" alt="Fixture cover"></article>')
     assert_non_axis_page_visuals('news/fixture-cover/index.html', doc, '')
+  end
+
+  def test_project_cover_is_limited_to_its_owned_public_path
+    valid = Nokogiri::HTML('<article><img src="/assets/img/projects/project-fixture/cover.jpg" alt="Project cover"></article>')
+    assert_non_axis_page_visuals('projects/project-fixture/index.html', valid, '')
+
+    unrelated = Nokogiri::HTML('<article><img src="/assets/img/research/axis_decision.jpg" alt="Research visual"></article>')
+    assert_raises(Minitest::Assertion) do
+      assert_non_axis_page_visuals('projects/project-fixture/index.html', unrelated, '')
+    end
   end
 
   def test_generated_placements_and_excluded_pages
