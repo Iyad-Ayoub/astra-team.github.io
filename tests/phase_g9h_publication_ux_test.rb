@@ -43,6 +43,14 @@ class PhaseG9hPublicationUxTest < Minitest::Test
     assert_includes APP, "value === 'Update available' && action === 'refresh'"
   end
 
+  def test_failed_controlled_validation_exposes_refresh_but_not_publish
+    assert_includes APP, "detail.indexOf('Validation failed') === 0"
+    assert_includes APP, "value === 'Submitted' || value === 'Update submitted'"
+    assert_includes APP, "refreshEligible = (value === 'Update available' && action === 'refresh') || failedControlledPull"
+    assert_includes APP, "refreshGithubPublication()"
+    assert_includes APP, "publishNow.hidden = !(detail && detail.indexOf('Validation passed') === 0"
+  end
+
   def test_validation_is_bound_to_the_current_publication_head
     assert_includes APP, "pull.head.sha !== knownLifecycle.expectedSha"
     assert_includes APP, "publicationValidationState(session, pull)"
