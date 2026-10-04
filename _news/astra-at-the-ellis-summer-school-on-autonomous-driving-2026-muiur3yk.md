@@ -5,6 +5,7 @@ slug: "astra-at-the-ellis-summer-school-on-autonomous-driving-2026-muiur3yk"
 title: "ASTRA at the ELLIS Summer School on Autonomous Driving 2026"
 status: "published"
 type: "event"
+content_date: "2026-09-21"
 event_date: "2026-09-15"
 summary: "ASTRA participated in the ELLIS Summer School on Autonomous Driving 2026 in Barcelona, with Alexandre Boulch contributing a session on multi-sensor pre-training and Iyad Abuhadrous attending the scientific program and exchanges."
 featured: true
