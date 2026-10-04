@@ -1,0 +1,18 @@
+{% assign demos = site.data.research_demos %}
+{% if include.axis %}{% assign demos = demos | where: 'related_axis', include.axis %}{% endif %}
+{% if demos.size > 0 %}
+<section id="research-demos" class="astra-section astra-research-demos" aria-labelledby="research-demos-title">
+<h2 id="research-demos-title">Research Demos</h2>
+<ul class="list-unstyled">
+{% for demo in demos %}
+<li id="research-demo-{{ demo.id | escape }}" class="astra-research-card p-3">
+  <h3 class="h5 mb-2">{{ demo.title | escape }}</h3>
+  {% if demo.subtitle %}<p class="mb-2">{{ demo.subtitle | escape }}</p>{% endif %}
+  <p class="astra-meta">{{ demo.type | escape }}</p>
+  <p class="astra-meta">Researchers: {{ demo.researchers | join: ', ' | escape }}</p>
+  <p class="mb-0"><a class="astra-text-link" href="{{ demo.demo_url | escape }}" target="_blank" rel="noopener noreferrer">View demo ↗</a></p>
+</li>
+{% endfor %}
+</ul>
+</section>
+{% endif %}
