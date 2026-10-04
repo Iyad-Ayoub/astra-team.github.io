@@ -12,7 +12,7 @@ class Phase7NewsTest < Minitest::Test
     news-open-source-2024 news-open-source-2023 news-visapp-2022-best-paper].freeze
   BASELINE_IDS = (NEW_IDS + %w[news-astra-creation-2022 news-plenary-2025]).freeze
   BASELINE_PUBLISHED_IDS = (NEW_IDS + ['news-plenary-2025']).freeze
-  HOME_IDS = %w[news-ieee-iv-2025 news-matswap-egsr-2025 news-acvss-2025].freeze
+  LATEST_IDS = %w[news-muiur3yk news-ieee-iv-2025 news-plenary-2025].freeze
 
   def records
     Dir[File.join(ROOT, '_news/*.md')].map { |p| SiteValidation.front_matter(p) }
@@ -58,8 +58,14 @@ class Phase7NewsTest < Minitest::Test
     assert_equal 'pasco', records.find { |r| r['content_id'] == 'news-pasco-cvpr-2024' }['related_output']
     validate(records)
     assert_equal 7, baseline.count { |r| r['date_precision'] == 'year' }
-    assert_equal HOME_IDS, AstraNews.ordered(baseline.select { |r| r['homepage'] }).first(3).map { |r| r['content_id'] }
+    assert_equal LATEST_IDS, AstraNews.ordered(records.select { |r| r['status'] == 'published' }).first(3).map { |r| r['content_id'] }
     assert_equal AstraNews.ordered(records), AstraNews.ordered(records.reverse)
+  end
+
+  def test_homepage_latest_news_uses_all_published_records
+    published = AstraNews.ordered(records.select { |record| record['status'] == 'published' })
+    assert_equal LATEST_IDS, published.first(3).map { |record| record['content_id'] }
+    refute records.find { |record| record['content_id'] == 'news-muiur3yk' }['homepage']
   end
 
   def test_additional_valid_news_item_preserves_the_baseline_and_adds_its_year
@@ -209,7 +215,7 @@ class Phase7NewsTest < Minitest::Test
       assert_includes doc.text, r['summary'] if NEW_IDS.include?(r['content_id'])
     end
     home = Nokogiri::HTML(File.read(File.join(destination, 'index.html')))
-    expected_home = AstraNews.ordered(published.select { |r| r['homepage'] }).first(3).map { |r| r['content_id'] }
+    expected_home = AstraNews.ordered(published).first(3).map { |r| r['content_id'] }
     assert_equal expected_home, home.css('.astra-news-row').map { |n| n['data-news-id'] }
     assert_empty home.css('[data-news-id="news-astra-creation-2022"]')
     assert home.css('.astra-news a').any? { |a| a.text.include?('View all news') && a['href'] == baseurl + '/news/' }

@@ -83,7 +83,10 @@ module AstraNews
     ordered = ordered(collection.docs)
     site.config['news_archive'] = ordered.reject { |d| d.data['legacy'] }
     site.config['news_legacy'] = ordered.select { |d| d.data['legacy'] }
-    site.config['news_homepage'] = ordered.select { |d| d.data['homepage'] && !d.data['legacy'] }.first(3)
+    # The homepage is a latest-news view of the canonical published archive.
+    # The legacy homepage flag remains accepted as editorial metadata, but it
+    # must not hide a newly published item from the automatic latest list.
+    site.config['news_homepage'] = ordered.reject { |d| d.data['legacy'] }.first(3)
   end
 end
 
