@@ -11,6 +11,7 @@ class PhaseG6PublicationTest < Minitest::Test
   def test_publication_rereads_draft_and_copies_controlled_media
     %w[readGithubDraft readMediaIndex githubMediaBlob publicNewsPath publicMediaPath cover_media_id].each { |item| assert_includes @app, item }
     assert_includes @app, "'_news/' + publicSlug(record) + '.md'"
+    assert_includes @app, 'content_date: record.content_date'
   end
   def test_public_slug_is_human_readable_sanitized_and_collision_safe
     assert_includes @app, "function publicSlug(record, published)"

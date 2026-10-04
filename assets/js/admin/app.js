@@ -732,8 +732,8 @@
   function publicMediaPath(record, media) { return 'assets/img/news/' + record.id + '/' + media.path.split('/').pop(); }
   function publicationMessage(value, kind) { var node = element('admin-publication-message'); if (!node) return; node.classList.remove('astra-admin-message-success', 'astra-admin-message-status'); if (kind === 'success') node.classList.add('astra-admin-message-success'); if (kind === 'status') node.classList.add('astra-admin-message-status'); node.textContent = value || ''; }
   function serializePublicNews(record, media, published) {
-    var fields = { layout: 'news', content_id: record.id, slug: publicSlug(record, published), title: record.title, status: 'published', type: record.type, event_date: record.event_date, summary: record.summary, featured: record.featured, homepage: record.homepage, end_date: record.end_date, location: record.location, external_url: record.external_url, date_precision: 'day', image: media ? '/' + publicMediaPath(record, media) : null, image_alt: media ? media.alt_text || media.filename : null };
-    return '---\n' + Object.keys(fields).filter(function (key) { return fields[key] !== null && fields[key] !== ''; }).map(function (key) { return key + ': ' + JSON.stringify(fields[key]); }).join('\n') + '\n---\n\n' + record.body.trim() + '\n';
+    var fields = { layout: 'news', content_id: record.id, slug: publicSlug(record, published), title: record.title, status: 'published', type: record.type, content_date: record.content_date, event_date: record.event_date, summary: record.summary, featured: record.featured, homepage: record.homepage, end_date: record.end_date, location: record.location, external_url: record.external_url, date_precision: 'day', image: media ? '/' + publicMediaPath(record, media) : null, image_alt: media ? media.alt_text || media.filename : null };
+    return '---\n' + Object.keys(fields).filter(function (key) { return fields[key] !== null && fields[key] !== '' && typeof fields[key] !== 'undefined'; }).map(function (key) { return key + ': ' + JSON.stringify(fields[key]); }).join('\n') + '\n---\n\n' + record.body.trim() + '\n';
   }
   async function draftMedia(session, record) { if (!record.cover_media_id) return null; await readMediaIndex(session); var media = mediaIndex.find(function (item) { return item.id === record.cover_media_id; }); if (!media) throw new Error('Referenced cover media is missing.'); return media; }
   function publicationDetails(value, pullLink, publicLink, deploymentLink) { var box = element('admin-publication-message'); if (!box) return; box.replaceChildren(); if (value) { var detail = document.createElement('span'); detail.textContent = value; if (value.indexOf('Validation passed') === 0 || value.indexOf('✓ Published successfully') === 0) detail.className = 'astra-admin-message-success'; else if (value.indexOf('Merged to main') === 0 || value.indexOf('Waiting') === 0 || value.indexOf('Deploying') === 0 || value.indexOf('Validation in progress') === 0) detail.className = 'astra-admin-message-status'; box.appendChild(detail); } [[pullLink, 'View pull request'], [publicLink, 'View public News page'], [deploymentLink, 'View deployment']].forEach(function (entry) { if (!entry[0]) return; var anchor = document.createElement('a'); anchor.href = entry[0]; anchor.textContent = entry[1]; anchor.className = 'astra-admin-text-link'; box.appendChild(anchor); }); }
@@ -1107,6 +1107,8 @@
     if (Number.isNaN(date.getTime())) return value;
     return String(date.getDate()).padStart(2, '0') + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()] + ' ' + date.getFullYear();
   }
+  function localIsoDate() { var now = new Date(); return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'); }
+  function compareNewsDrafts(left, right) { var leftDate = String(left.content_date || left.event_date || ''), rightDate = String(right.content_date || right.event_date || ''); if (leftDate !== rightDate) return leftDate < rightDate ? 1 : -1; var leftId = String(left.id || ''), rightId = String(right.id || ''); return leftId < rightId ? -1 : leftId > rightId ? 1 : 0; }
   function newsBadge(value, className) { var badge = document.createElement('span'); badge.className = 'astra-admin-news-badge' + (className ? ' ' + className : ''); badge.textContent = value; return badge; }
 
   async function loadGithubNewsRoute(identity) {
@@ -1125,14 +1127,19 @@
         try { entries = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + githubDraftRoot + '?ref=' + githubDraftBranch, session); } catch (error) { if (error.status === 404) entries = []; else throw error; }
         var container = element('admin-github-news-items');
         container.replaceChildren();
+        var drafts = [];
         for (var index = 0; index < entries.length; index += 1) {
           var draft = await readGithubDraft(session, entries[index].name.replace(/\.md$/, ''));
-          var lifecycleState = 'Draft';
-          await loadPublicationStatus(session, draft.record, null, function (state) { lifecycleState = state; });
+          drafts.push(draft.record);
+        }
+        drafts.sort(compareNewsDrafts);
+        for (var draftIndex = 0; draftIndex < drafts.length; draftIndex += 1) {
+          var draftRecord = drafts[draftIndex], lifecycleState = 'Draft';
+          await loadPublicationStatus(session, draftRecord, null, function (state) { lifecycleState = state; });
           var link = document.createElement('a');
-          link.className = 'astra-admin-news-item'; link.href = new URL('edit/?id=' + encodeURIComponent(draft.record.id), window.location.href).toString();
-          var title = document.createElement('strong'); title.className = 'astra-admin-news-title'; title.textContent = draft.record.title; link.appendChild(title);
-          var metadata = document.createElement('span'); metadata.className = 'astra-admin-news-meta'; metadata.appendChild(newsBadge(displayNewsType(draft.record.type))); if (displayNewsDate(draft.record.content_date)) metadata.appendChild(newsBadge(displayNewsDate(draft.record.content_date))); metadata.appendChild(newsBadge(lifecycleState)); if (draft.record.featured) metadata.appendChild(newsBadge('Featured')); if (draft.record.homepage) metadata.appendChild(newsBadge('Homepage')); link.appendChild(metadata);
+          link.className = 'astra-admin-news-item'; link.href = new URL('edit/?id=' + encodeURIComponent(draftRecord.id), window.location.href).toString();
+          var title = document.createElement('strong'); title.className = 'astra-admin-news-title'; title.textContent = draftRecord.title; link.appendChild(title);
+          var metadata = document.createElement('span'); metadata.className = 'astra-admin-news-meta'; metadata.appendChild(newsBadge(displayNewsType(draftRecord.type))); if (displayNewsDate(draftRecord.content_date)) metadata.appendChild(newsBadge(displayNewsDate(draftRecord.content_date))); metadata.appendChild(newsBadge(lifecycleState)); if (draftRecord.featured) metadata.appendChild(newsBadge('Featured')); if (draftRecord.homepage) metadata.appendChild(newsBadge('Homepage')); link.appendChild(metadata);
           container.appendChild(link);
         }
         if (!entries.length) container.textContent = 'No GitHub drafts yet.';
@@ -1506,7 +1513,8 @@
     newsField('type').value = record && validNewsTypes.indexOf(record.type) !== -1 ? record.type : 'event';
     newsField('summary').value = record ? record.summary : '';
     newsField('body').value = record ? record.body : '';
-    newsField('content-date').value = record ? record.content_date : '';
+    newsField('content-date').value = record ? (record.content_date || '') : localIsoDate();
+    newsField('content-date').readOnly = Boolean(record);
     newsField('event-date').value = record && record.event_date ? record.event_date : '';
     newsField('end-date').value = record && record.end_date ? record.end_date : '';
     newsField('location').value = record && record.location ? record.location : '';

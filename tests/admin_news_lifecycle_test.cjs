@@ -14,7 +14,7 @@ const draft = {
 };
 const draftMarkdown = `---\n${Object.entries(draft).filter(([key]) => key !== 'body').map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join('\n')}\n---\n\n${draft.body}\n`;
 const publishedPath = `_news/barcelona-test1234.md`;
-const publishedMarkdown = `---\nlayout: "news"\ncontent_id: "${id}"\nslug: "barcelona-test1234"\ntitle: "Barcelona"\nstatus: "published"\ntype: "event"\nevent_date: "2026-01-02"\nsummary: "A summary"\nfeatured: false\nhomepage: false\ndate_precision: "day"\nimage: "/assets/img/news/${id}/media-test1234.png"\nimage_alt: "photo.png"\n---\n\nA body\n`;
+const publishedMarkdown = `---\nlayout: "news"\ncontent_id: "${id}"\nslug: "barcelona-test1234"\ntitle: "Barcelona"\nstatus: "published"\ntype: "event"\ncontent_date: "2026-01-01"\nevent_date: "2026-01-02"\nsummary: "A summary"\nfeatured: false\nhomepage: false\ndate_precision: "day"\nimage: "/assets/img/news/${id}/media-test1234.png"\nimage_alt: "photo.png"\n---\n\nA body\n`;
 
 function response(body, status = 200, headers = {}) {
   return { ok: status >= 200 && status < 300, status, headers: new Map(Object.entries(headers)), json: async () => body, text: async () => JSON.stringify(body), blob: async () => new Blob([Buffer.from('image')], { type: 'image/png' }) };
@@ -68,6 +68,8 @@ async function main() {
   const title = window.document.querySelector('#admin-news-title');
   const save = window.document.querySelector('#admin-github-news-form button[type="submit"]');
   assert.strictEqual(title.value, draft.title, 'existing draft should hydrate');
+  assert.strictEqual(window.document.querySelector('#admin-news-content-date').value, draft.content_date, 'existing content date should hydrate');
+  assert.strictEqual(window.document.querySelector('#admin-news-content-date').readOnly, true, 'existing content date is immutable in the editor');
   assert.strictEqual(save.disabled, true, 'existing draft starts clean');
   assert.strictEqual(window.document.querySelector('#admin-github-news-message').textContent, '', 'no stale dirty message');
   title.value = 'Barcelona changed'; title.dispatchEvent(new window.Event('input', { bubbles: true }));
