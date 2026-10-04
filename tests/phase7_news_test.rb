@@ -12,7 +12,6 @@ class Phase7NewsTest < Minitest::Test
     news-open-source-2024 news-open-source-2023 news-visapp-2022-best-paper].freeze
   BASELINE_IDS = (NEW_IDS + %w[news-astra-creation-2022 news-plenary-2025]).freeze
   BASELINE_PUBLISHED_IDS = (NEW_IDS + ['news-plenary-2025']).freeze
-  LATEST_IDS = %w[news-muiur3yk news-ieee-iv-2025 news-plenary-2025].freeze
 
   def records
     Dir[File.join(ROOT, '_news/*.md')].map { |p| SiteValidation.front_matter(p) }
@@ -58,14 +57,43 @@ class Phase7NewsTest < Minitest::Test
     assert_equal 'pasco', records.find { |r| r['content_id'] == 'news-pasco-cvpr-2024' }['related_output']
     validate(records)
     assert_equal 7, baseline.count { |r| r['date_precision'] == 'year' }
-    assert_equal LATEST_IDS, AstraNews.ordered(records.select { |r| r['status'] == 'published' }).first(3).map { |r| r['content_id'] }
+    assert_equal 3, AstraNews.homepage(records).size
+    assert AstraNews.homepage(records).all? { |record| record['status'] == 'published' && !record['legacy'] }
     assert_equal AstraNews.ordered(records), AstraNews.ordered(records.reverse)
   end
 
   def test_homepage_latest_news_uses_all_published_records
-    published = AstraNews.ordered(records.select { |record| record['status'] == 'published' })
-    assert_equal LATEST_IDS, published.first(3).map { |record| record['content_id'] }
+    published = AstraNews.homepage(records)
+    assert_equal 3, published.size
+    assert published.all? { |record| record['status'] == 'published' && !record['legacy'] }
     refute records.find { |record| record['content_id'] == 'news-muiur3yk' }['homepage']
+  end
+
+  def test_homepage_selector_is_dynamic_and_deterministic
+    fixture = lambda do |id, date, **extra|
+      { 'content_id' => id, 'event_date' => date, 'date_precision' => 'day', 'status' => 'published' }.merge(extra)
+    end
+    baseline = [
+      fixture.call('oldest', '2024-01-01'),
+      fixture.call('middle', '2025-01-01'),
+      fixture.call('latest', '2026-01-01')
+    ]
+    assert_equal %w[latest middle oldest], AstraNews.homepage(baseline).map { |record| record['content_id'] }
+
+    records = baseline + [
+      fixture.call('newer', '2027-01-01'),
+      fixture.call('draft-newest', '2028-01-01', 'status' => 'draft'),
+      fixture.call('legacy-newest', '2029-01-01', 'legacy' => true),
+      fixture.call('homepage-false', '2026-06-01', 'homepage' => false),
+    ]
+    selected = AstraNews.homepage(records)
+    assert_equal %w[newer homepage-false latest], selected.map { |record| record['content_id'] }
+    refute_includes selected.map { |record| record['content_id'] }, 'draft-newest'
+    refute_includes selected.map { |record| record['content_id'] }, 'legacy-newest'
+
+    ties = [fixture.call('same-date-b', '2030-01-01'), fixture.call('same-date-a', '2030-01-01'), fixture.call('older', '2029-01-01')]
+    assert_equal %w[same-date-a same-date-b older], AstraNews.homepage(ties).map { |record| record['content_id'] }
+    assert_equal AstraNews.homepage(ties).map { |record| record['content_id'] }, AstraNews.homepage(ties.reverse).map { |record| record['content_id'] }
   end
 
   def test_additional_valid_news_item_preserves_the_baseline_and_adds_its_year
@@ -215,7 +243,7 @@ class Phase7NewsTest < Minitest::Test
       assert_includes doc.text, r['summary'] if NEW_IDS.include?(r['content_id'])
     end
     home = Nokogiri::HTML(File.read(File.join(destination, 'index.html')))
-    expected_home = AstraNews.ordered(published).first(3).map { |r| r['content_id'] }
+    expected_home = AstraNews.homepage(records).map { |r| r['content_id'] }
     assert_equal expected_home, home.css('.astra-news-row').map { |n| n['data-news-id'] }
     assert_empty home.css('[data-news-id="news-astra-creation-2022"]')
     assert home.css('.astra-news a').any? { |a| a.text.include?('View all news') && a['href'] == baseurl + '/news/' }

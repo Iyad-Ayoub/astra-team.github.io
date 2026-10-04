@@ -10,11 +10,14 @@ class PhaseG9hPublicationUxTest < Minitest::Test
     assert_includes APP, 'findOpenPublicationPull(session, id)'
     assert_includes APP, 'await createPublicationCommit(session, publicationBranch(id), record, media, published)'
     assert_includes APP, 'return commit.sha;'
-    assert_includes APP, 'expectedPublicationSha = pull.head && pull.head.sha'
+    assert_includes APP, 'var expectedPublicationSha = await synchronizeLifecycleBranchWithMain(session, publicationBranch(id), pull);'
     assert_includes APP, 'expectedSha: expectedPublicationSha'
     assert_includes APP, 'Waiting for GitHub to register the refreshed publication…'
     assert_includes APP, "base: 'main'"
-    refute_includes APP.split('async function refreshGithubPublication', 2).last.split('async function publishGithubPublication', 2).first, "method: 'POST'"
+    assert_includes APP, 'async function synchronizeLifecycleBranchWithMain(session, branch, pull)'
+    assert_includes APP, "base: branch, head: 'main'"
+    assert_includes APP, "base + '/compare/'"
+    assert_includes APP, "base + '/merges'"
   end
 
   def test_publish_now_merges_only_a_validated_expected_pull
@@ -38,6 +41,14 @@ class PhaseG9hPublicationUxTest < Minitest::Test
     assert_includes APP, "renderPublicationState('Update available', '', null, publicNewsUrl(published), 'update')"
     assert_includes APP, "value === 'Update available' && action === 'update'"
     assert_includes APP, "value === 'Update available' && action === 'refresh'"
+  end
+
+  def test_failed_controlled_validation_exposes_refresh_but_not_publish
+    assert_includes APP, "detail.indexOf('Validation failed') === 0"
+    assert_includes APP, "value === 'Submitted' || value === 'Update submitted'"
+    assert_includes APP, "refreshEligible = (value === 'Update available' && action === 'refresh') || failedControlledPull"
+    assert_includes APP, "refreshGithubPublication()"
+    assert_includes APP, "publishNow.hidden = !(detail && detail.indexOf('Validation passed') === 0"
   end
 
   def test_validation_is_bound_to_the_current_publication_head
