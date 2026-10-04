@@ -66,6 +66,16 @@ module AstraNews
     end
   end
 
+  # Homepage Latest News is the canonical published, non-legacy view. Keep
+  # this selector reusable so future CMS additions are selected by contract,
+  # rather than by a snapshot of today's content IDs.
+  def self.homepage(documents)
+    ordered(documents.select do |doc|
+      record = doc.respond_to?(:data) ? doc.data : doc
+      record['status'] == 'published' && !record['legacy']
+    end).first(3)
+  end
+
   def self.prepare(site)
     collection = site.collections['news']
     return unless collection
@@ -86,7 +96,7 @@ module AstraNews
     # The homepage is a latest-news view of the canonical published archive.
     # The legacy homepage flag remains accepted as editorial metadata, but it
     # must not hide a newly published item from the automatic latest list.
-    site.config['news_homepage'] = ordered.reject { |d| d.data['legacy'] }.first(3)
+    site.config['news_homepage'] = homepage(collection.docs)
   end
 end
 
