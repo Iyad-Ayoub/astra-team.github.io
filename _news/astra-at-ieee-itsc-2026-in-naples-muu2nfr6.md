@@ -5,6 +5,7 @@ slug: "astra-at-ieee-itsc-2026-in-naples-muu2nfr6"
 title: "ASTRA at IEEE ITSC 2026 in Naples"
 status: "published"
 type: "event"
+content_date: "2026-09-30"
 event_date: "2026-09-15"
 summary: "ASTRA researchers Islem Kobbi and Fawzi Nashashibi participated in IEEE ITSC 2026 in Naples, where Islem presented the paper “Motion Planning in Urban Environments via Self-Play Reinforcement Learning,” co-authored with Tiago Rocha Gonçalves."
 featured: true
