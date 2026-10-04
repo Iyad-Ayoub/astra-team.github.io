@@ -66,6 +66,12 @@ class PhaseG12ProjectPublicationTest < Minitest::Test
     assert_includes APP, "publicationDisplayState('Update submitted', validation)"
   end
 
+  def test_project_refresh_synchronizes_the_controlled_branch_with_main
+    assert_includes APP, 'await synchronizeLifecycleBranchWithMain(session, branch, pull);'
+    assert_includes APP, "base + '/pulls/' + pull.number"
+    assert_includes APP, "base: branch, head: 'main'"
+  end
+
   def test_project_deployment_reconciles_later_main_success_and_requires_current_project
     assert_includes APP, "mergeSha ? base + '/actions/runs?branch=main&head_sha='"
     assert_includes APP, "base + '/actions/runs?branch=main&per_page=100&page='"

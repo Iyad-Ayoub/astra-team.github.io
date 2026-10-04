@@ -300,8 +300,10 @@
     try {
       var id = currentProjectId(), session = storedGithubSession() || await restoreGithubSession();
       if (!id || !session) return;
-      var record = (await readProjectDraft(session, id)).record, media = await draftMedia(session, record), branch = projectPublicationBranch(id), published = await publishedProjectByContentId(session, id), pull = await findProjectPublicationPull(session, id);
+      var record = (await readProjectDraft(session, id)).record, media = await draftMedia(session, record), branch = projectPublicationBranch(id), published = await publishedProjectByContentId(session, id), pull = await findProjectPublicationPull(session, id), github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName;
       if (!pull) throw new Error('No open Project publication pull request was found.');
+      pull = await githubResponse(base + '/pulls/' + pull.number, session);
+      await synchronizeLifecycleBranchWithMain(session, branch, pull);
       if (!await projectBranchMatchesDraft(session, record, branch, media)) await createProjectPublicationCommit(session, branch, record, media);
       renderProjectPublicationState(published ? 'Update submitted' : 'Submitted', 'Validation in progress…', pull.html_url);
       await loadProjectPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pull });
@@ -773,6 +775,26 @@
       throw new Error('The previous publication branch cannot be safely reset from main.');
     }
   }
+  async function synchronizeLifecycleBranchWithMain(session, branch, pull) {
+    var match = /^(cms-publish|cms-unpublish)\/(news|projects)\/((?:news|project)-[a-z0-9]+)$/.exec(branch), expected = match && (match[1] === 'cms-publish' ? (match[2] === 'news' ? publicationBranch(match[3]) : projectPublicationBranch(match[3])) : (match[2] === 'news' ? unpublishBranch(match[3]) : projectUnpublishBranch(match[3])));
+    if (!match || expected !== branch || !pull || pull.state !== 'open' || !pull.base || pull.base.ref !== 'main' || !pull.head || pull.head.ref !== branch) throw new Error('The publication pull request is not a controlled request targeting main.');
+    var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, main = await githubResponse(base + '/git/ref/heads/main', session), current = await githubResponse(base + '/git/ref/heads/' + branch, session);
+    if (current.object.sha === main.object.sha) return current.object.sha;
+    var comparison = await githubResponse(base + '/compare/' + encodeURIComponent(branch + '...main'), session);
+    if (!comparison || !['ahead', 'behind', 'diverged', 'identical'].includes(comparison.status)) throw new Error('Unable to determine whether the publication branch is behind main.');
+    if (comparison.status === 'ahead' || comparison.status === 'diverged' || Number(comparison.ahead_by) > 0) {
+      var merged;
+      try {
+        merged = await githubResponse(base + '/merges', session, { method: 'POST', body: { base: branch, head: 'main', commit_message: 'cms: synchronize ' + branch + ' with main' } });
+      } catch (error) {
+        if (error.status === 409) throw new Error('Main and the publication branch conflict. Resolve the publication conflict before refreshing.');
+        throw error;
+      }
+      if (merged && merged.merged === false) throw new Error('Main cannot be synchronized with the publication branch without resolving a merge conflict.');
+    }
+    var updated = await githubResponse(base + '/git/ref/heads/' + branch, session);
+    return updated.object.sha;
+  }
   async function publicationBranchMatchesDraft(session, record, branch, published, media) { try { var github = githubSettings(), path = publicNewsPath(record, published), data = await githubResponse('/repos/' + github.repoOwner + '/' + github.repoName + '/contents/' + path + '?ref=' + encodeURIComponent(branch), session); return fromBase64(data.content) === serializePublicNews(record, media, published); } catch (error) { return false; } }
   function stopPublicationStatusPolling() { if (publicationStatusTimer) { window.clearTimeout(publicationStatusTimer); publicationStatusTimer = null; } if (deploymentStatusTimer) { window.clearTimeout(deploymentStatusTimer); deploymentStatusTimer = null; } }
   function schedulePublicationStatusPolling(session, record, knownLifecycle) { stopPublicationStatusPolling(); publicationStatusTimer = window.setTimeout(function () { loadPublicationStatus(session, record, knownLifecycle); }, 15000); }
@@ -845,7 +867,7 @@
       var draft = await readGithubDraft(session, id), record = draft.record, github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, branch = publicationBranch(id), published = await publishedNewsByContentId(session, id), media = await draftMedia(session, record);
       if (validNewsTypes.indexOf(record.type) === -1) throw new Error('This draft uses a legacy unsupported type. Select a canonical public type before publication.');
       var pulls = await githubResponse(base + '/pulls?state=open&head=' + encodeURIComponent(github.repoOwner + ':' + branch), session);
-      if (published && serializePublicNews(record, media, published) === published.markdown) {
+      if (published && serializePublicNews(record, media, published) === published.markdown && !pulls.length) {
         renderPublicationState('Published', 'No public changes to publish.', pulls.length ? pulls[0].html_url : null, publicNewsUrl(published));
         return;
       }
@@ -875,13 +897,14 @@
       await verifyGithubRepositoryAccess(session);
       var draft = await readGithubDraft(session, id), record = draft.record, published = await publishedNewsByContentId(session, id), media = await draftMedia(session, record);
       if (validNewsTypes.indexOf(record.type) === -1) throw new Error('This draft uses a legacy unsupported type. Select a canonical public type before publication.');
-      var pull = await findOpenPublicationPull(session, id);
-      if (published && serializePublicNews(record, media, published) === published.markdown) {
-        renderPublicationState('Published', 'No public changes to publish.', pull ? pull.html_url : null, publicNewsUrl(published));
+      var github = githubSettings(), base = '/repos/' + github.repoOwner + '/' + github.repoName, pull = await findOpenPublicationPull(session, id);
+      if (published && serializePublicNews(record, media, published) === published.markdown && !pull) {
+        renderPublicationState('Published', 'No public changes to publish.', null, publicNewsUrl(published));
         return;
       }
       if (!pull) throw new Error('No open publication pull request was found for this draft.');
-      var expectedPublicationSha = pull.head && pull.head.sha;
+      pull = await githubResponse(base + '/pulls/' + pull.number, session);
+      var expectedPublicationSha = await synchronizeLifecycleBranchWithMain(session, publicationBranch(id), pull);
       if (!await publicationBranchMatchesDraft(session, record, publicationBranch(id), published, media)) expectedPublicationSha = await createPublicationCommit(session, publicationBranch(id), record, media, published);
       renderPublicationState(published ? 'Update submitted' : 'Submitted', 'Waiting for GitHub to register the refreshed publication…', pull.html_url, publicNewsUrl(published));
       await loadPublicationStatus(session, record, { state: published ? 'Update submitted' : 'Submitted', pull: pull, unpublish: false, expectedSha: expectedPublicationSha });

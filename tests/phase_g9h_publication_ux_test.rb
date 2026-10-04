@@ -10,11 +10,14 @@ class PhaseG9hPublicationUxTest < Minitest::Test
     assert_includes APP, 'findOpenPublicationPull(session, id)'
     assert_includes APP, 'await createPublicationCommit(session, publicationBranch(id), record, media, published)'
     assert_includes APP, 'return commit.sha;'
-    assert_includes APP, 'expectedPublicationSha = pull.head && pull.head.sha'
+    assert_includes APP, 'var expectedPublicationSha = await synchronizeLifecycleBranchWithMain(session, publicationBranch(id), pull);'
     assert_includes APP, 'expectedSha: expectedPublicationSha'
     assert_includes APP, 'Waiting for GitHub to register the refreshed publication…'
     assert_includes APP, "base: 'main'"
-    refute_includes APP.split('async function refreshGithubPublication', 2).last.split('async function publishGithubPublication', 2).first, "method: 'POST'"
+    assert_includes APP, 'async function synchronizeLifecycleBranchWithMain(session, branch, pull)'
+    assert_includes APP, "base: branch, head: 'main'"
+    assert_includes APP, "base + '/compare/'"
+    assert_includes APP, "base + '/merges'"
   end
 
   def test_publish_now_merges_only_a_validated_expected_pull
