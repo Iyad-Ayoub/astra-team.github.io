@@ -96,6 +96,22 @@ class Phase7NewsTest < Minitest::Test
     assert_equal AstraNews.homepage(ties).map { |record| record['content_id'] }, AstraNews.homepage(ties.reverse).map { |record| record['content_id'] }
   end
 
+  def test_content_date_is_primary_with_historical_event_date_fallback
+    fixture = lambda do |id, event_date, content_date = nil, **extra|
+      { 'content_id' => id, 'event_date' => event_date, 'date_precision' => 'day', 'status' => 'published' }.merge(content_date ? { 'content_date' => content_date } : {}).merge(extra)
+    end
+    items = [
+      fixture.call('historical', '2026-09-25'),
+      fixture.call('ellis', '2026-09-15', '2026-09-21'),
+      fixture.call('itsc', '2026-09-15', '2026-09-30'),
+      fixture.call('tie-b', '2026-01-01', '2026-01-01', 'display_order' => 2),
+      fixture.call('tie-a', '2026-01-01', '2026-01-01', 'display_order' => 1)
+    ]
+    assert_equal %w[itsc historical ellis tie-a tie-b], AstraNews.ordered(items).map { |item| item['content_id'] }
+    assert_equal AstraNews.ordered(items).map { |item| item['content_id'] }, AstraNews.ordered(items.reverse).map { |item| item['content_id'] }
+    assert_raises(RuntimeError) { validate([items.first.merge('content_date' => '2026-02')]) }
+  end
+
   def test_additional_valid_news_item_preserves_the_baseline_and_adds_its_year
     item = records.find { |record| record['content_id'] == 'news-acvss-2025' }.merge(
       'content_id' => 'news-fixture-future', 'slug' => 'fixture-future', 'title' => 'Fixture future News item',

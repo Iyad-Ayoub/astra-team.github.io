@@ -35,6 +35,10 @@ module AstraNews
       raise 'invalid news status/type' unless %w[draft published].include?(r['status']) && TYPES.include?(r['type'])
       raise 'news requires title and summary' unless %w[title summary].all? { |k| r[k].is_a?(String) && !r[k].strip.empty? }
       date_parts(r['event_date'], r['date_precision'])
+      if r.key?('content_date')
+        raise 'invalid news content date' unless r['content_date'].is_a?(String)
+        date_parts(r['content_date'], 'day')
+      end
       if r['end_date']
         date_parts(r['end_date'], 'day')
         raise 'invalid news date range' unless r['date_precision'] == 'day' && r['end_date'] >= r['event_date']
@@ -61,7 +65,9 @@ module AstraNews
   def self.ordered(documents)
     documents.sort_by do |doc|
       r = doc.respond_to?(:data) ? doc.data : doc
-      y, m, d = date_parts(r['event_date'], r['date_precision'])
+      chronology = r['content_date'] || r['event_date']
+      precision = r['content_date'] ? 'day' : r['date_precision']
+      y, m, d = date_parts(chronology, precision)
       [-y, -(m || 0), -(d || 0), r.fetch('display_order', 0), r['content_id']]
     end
   end

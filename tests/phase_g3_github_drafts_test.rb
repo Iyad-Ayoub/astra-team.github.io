@@ -56,8 +56,12 @@ class PhaseG3GitHubDraftsTest < Minitest::Test
   def test_news_list_has_separate_hierarchy_and_save_feedback_states
     assert_includes @app, "className = 'astra-admin-news-title'"
     assert_includes @app, "className = 'astra-admin-news-meta'"
-    assert_includes @app, 'displayNewsDate(draft.record.content_date)'
-    assert_includes @app, 'loadPublicationStatus(session, draft.record, null, function (state) { lifecycleState = state; })'
+    assert_includes @app, 'displayNewsDate(draftRecord.content_date)'
+    assert_includes @app, 'drafts.sort(compareNewsDrafts)'
+    assert_includes @app, 'function compareNewsDrafts(left, right)'
+    assert_includes @app, 'localIsoDate()'
+    assert_includes @app, "newsField('content-date').readOnly = Boolean(record)"
+    assert_includes @app, 'loadPublicationStatus(session, draftRecord, null, function (state) { lifecycleState = state; })'
     refute_includes @app, "draft.record.status === 'published' ? 'Published' : 'Draft'"
     %w[Draft Submitted Published].each { |state| assert_includes @app, "'#{state}'" }
     assert_includes @app, "'Update available'"
