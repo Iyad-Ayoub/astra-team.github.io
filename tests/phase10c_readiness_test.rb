@@ -68,7 +68,7 @@ class Phase10CReadinessTest < Minitest::Test
     assert_includes privacy.text, 'ASTRA does not directly control GitHub’s logs'
     assert privacy.at_css('a[href="mailto:dpo@inria.fr"]')
     legal = Nokogiri::HTML(File.read(File.join(dest, 'legal/index.html'))).at_css('article').text
-    assert_includes legal, 'For website and editorial enquiries, contact the team assistant, Christelle Leclerc.'
+    assert_includes legal, 'For website and editorial enquiries, contact the team assistant, Krystel Leclerc.'
     refute_includes legal, 'subject to institutional confirmation'
     assert_includes legal, 'GitHub Pages'
     refute_match(/WordPress|Automattic|hosted by Inria/, legal)
@@ -77,7 +77,7 @@ class Phase10CReadinessTest < Minitest::Test
     refute_match(/\d+(?:[.,]\d+)?\s*%/, accessibility)
     %w[legal privacy accessibility about info].each do |route|
       doc = Nokogiri::HTML(File.read(File.join(dest, route, 'index.html')))
-      assert_equal 'Christelle Leclerc', doc.at_css('a[href="mailto:krystel.leclerc@inria.fr"]').text
+      assert_equal 'Krystel Leclerc', doc.at_css('a[href="mailto:krystel.leclerc@inria.fr"]').text
     end
   end
 end

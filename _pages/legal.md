@@ -13,7 +13,7 @@ Inria's institutional identity is the Institut national de recherche en sciences
 
 Domaine de Voluceau, Rocquencourt – B.P. 105, 78153 Le Chesnay Cedex – France. Telephone: [+33 1 39 63 55 11](tel:+33139635511).
 
-For website and editorial enquiries, contact the team assistant, [Christelle Leclerc](mailto:krystel.leclerc@inria.fr).
+For website and editorial enquiries, contact the team assistant, [Krystel Leclerc](mailto:krystel.leclerc@inria.fr).
 
 ## Hosting
 

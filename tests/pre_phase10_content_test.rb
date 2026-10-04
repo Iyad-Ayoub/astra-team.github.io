@@ -48,8 +48,8 @@ class PrePhase10ContentTest < Minitest::Test
       page = Nokogiri::HTML(File.read(File.join(destination, route, 'index.html')))
       contact = page.at_css('a[href="mailto:krystel.leclerc@inria.fr"]')
       refute_nil contact
-      assert_equal 'Christelle Leclerc', contact.text
-      assert_equal 'For general requests, please contact our team assistant: Christelle Leclerc.', contact.parent.text.strip
+      assert_equal 'Krystel Leclerc', contact.text
+      assert_equal 'For general requests, please contact our team assistant: Krystel Leclerc.', contact.parent.text.strip
     end
     Dir[File.join(destination, '**/*.html')].each do |file|
       page = Nokogiri::HTML(File.read(file))

@@ -83,6 +83,10 @@ class ValidationTest < Minitest::Test
     excludes = YAML.safe_load_file(File.join(__dir__, '..', '_config.yml')).fetch('exclude')
     assert_includes excludes, 'auth-broker'
     assert_includes excludes, '.env.example'
+    assert_includes excludes, 'docs'
+    assert SiteValidation.forbidden_path?('docs/WEBSITE_STATUS.md')
+    assert SiteValidation.forbidden_path?('docs/POST_LAUNCH_ROADMAP.md')
+    assert SiteValidation.forbidden_path?('docs/DEPLOYMENT_HANDOFF.md')
   end
 
   def test_secret_and_host_are_rejected_without_value_output
