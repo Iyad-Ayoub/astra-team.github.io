@@ -62,7 +62,7 @@ the public team/news/publication content and fresh browser requests/storage.
   logs or erase cookies left by older deployments. Recheck the real deployment
   after separately authorized release.
 
-Christelle Leclerc (`krystel.leclerc@inria.fr`) remains the current team contact.
+Krystel Leclerc (`krystel.leclerc@inria.fr`) remains the current team contact.
 Personal-data enquiries refer to `dpo@inria.fr` and Inria's institutional
 framework, not an invented ASTRA controller assignment. Institutional review
 must establish the applicable controller responsibilities/legal bases,

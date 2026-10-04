@@ -12,7 +12,7 @@ class Phase6TeamTest < Minitest::Test
     'associates' => ['Iyad Abuhadrous', 'Itheri Yahiaoui', 'Paul Roger-Dauvergne'],
     'phd' => ['Fatima Balde', 'Mohammad Fahes', 'Islem Kobbi', 'Elias Maharmeh',
       'Tetiana Martyniuk', 'Antionios Tragoudaras', 'William Gaudelier'],
-    'administration' => ['Christelle Leclerc']
+    'administration' => ['Krystel Leclerc']
   }.freeze
   REQUIRED_ALUMNI = ['Karim Essalmi', 'Noël Nadal', 'Yacine Ben Ameur',
     'Anh-Quan Cao', 'Amina Ghoul', 'Ivan Lopes', 'Jiahao Zhang', 'Fabio Pizzati',

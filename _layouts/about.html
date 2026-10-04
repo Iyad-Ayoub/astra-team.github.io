@@ -38,10 +38,7 @@ layout: default
       {% for axis in core_axes %}
       <article class="astra-research-card">
         <a href="{{ axis.url | relative_url }}">
-          {% comment %}Reuse each corresponding legacy image without changing the content schema.{% endcomment %}
-          {% assign legacy_axis = site.data.axes[forloop.index0] %}
-          {% assign image_path = legacy_axis.img | prepend: '/assets/img/' %}
-          <div class="astra-card-image"><img src="{{ image_path | relative_url }}" alt="" loading="lazy" /></div>
+          <div class="astra-card-image"><img src="{{ axis.image | relative_url }}" alt="{{ axis.image_alt | escape }}" loading="lazy" width="{{ axis.image_width }}" height="{{ axis.image_height }}" /></div>
           <div class="astra-card-heading"><h3>{{ axis.title }}</h3><span aria-hidden="true">&rarr;</span></div>
         </a>
         <p>{{ site.data.home_research[axis.content_id] | escape }}</p>

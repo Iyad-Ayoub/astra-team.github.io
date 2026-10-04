@@ -25,7 +25,7 @@ ASTRA today brings this heritage into a current programme across multimodal perc
 
 ## Contact
 
-For general requests, please contact our team assistant: [Christelle Leclerc](mailto:krystel.leclerc@inria.fr).
+For general requests, please contact our team assistant: [Krystel Leclerc](mailto:krystel.leclerc@inria.fr).
 
 For scientific inquiries, please contact Inria team leader: [Fawzi Nashashibi](mailto:fawzi.nashashibi@inria.fr)
 

@@ -5,7 +5,7 @@ follow the user-approved 2025 roster and explicit Phase 6B corrections.
 There are 25 current members (2 leadership, 4 permanent researchers,
 8 industrial research members, 3 associated researchers/engineers,
 7 PhD students, 1 administrative assistant) and 28 alumni.
-The final correction makes Christelle Leclerc the sole current Team Assistant.
+The final correction makes Krystel Leclerc the sole current Team Assistant.
 Abigaïl Palma is a Former Administrative Assistant and Martial Le-Henaff
 is a Former Team Assistant. No departure dates or employers are added.
 Iyad Abuhadrous is displayed as R&D Engineer (user-confirmed Inria position),

@@ -9,7 +9,7 @@ description: Personal data, email contact, third-party resources and the current
 
 This static website has no user accounts or contact form. It does not directly collect personal data through forms or account registration.
 
-The site publishes professional information about team members and research activities, including names, roles, affiliations, portraits, publication authors and news references. For corrections to information about you, contact [Christelle Leclerc](mailto:krystel.leclerc@inria.fr).
+The site publishes professional information about team members and research activities, including names, roles, affiliations, portraits, publication authors and news references. For corrections to information about you, contact [Krystel Leclerc](mailto:krystel.leclerc@inria.fr).
 
 Email links open your email application. If you contact the team, your address and message are used to handle your enquiry; the message is not submitted through this website.
 

@@ -43,6 +43,15 @@ class ScientificVisionTest < Minitest::Test
     end
   end
 
+  def test_homepage_research_cards_use_canonical_axis_images
+    layout = File.read(File.join(ROOT, '_layouts/about.html'))
+    assert_includes layout, 'axis.image | relative_url'
+    assert_includes layout, 'axis.image_alt'
+    assert_includes layout, 'axis.image_width'
+    assert_includes layout, 'axis.image_height'
+    refute_includes layout, 'site.data.axes[forloop.index0]'
+  end
+
   def test_research_axis_visual_and_heading_polish_is_scoped
     page_layout = File.read(File.join(ROOT, '_layouts/page.html'))
     styles = File.read(File.join(ROOT, '_sass/_astra.scss'))
@@ -56,6 +65,17 @@ class ScientificVisionTest < Minitest::Test
   def test_rendered_core_axes_are_titles_only_when_artifact_supplied
     destination = ENV['VISION_SITE']
     skip 'Set VISION_SITE for generated checks' unless destination
+
+    base = ENV.fetch('VISION_BASEURL', '')
+    homepage = Nokogiri::HTML(File.read(File.join(destination, 'index.html')))
+    homepage_cards = homepage.css('.astra-home .astra-research-grid > .astra-research-card')
+    assert_equal 4, homepage_cards.size
+    expected_images = AXES.zip(%w[perception mapping decision cooperative]).map do |_, id|
+      axis = File.read(File.join(ROOT, "_research_axes/#{id}.md"))
+      axis[/^image: (\S+)$/, 1]
+    end
+    assert_equal expected_images.map { |image| "#{base}#{image}" }, homepage_cards.map { |card| card.at_css('img')['src'] }
+    refute homepage.text.include?('axis_astra-vision')
 
     research = Nokogiri::HTML(File.read(File.join(destination, 'research/index.html')))
     core_axes = research.css('#current-research ul.astra-axis-grid > li')
