@@ -1,0 +1,11 @@
+# Verified Research Demo records. Keep scientific claims limited to sourced metadata.
+- id: revamp
+  title: REVAMP
+  subtitle: Reversible Lookahead
+  type: Research Demo
+  researchers:
+    - Islem Kobbi
+    - Tiago Rocha Goncalves
+    - Fawzi Nashashibi
+  related_axis: decision
+  demo_url: https://islemkobbi.github.io/revamp_demo/

@@ -9,3 +9,4 @@ subtitle: <strong>Automated and Safe TRAnsportation systems</strong>
 ---
 
 {% include research_links.html %}
+{% include research_demos.html %}
